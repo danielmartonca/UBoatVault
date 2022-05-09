@@ -54,17 +54,20 @@ public class RegistrationController {
     @PostMapping(value = "/api/requestRegistration", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseBody
     public ResponseEntity<String> requestRegistration(@RequestBody RegistrationData registrationData) {
+        log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/requestRegistration", registrationData));
         String token = registrationService.requestRegistration(registrationData);
         if (token != null)
             return new ResponseEntity<>(EncryptionService.encryptString(token), HttpStatus.OK);
         else
-            return new ResponseEntity<>("", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("", HttpStatus.OK);
     }
 
     @PostMapping(value = "/api/register", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseBody
     public ResponseEntity<String> register(@CookieValue(name = "token") String token,
                                            @RequestBody RegistrationData registrationData) {
+        log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/register", registrationData));
+
         token = EncryptionService.decryptString(token);
         if (token.isEmpty())
             return new ResponseEntity<>("Invalid token.", HttpStatus.BAD_REQUEST);
