@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.model;
+package com.example.uboatvault.api.model.persistence;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -22,11 +22,15 @@ public class RegistrationData {
     @JsonIgnore
     private Long registrationDataId;
 
-    @OneToMany(mappedBy = "registrationData", cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "registrationData", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<SimCard> mobileNumbersInfoList = new java.util.ArrayList<>();
 
     @Column(unique = true)
     String deviceInfo;
+
+    @Setter
+    @Column(unique = true)
+    String phoneNumber;
 
     @Setter
     @JsonIgnore

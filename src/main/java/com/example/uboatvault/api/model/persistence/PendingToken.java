@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.model;
+package com.example.uboatvault.api.model.persistence;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -17,4 +17,8 @@ public class PendingToken {
     @Setter
     @Column(nullable = false, unique = true)
     String tokenValue;
+
+    public PendingToken(String tokenValue) {
+        this.tokenValue = tokenValue;
+    }
 }

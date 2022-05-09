@@ -10,6 +10,11 @@ public class EncryptionService {
     private EncryptionService() {
     }
 
+    public static boolean isTokenDecryptable(String token) {
+        String decryptedToken = decryptString(token);
+        return !decryptedToken.isEmpty();
+    }
+
     public static String encryptString(String string) {
         String cipherText = "";
         try {

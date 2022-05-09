@@ -1,6 +1,8 @@
 package com.example.uboatvault.api.controllers;
 
-import com.example.uboatvault.api.model.RegistrationData;
+import com.example.uboatvault.api.model.persistence.RegistrationData;
+import com.example.uboatvault.api.model.requests.RegistrationRequest;
+import com.example.uboatvault.api.model.response.RegistrationDataResponse;
 import com.example.uboatvault.api.services.EncryptionService;
 import com.example.uboatvault.api.services.RegistrationService;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;
@@ -26,56 +28,59 @@ public class RegistrationController {
 
     @GetMapping(value = "/api/test")
     public String test() {
+        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/test", null));
         return "Running...";
     }
 
     @PostMapping(value = "/api/checkDeviceRegistration", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseBody
-    public ResponseEntity<String> checkDeviceRegistration(@CookieValue(name = "token", required = false) String token,
-                                                          @RequestBody RegistrationData registrationData) {
+    public ResponseEntity<RegistrationDataResponse> checkDeviceRegistration(@CookieValue(name = "token", required = false) String token,
+                                                                            @RequestBody RegistrationData registrationData) {
         log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/checkDeviceRegistration", registrationData));
 
         if (token != null) {
-            token = EncryptionService.decryptString(token);
-            if (token.isEmpty())
-                return new ResponseEntity<>("Invalid token.", HttpStatus.BAD_REQUEST);
+            if (!EncryptionService.isTokenDecryptable(token))
+                return new ResponseEntity<>(new RegistrationDataResponse(null, null), HttpStatus.NOT_ACCEPTABLE);
 
             String extractedToken = registrationService.searchForToken(registrationData, token);
             if (extractedToken != null)
-                return new ResponseEntity<>(EncryptionService.encryptString(extractedToken), HttpStatus.OK);
+                return new ResponseEntity<>(new RegistrationDataResponse(true, extractedToken), HttpStatus.OK);
         }
-        String newToken = registrationService.searchForTokenBasedOnRegistrationData(registrationData);
-        if (newToken != null)
-            return new ResponseEntity<>(EncryptionService.encryptString(newToken), HttpStatus.OK);
+
+        String dbToken = registrationService.searchForTokenBasedOnRegistrationData(registrationData);
+        if (dbToken != null)
+            return new ResponseEntity<>(new RegistrationDataResponse(true, dbToken), HttpStatus.OK);
         else
-            return new ResponseEntity<>("", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.NOT_FOUND);
     }
 
     @PostMapping(value = "/api/requestRegistration", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseBody
-    public ResponseEntity<String> requestRegistration(@RequestBody RegistrationData registrationData) {
+    public ResponseEntity<RegistrationDataResponse> requestRegistration(@RequestBody RegistrationData registrationData) {
         log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/requestRegistration", registrationData));
         String token = registrationService.requestRegistration(registrationData);
+        RegistrationDataResponse registrationResponse;
         if (token != null)
-            return new ResponseEntity<>(EncryptionService.encryptString(token), HttpStatus.OK);
+            registrationResponse = new RegistrationDataResponse(false, token);
         else
-            return new ResponseEntity<>("", HttpStatus.OK);
+            registrationResponse = new RegistrationDataResponse(false, null);
+
+        return new ResponseEntity<>(registrationResponse, HttpStatus.OK);
     }
 
     @PostMapping(value = "/api/register", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseBody
-    public ResponseEntity<String> register(@CookieValue(name = "token") String token,
-                                           @RequestBody RegistrationData registrationData) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/register", registrationData));
+    public ResponseEntity<RegistrationDataResponse> register(@CookieValue(name = "token") String token,
+                                                             @RequestBody RegistrationRequest registrationRequest) {
+        log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/register", registrationRequest));
 
-        token = EncryptionService.decryptString(token);
-        if (token.isEmpty())
-            return new ResponseEntity<>("Invalid token.", HttpStatus.BAD_REQUEST);
+        if (!EncryptionService.isTokenDecryptable(token))
+            return new ResponseEntity<>(new RegistrationDataResponse(null, null), HttpStatus.BAD_REQUEST);
 
-        String extractedValue = registrationService.register(registrationData, token);
+        String extractedValue = registrationService.register(registrationRequest, token);
         if (extractedValue != null)
-            return new ResponseEntity<>(EncryptionService.encryptString(extractedValue), HttpStatus.OK);
+            return new ResponseEntity<>(new RegistrationDataResponse(true, extractedValue), HttpStatus.OK);
         else
-            return new ResponseEntity<>("", HttpStatus.NOT_ACCEPTABLE);
+            return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.NOT_ACCEPTABLE);
     }
 }

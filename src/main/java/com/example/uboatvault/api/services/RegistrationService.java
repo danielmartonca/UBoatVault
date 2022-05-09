@@ -1,9 +1,10 @@
 package com.example.uboatvault.api.services;
 
 import com.example.uboatvault.api.controllers.RegistrationController;
-import com.example.uboatvault.api.model.PendingToken;
-import com.example.uboatvault.api.model.RegistrationData;
-import com.example.uboatvault.api.model.SimCard;
+import com.example.uboatvault.api.model.persistence.PendingToken;
+import com.example.uboatvault.api.model.persistence.RegistrationData;
+import com.example.uboatvault.api.model.persistence.SimCard;
+import com.example.uboatvault.api.model.requests.RegistrationRequest;
 import com.example.uboatvault.api.repositories.PendingTokenRepository;
 import com.example.uboatvault.api.repositories.RegistrationDataRepository;
 import com.example.uboatvault.api.repositories.SimCardRepository;
@@ -36,7 +37,7 @@ public class RegistrationService {
     }
 
     private String generateToken() {
-        String token = "";
+        String token;
         do {
             UUID uuid = UUID.randomUUID();
             token = uuid.toString();
@@ -46,6 +47,14 @@ public class RegistrationService {
         return token;
     }
 
+    private boolean isTokenDeprecated(RegistrationData registrationData) {
+        return getMinuteDifferenceFromNow(registrationData.getTokenCreation()) > 30;
+    }
+
+    private void updateToken(RegistrationData registrationData) {
+        registrationData.setToken(generateToken());
+        registrationData.setTokenCreation(new Date(System.currentTimeMillis()));
+    }
 
     /**
      * This method searches if any part of the registrationData exists in the database and returns its token if found (or generates a new one if it's older than 30 minutes)
@@ -53,9 +62,8 @@ public class RegistrationService {
     public String searchForTokenBasedOnRegistrationData(RegistrationData registrationData) {
         var foundRegistrationData = registrationDataRepository.findFirstByDeviceInfo(registrationData.getDeviceInfo());
         if (foundRegistrationData != null) {
-            if (getMinuteDifferenceFromNow(foundRegistrationData.getTokenCreation()) > 30) {
-                foundRegistrationData.setToken(generateToken());
-                foundRegistrationData.setTokenCreation(new Date(System.currentTimeMillis()));
+            if (isTokenDeprecated(foundRegistrationData)) {
+                updateToken(foundRegistrationData);
                 registrationDataRepository.save(foundRegistrationData);
             }
             return foundRegistrationData.getToken();
@@ -64,9 +72,8 @@ public class RegistrationService {
         for (var simCard : registrationData.getMobileNumbersInfoList()) {
             SimCard extractedSimCard = simCardRepository.findFirstByNumberAndDisplayNameAndCountryIso(simCard.getNumber(), simCard.getDisplayName(), simCard.getCountryIso());
             if (extractedSimCard != null) {
-                if (getMinuteDifferenceFromNow(registrationData.getTokenCreation()) > 30) {
-                    registrationData.setToken(generateToken());
-                    registrationData.setTokenCreation(new Date(System.currentTimeMillis()));
+                if (isTokenDeprecated(registrationData)) {
+                    updateToken(registrationData);
                     registrationDataRepository.save(registrationData);
                 }
                 return registrationData.getToken();
@@ -99,9 +106,10 @@ public class RegistrationService {
     public String requestRegistration(RegistrationData registrationData) {
         try {
             String token = searchForTokenBasedOnRegistrationData(registrationData);
-            if (token != null)
-                return token;
-            return generateToken();
+            if (token == null)
+                token = generateToken();
+            pendingTokenRepository.save(new PendingToken(token));
+            return token;
         } catch (Exception e) {
             log.error("Error while requesting new registration.", e);
             return null;
@@ -111,12 +119,12 @@ public class RegistrationService {
     /**
      * Saves a new device in the database based on registrationData and returns its token if successful.
      */
-    public String register(RegistrationData registrationData, String token) {
+    public String register(RegistrationRequest registrationRequest, String token) {
         try {
+            RegistrationData registrationData = registrationRequest.getRegistrationData();
             if (pendingTokenRepository.findFirstByTokenValue(token) == null) {
-                registrationData.setToken(token);
-                registrationData.setTokenCreation(new Date(System.currentTimeMillis()));
-                registrationData = registrationDataRepository.save(registrationData);
+                updateToken(registrationData);
+                registrationDataRepository.save(registrationData);
                 pendingTokenRepository.deleteByTokenValue(token);
                 return registrationData.getToken();
             }

@@ -1,6 +1,6 @@
 package com.example.uboatvault.api.repositories;
 
-import com.example.uboatvault.api.model.RegistrationData;
+import com.example.uboatvault.api.model.persistence.RegistrationData;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RegistrationDataRepository extends JpaRepository<RegistrationData, Long> {
