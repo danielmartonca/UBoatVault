@@ -120,6 +120,11 @@ public class RegistrationService {
         }
     }
 
+    //TODO
+    public boolean isUsernameUsed(String username) {
+        return false;
+    }
+
     /**
      * Saves a new device in the database based on registrationData and returns its token if successful.
      */

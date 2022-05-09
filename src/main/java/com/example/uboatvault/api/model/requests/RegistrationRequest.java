@@ -6,10 +6,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.persistence.Transient;
 
 @AllArgsConstructor
 @Getter
 public class RegistrationRequest {
+    @Autowired
+    @Transient
+    @JsonIgnore
+    EncryptionService encryptionService;
+
     @Setter
     @JsonIgnore
     private String token;
@@ -20,8 +28,8 @@ public class RegistrationRequest {
     private RegistrationData registrationData;
 
     private void decryptCredentials() {
-        this.username = EncryptionService.decryptString(this.username);
-        this.password = EncryptionService.decryptString(this.password);
+        this.username = encryptionService.decryptString(this.username);
+        this.password = encryptionService.decryptString(this.password);
     }
 
     @Override
