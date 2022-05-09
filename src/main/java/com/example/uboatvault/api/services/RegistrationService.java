@@ -66,6 +66,7 @@ public class RegistrationService {
                 updateToken(foundRegistrationData);
                 registrationDataRepository.save(foundRegistrationData);
             }
+            log.info("Found token.");
             return foundRegistrationData.getToken();
         }
 
@@ -76,10 +77,11 @@ public class RegistrationService {
                     updateToken(registrationData);
                     registrationDataRepository.save(registrationData);
                 }
+                log.info("Found token.");
                 return registrationData.getToken();
             }
         }
-
+        log.info("Couldn't find any token.");
         return null;
     }
 
@@ -94,9 +96,10 @@ public class RegistrationService {
                 foundRegistrationData.setToken(generateToken());
                 foundRegistrationData.setTokenCreation(new Date(System.currentTimeMillis()));
                 registrationDataRepository.save(foundRegistrationData);
+                log.info("Found token.");
                 return foundRegistrationData.getToken();
             }
-
+        log.info("Couldn't find any token.");
         return null;
     }
 
@@ -109,6 +112,7 @@ public class RegistrationService {
             if (token == null)
                 token = generateToken();
             pendingTokenRepository.save(new PendingToken(token));
+            log.info("Created registration request. Returning token '" + token + "'.");
             return token;
         } catch (Exception e) {
             log.error("Error while requesting new registration.", e);
@@ -126,6 +130,7 @@ public class RegistrationService {
                 updateToken(registrationData);
                 registrationDataRepository.save(registrationData);
                 pendingTokenRepository.deleteByTokenValue(token);
+                log.info("Registration successful. Returning token '" + token + "'.");
                 return registrationData.getToken();
             }
         } catch (Exception e) {

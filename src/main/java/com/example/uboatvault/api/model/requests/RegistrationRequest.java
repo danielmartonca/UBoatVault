@@ -2,6 +2,7 @@ package com.example.uboatvault.api.model.requests;
 
 import com.example.uboatvault.api.model.persistence.RegistrationData;
 import com.example.uboatvault.api.services.EncryptionService;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +11,7 @@ import lombok.Setter;
 @Getter
 public class RegistrationRequest {
     @Setter
+    @JsonIgnore
     private String token;
     private String phoneNumber;
     private String username;

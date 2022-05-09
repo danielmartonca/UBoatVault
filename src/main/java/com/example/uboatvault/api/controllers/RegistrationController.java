@@ -32,15 +32,17 @@ public class RegistrationController {
         return "Running...";
     }
 
-    @PostMapping(value = "/api/checkDeviceRegistration", produces = MediaType.TEXT_PLAIN_VALUE)
+    @PostMapping(value = "/api/checkDeviceRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<RegistrationDataResponse> checkDeviceRegistration(@CookieValue(name = "token", required = false) String token,
                                                                             @RequestBody RegistrationData registrationData) {
         log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/checkDeviceRegistration", registrationData));
 
         if (token != null) {
-            if (!EncryptionService.isTokenDecryptable(token))
+            if (!EncryptionService.isTokenDecryptable(token)) {
+                log.error("Token is not decryptable.");
                 return new ResponseEntity<>(new RegistrationDataResponse(null, null), HttpStatus.NOT_ACCEPTABLE);
+            }
 
             String extractedToken = registrationService.searchForToken(registrationData, token);
             if (extractedToken != null)
@@ -51,10 +53,10 @@ public class RegistrationController {
         if (dbToken != null)
             return new ResponseEntity<>(new RegistrationDataResponse(true, dbToken), HttpStatus.OK);
         else
-            return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.OK);
     }
 
-    @PostMapping(value = "/api/requestRegistration", produces = MediaType.TEXT_PLAIN_VALUE)
+    @PostMapping(value = "/api/requestRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<RegistrationDataResponse> requestRegistration(@RequestBody RegistrationData registrationData) {
         log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/requestRegistration", registrationData));
@@ -68,14 +70,16 @@ public class RegistrationController {
         return new ResponseEntity<>(registrationResponse, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/api/register", produces = MediaType.TEXT_PLAIN_VALUE)
+    @PostMapping(value = "/api/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<RegistrationDataResponse> register(@CookieValue(name = "token") String token,
                                                              @RequestBody RegistrationRequest registrationRequest) {
         log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/register", registrationRequest));
 
-        if (!EncryptionService.isTokenDecryptable(token))
+        if (!EncryptionService.isTokenDecryptable(token)) {
+            log.error("Token is not decryptable.");
             return new ResponseEntity<>(new RegistrationDataResponse(null, null), HttpStatus.BAD_REQUEST);
+        }
 
         String extractedValue = registrationService.register(registrationRequest, token);
         if (extractedValue != null)
