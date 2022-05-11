@@ -23,15 +23,24 @@ public class LoginService {
 
     public String login(Account account, String token) {
         var foundAccount = accountsRepository.findFirstByPassword(account.getPassword());
-        if (foundAccount != null &&
-                foundAccount.getRegistrationData().equals(account.getRegistrationData()) &&
-                foundAccount.getToken().getTokenValue().equals(token))
-            if (foundAccount.getUsername().equals(account.getUsername()) ||
+        if (foundAccount != null) {
+            if (!foundAccount.getRegistrationData().equals(account.getRegistrationData())) {
+                log.warn("Account found by password but registration data does not match.");
+                return null;
+            } else if (
+                    foundAccount.getToken().getTokenValue().equals(token)) {
+                log.warn("Account found by password and registration data but tokens do not match.");
+                return null;
+            } else if (foundAccount.getUsername().equals(account.getUsername()) ||
                     foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
                 log.info("Found account. Updating token and returning it.");
                 tokenService.updateToken(account);
                 return account.getToken().getTokenValue();
+            } else {
+                log.warn("Account found by password, registration data and phone number match but neither username or phone number match.");
+                return null;
             }
+        }
         log.warn("Invalid credentials. Login failed");
         return null;
     }
