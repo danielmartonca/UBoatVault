@@ -15,6 +15,8 @@ import javax.persistence.*;
 @Table(name = "PendingTokens")
 public class PendingToken {
     @Id
+    @Getter
+    @Setter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
@@ -24,7 +26,7 @@ public class PendingToken {
     private String tokenValue;
 
     @JsonIgnore
-    @OneToOne(cascade = CascadeType.MERGE)
+    @OneToOne(cascade = CascadeType.REMOVE)
     private PendingAccount account;
 
     public PendingToken(String tokenValue,PendingAccount account) {

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.UUID;
@@ -216,19 +217,31 @@ public class RegistrationService {
     /**
      * Saves a new device in the database based on registrationData and returns its token if successful.
      */
+    @Transactional
     public String register(Account account, String token) {
         try {
             PendingToken pendingToken = pendingTokenRepository.findFirstByTokenValue(token);
-            if (!token.equals(pendingToken.getTokenValue())) return null;
+            if (pendingToken == null) {
+                log.warn("There is no matching pending token to the provided token.");
+                return null;
+            }
+
+            if (!token.equals(pendingToken.getTokenValue())) {
+                log.warn("Tokens don't match.");
+                return null;
+            }
 
             PendingAccount pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
-            if (pendingAccount!=null&&account.equalsPendingAccount(pendingAccount)) return null;
+            if (pendingAccount == null || !account.equalsPendingAccount(pendingAccount)) {
+                log.warn("Token found but credentials don't match.");
+                return null;
+            }
 
             updateToken(account);
 
 //            accountsRepository.save(account);TODO fix this
-            pendingTokenRepository.deleteByTokenValue(token);
-            pendingAccountsRepository.deleteByUsernameAndPassword(account.getUsername(), account.getPassword());
+            pendingToken = pendingTokenRepository.findFirstByTokenValue(token);
+            pendingTokenRepository.delete(pendingToken);
             log.info("Registration successful. Returning token '" + token + "'.");
             return account.getToken().getTokenValue();
         } catch (Exception e) {

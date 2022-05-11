@@ -5,5 +5,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PendingAccountsRepository extends JpaRepository<PendingAccount, Long> {
     PendingAccount findFirstByUsernameAndPassword(String username, String password);
-    PendingAccount deleteByUsernameAndPassword(String username, String password);
 }
