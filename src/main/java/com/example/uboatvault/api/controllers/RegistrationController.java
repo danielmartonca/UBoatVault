@@ -63,23 +63,13 @@ public class RegistrationController {
     }
 
     @GetMapping(value = "/api/checkUsername")
-    public ResponseEntity<Object> checkUsername(@CookieValue(name = "token") String token,
-                                                @RequestParam String username) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/checkUsername/username=" + username, null));
-
-        if (!tokenService.isTokenDecryptable(token)) {
-            log.error("Token is not decryptable.");
-            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
-        }
-        if (!tokenService.isTokenValid(token)) {
-            log.error("Token is not valid.");
-            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
-        }
+    public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
+        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/checkUsername/username='" + username+"'", null));
 
         if (!registrationService.isUsernameUsed(username))
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(true,HttpStatus.OK);
         else
-            return new ResponseEntity<>(HttpStatus.OK);//case if username already exists
+            return new ResponseEntity<>(false,HttpStatus.OK);//case if username already exists
     }
 
     @PostMapping(value = "/api/requestRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

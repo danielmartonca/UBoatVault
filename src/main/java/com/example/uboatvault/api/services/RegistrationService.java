@@ -1,10 +1,12 @@
 package com.example.uboatvault.api.services;
 
 import com.example.uboatvault.api.controllers.RegistrationController;
+import com.example.uboatvault.api.model.persistence.Account;
 import com.example.uboatvault.api.model.persistence.PendingToken;
 import com.example.uboatvault.api.model.persistence.RegistrationData;
 import com.example.uboatvault.api.model.persistence.SimCard;
 import com.example.uboatvault.api.model.requests.RegistrationRequest;
+import com.example.uboatvault.api.repositories.AccountsRepository;
 import com.example.uboatvault.api.repositories.PendingTokenRepository;
 import com.example.uboatvault.api.repositories.RegistrationDataRepository;
 import com.example.uboatvault.api.repositories.SimCardRepository;
@@ -23,12 +25,14 @@ public class RegistrationService {
     private final RegistrationDataRepository registrationDataRepository;
     private final SimCardRepository simCardRepository;
     private final PendingTokenRepository pendingTokenRepository;
+    private final AccountsRepository accountsRepository;
 
     @Autowired
-    public RegistrationService(RegistrationDataRepository registrationDataRepository, SimCardRepository simCardRepository, PendingTokenRepository pendingTokenRepository) {
+    public RegistrationService(RegistrationDataRepository registrationDataRepository, SimCardRepository simCardRepository, PendingTokenRepository pendingTokenRepository, AccountsRepository accountsRepository) {
         this.registrationDataRepository = registrationDataRepository;
         this.simCardRepository = simCardRepository;
         this.pendingTokenRepository = pendingTokenRepository;
+        this.accountsRepository = accountsRepository;
     }
 
     private long getMinuteDifferenceFromNow(Date date) {
@@ -120,9 +124,16 @@ public class RegistrationService {
         }
     }
 
-    //TODO
+    /**
+     * Checks if an account exists with the given username in the database.
+     */
     public boolean isUsernameUsed(String username) {
-        return false;
+        boolean usernameExists = true;
+        Account account = accountsRepository.findFirstByUsername(username);
+        if (account == null)
+            usernameExists = false;
+        log.info(usernameExists ? "Username is already used." : "Username is not used.");
+        return usernameExists;
     }
 
     /**
