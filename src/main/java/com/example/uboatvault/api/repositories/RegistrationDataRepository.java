@@ -4,7 +4,5 @@ import com.example.uboatvault.api.model.persistence.RegistrationData;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RegistrationDataRepository extends JpaRepository<RegistrationData, Long> {
-    RegistrationData findFirstByToken(String token);
-
     RegistrationData findFirstByDeviceInfo(String value);
 }

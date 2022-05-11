@@ -5,5 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PendingTokenRepository extends JpaRepository<PendingToken, Long> {
     PendingToken findFirstByTokenValue(String token);
+
     PendingToken deleteByTokenValue(String value);
+
+    PendingToken findFirstByAccount_UsernameAndAccount_Password(String username, String password);
 }

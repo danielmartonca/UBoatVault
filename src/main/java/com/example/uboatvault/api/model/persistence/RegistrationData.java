@@ -7,8 +7,10 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.*;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -28,24 +30,26 @@ public class RegistrationData {
     @Column(unique = true)
     String deviceInfo;
 
-    @Setter
-    @Column(unique = true)
-    String phoneNumber;
+    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(nullable = false)
+    Account account;
 
-    @Setter
-    @JsonIgnore
-    @Column(unique = true)
-    String token;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RegistrationData that = (RegistrationData) o;
+        return Objects.equals(mobileNumbersInfoList, that.mobileNumbersInfoList) && Objects.equals(deviceInfo, that.deviceInfo);
+    }
 
-    @Setter
-    @JsonIgnore
-    @Column(name = "token_creation_date")
-    @Temporal(TemporalType.TIMESTAMP)
-    Date tokenCreation;
+    @Override
+    public int hashCode() {
+        return Objects.hash(mobileNumbersInfoList, deviceInfo);
+    }
 
     /*
-    Used by jackson to print requests body
-     */
+        Used by jackson to print requests body
+         */
     @Override
     public String toString() {
         try {

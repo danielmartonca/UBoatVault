@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,6 +16,7 @@ import javax.persistence.*;
 @Table(name = "PhoneNumbers")
 public class PhoneNumber {
     @ToString.Include
+    @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", nullable = false)
@@ -28,13 +30,26 @@ public class PhoneNumber {
     private String isoCode;
 
     @JsonIgnore
-    @OneToOne(cascade=CascadeType.ALL)
+    @OneToOne(cascade=CascadeType.MERGE)
     private Account account;
 
     public PhoneNumber(String phoneNumber, String dialCode, String isoCode) {
         this.phoneNumber = phoneNumber;
         this.dialCode = dialCode;
         this.isoCode = isoCode;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PhoneNumber that = (PhoneNumber) o;
+        return phoneNumber.equals(that.phoneNumber) && dialCode.equals(that.dialCode) && isoCode.equals(that.isoCode);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(phoneNumber, dialCode, isoCode);
     }
 
     @Override

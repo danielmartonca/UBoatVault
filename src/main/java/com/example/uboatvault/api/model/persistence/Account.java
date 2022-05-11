@@ -9,9 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.Date;
 
 @NoArgsConstructor
-@Getter
 @Entity
 @Table(name = "Accounts")
 public class Account {
@@ -25,41 +25,41 @@ public class Account {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Setter
-    private String token;
+    @Getter
     @NotNull
     @Setter
-    @OneToOne(cascade=CascadeType.ALL)
+    @OneToOne(cascade = {CascadeType.ALL})
+    @JoinColumn
     private PhoneNumber phoneNumber;
+
+    @Getter
     @Setter
     private String username;
+
+    @Getter
     @Setter
     private String name;
+
+    @Getter
     @Setter
     private String surname;
+
+    @Getter
     @NotNull
     @Setter
     private String password;
 
+    @Getter
+    @Setter
+    @OneToOne(cascade = {CascadeType.ALL})
+    @JoinColumn(unique = true)
+    private Token token;
+
+    @Getter
     @NotNull
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.ALL})
     @JoinColumn
     private RegistrationData registrationData;
-
-    public Account(String token, PhoneNumber phoneNumber, String username, String name, String surname, String password, RegistrationData registrationData) {
-        this.token = token;
-        this.phoneNumber = phoneNumber;
-        this.name = name;
-        this.surname = surname;
-        this.username = encryptionService.encryptString(username);
-        this.password = encryptionService.encryptString(password);
-        this.registrationData = registrationData;
-    }
-
-    private void decryptCredentials() {
-        this.username = encryptionService.decryptString(this.username);
-        this.password = encryptionService.decryptString(this.password);
-    }
 
     @Override
     public String toString() {
@@ -72,5 +72,10 @@ public class Account {
                 ", password='" + "***" + '\'' +
                 ", registrationData=" + registrationData +
                 '}';
+    }
+
+    public boolean equalsPendingAccount(PendingAccount pendingAccount) {
+        return this.username.equals(pendingAccount.getUsername()) &&
+                this.password.equals(pendingAccount.getPassword()) ;
     }
 }

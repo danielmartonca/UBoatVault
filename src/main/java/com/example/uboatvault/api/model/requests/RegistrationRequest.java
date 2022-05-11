@@ -34,12 +34,12 @@ public class RegistrationRequest {
 
     @Override
     public String toString() {
-        return "RegistrationRequest{" +
-                "token='" + token + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", username='" + "***" + '\'' +
-                ", password='" + "***" + '\'' +
-                ", registrationData=" + registrationData +
+        return "RegistrationRequest{\n" +
+                "token:'" + token + '\'' + '\n' +
+                ", phoneNumber:'" + phoneNumber + '\'' + '\n' +
+                ", username:'" + username + '\'' + '\n' +
+                ", password:'" + "***" + '\'' + '\n' +
+                ", registrationData:" + registrationData + '\n' +
                 '}';
     }
 }

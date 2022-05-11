@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class TokenService {
-
     RegistrationDataRepository registrationDataRepository;
     EncryptionService encryptionService;
 
@@ -14,11 +13,6 @@ public class TokenService {
     public TokenService(RegistrationDataRepository registrationDataRepository, EncryptionService encryptionService) {
         this.registrationDataRepository = registrationDataRepository;
         this.encryptionService = encryptionService;
-    }
-
-    public boolean isTokenValid(String token) {
-        var registrationData = registrationDataRepository.findFirstByToken(token);
-        return registrationData != null;
     }
 
     public boolean isTokenDecryptable(String token) {
