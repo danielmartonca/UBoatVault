@@ -2,7 +2,6 @@ package com.example.uboatvault.api.model.persistence;
 
 import com.example.uboatvault.api.services.EncryptionService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,7 +29,8 @@ public class Account {
     private String token;
     @NotNull
     @Setter
-    private String phoneNumber;
+    @OneToOne(cascade=CascadeType.ALL)
+    private PhoneNumber phoneNumber;
     @Setter
     private String username;
     @Setter
@@ -46,7 +46,7 @@ public class Account {
     @JoinColumn
     private RegistrationData registrationData;
 
-    public Account(String token, String phoneNumber, String username, String name, String surname, String password, RegistrationData registrationData) {
+    public Account(String token, PhoneNumber phoneNumber, String username, String name, String surname, String password, RegistrationData registrationData) {
         this.token = token;
         this.phoneNumber = phoneNumber;
         this.name = name;

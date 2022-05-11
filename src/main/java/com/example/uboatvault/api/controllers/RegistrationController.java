@@ -1,5 +1,6 @@
 package com.example.uboatvault.api.controllers;
 
+import com.example.uboatvault.api.model.persistence.PhoneNumber;
 import com.example.uboatvault.api.model.persistence.RegistrationData;
 import com.example.uboatvault.api.model.requests.RegistrationRequest;
 import com.example.uboatvault.api.model.response.RegistrationDataResponse;
@@ -64,12 +65,30 @@ public class RegistrationController {
 
     @GetMapping(value = "/api/checkUsername")
     public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/checkUsername/username='" + username+"'", null));
+        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/checkUsername/username='" + username + "'", null));
+
+        if (!registrationService.usernameMatchesPattern(username))
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         if (!registrationService.isUsernameUsed(username))
-            return new ResponseEntity<>(true,HttpStatus.OK);
+            return new ResponseEntity<>(true, HttpStatus.OK);
         else
-            return new ResponseEntity<>(false,HttpStatus.OK);//case if username already exists
+            return new ResponseEntity<>(false, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/api/checkPhoneNumber")
+    public ResponseEntity<Boolean> checkPhoneNumber(@RequestParam String phoneNumber,
+                                                    @RequestParam String dialCode,
+                                                    @RequestParam String isoCode) {
+        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/checkPhoneNumber?phoneNumber='" + phoneNumber + "';" + "dialCode='" + dialCode + "';isoCode='" + isoCode + "'", null));
+
+        if (!registrationService.phoneNumberMatchesPattern(phoneNumber) || dialCode.length() > 5 || isoCode.length() >= 3)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        if (!registrationService.isPhoneNumberUsed(phoneNumber, dialCode, isoCode))
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        else
+            return new ResponseEntity<>(false, HttpStatus.OK);
     }
 
     @PostMapping(value = "/api/requestRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

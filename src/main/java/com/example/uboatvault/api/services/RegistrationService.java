@@ -1,15 +1,9 @@
 package com.example.uboatvault.api.services;
 
 import com.example.uboatvault.api.controllers.RegistrationController;
-import com.example.uboatvault.api.model.persistence.Account;
-import com.example.uboatvault.api.model.persistence.PendingToken;
-import com.example.uboatvault.api.model.persistence.RegistrationData;
-import com.example.uboatvault.api.model.persistence.SimCard;
+import com.example.uboatvault.api.model.persistence.*;
 import com.example.uboatvault.api.model.requests.RegistrationRequest;
-import com.example.uboatvault.api.repositories.AccountsRepository;
-import com.example.uboatvault.api.repositories.PendingTokenRepository;
-import com.example.uboatvault.api.repositories.RegistrationDataRepository;
-import com.example.uboatvault.api.repositories.SimCardRepository;
+import com.example.uboatvault.api.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class RegistrationService {
@@ -26,13 +22,18 @@ public class RegistrationService {
     private final SimCardRepository simCardRepository;
     private final PendingTokenRepository pendingTokenRepository;
     private final AccountsRepository accountsRepository;
+    private final PhoneNumbersRepository phoneNumbersRepository;
+
+    private final Pattern phoneNumberPattern = Pattern.compile("^\\s*(?:\\+?(\\d{1,3}))?[-. (]*(\\d{3})[-. )]*(\\d{3})[-. ]*(\\d{4})(?: *x(\\d+))?\\s*$");
+    private final Pattern usernamePattern = Pattern.compile("[a-zA-z][a-zA-z0-9]*");
 
     @Autowired
-    public RegistrationService(RegistrationDataRepository registrationDataRepository, SimCardRepository simCardRepository, PendingTokenRepository pendingTokenRepository, AccountsRepository accountsRepository) {
+    public RegistrationService(RegistrationDataRepository registrationDataRepository, SimCardRepository simCardRepository, PendingTokenRepository pendingTokenRepository, AccountsRepository accountsRepository, PhoneNumbersRepository phoneNumbersRepository) {
         this.registrationDataRepository = registrationDataRepository;
         this.simCardRepository = simCardRepository;
         this.pendingTokenRepository = pendingTokenRepository;
         this.accountsRepository = accountsRepository;
+        this.phoneNumbersRepository = phoneNumbersRepository;
     }
 
     private long getMinuteDifferenceFromNow(Date date) {
@@ -113,8 +114,7 @@ public class RegistrationService {
     public String requestRegistration(RegistrationData registrationData) {
         try {
             String token = searchForTokenBasedOnRegistrationData(registrationData);
-            if (token == null)
-                token = generateToken();
+            if (token == null) token = generateToken();
             pendingTokenRepository.save(new PendingToken(token));
             log.info("Created registration request. Returning token '" + token + "'.");
             return token;
@@ -124,16 +124,37 @@ public class RegistrationService {
         }
     }
 
+    public boolean usernameMatchesPattern(String username) {
+        Matcher m = usernamePattern.matcher(username);
+        return m.matches();
+    }
+
+    public boolean phoneNumberMatchesPattern(String phoneNumber) {
+        Matcher m = phoneNumberPattern.matcher(phoneNumber);
+        return m.matches();
+    }
+
     /**
      * Checks if an account exists with the given username in the database.
      */
     public boolean isUsernameUsed(String username) {
         boolean usernameExists = true;
         Account account = accountsRepository.findFirstByUsername(username);
-        if (account == null)
-            usernameExists = false;
+        if (account == null) usernameExists = false;
         log.info(usernameExists ? "Username is already used." : "Username is not used.");
         return usernameExists;
+    }
+
+    /**
+     * Checks if an account exists with the given phone number in the database.
+     */
+    public boolean isPhoneNumberUsed(String phoneNumber, String dialCode, String isoCode) {
+        boolean phoneNumberAlreadyUsed = true;
+        PhoneNumber phoneNumberFound = phoneNumbersRepository.findFirstByPhoneNumberAndDialCodeAndIsoCode(phoneNumber, dialCode, isoCode);
+        if (phoneNumberFound == null) phoneNumberAlreadyUsed = false;
+        else if (phoneNumberFound.getAccount() == null) phoneNumberAlreadyUsed = false;
+        log.info(phoneNumberAlreadyUsed ? "Phone number is already used." : "Phone number is not used.");
+        return phoneNumberAlreadyUsed;
     }
 
     /**
