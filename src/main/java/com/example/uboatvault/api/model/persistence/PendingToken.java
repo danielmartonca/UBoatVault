@@ -15,7 +15,7 @@ import javax.persistence.*;
 @Table(name = "PendingTokens")
 public class PendingToken {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 

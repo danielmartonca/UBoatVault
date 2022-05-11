@@ -15,7 +15,7 @@ import java.util.Objects;
 @Table(name = "SimCards")
 public class SimCard {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "simCardId", nullable = false)
     @JsonIgnore
     private Long simCardId;

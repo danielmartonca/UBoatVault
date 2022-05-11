@@ -222,11 +222,11 @@ public class RegistrationService {
             if (!token.equals(pendingToken.getTokenValue())) return null;
 
             PendingAccount pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
-            if (account.equalsPendingAccount(pendingAccount)) return null;
+            if (pendingAccount!=null&&account.equalsPendingAccount(pendingAccount)) return null;
 
             updateToken(account);
 
-            accountsRepository.save(account);
+//            accountsRepository.save(account);TODO fix this
             pendingTokenRepository.deleteByTokenValue(token);
             pendingAccountsRepository.deleteByUsernameAndPassword(account.getUsername(), account.getPassword());
             log.info("Registration successful. Returning token '" + token + "'.");

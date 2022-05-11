@@ -132,9 +132,12 @@ public class RegistrationController {
         }
 
         String extractedValue = registrationService.register(account, token);
-        if (extractedValue != null)
+        if (extractedValue != null) {
+            log.info("Device registered successfully.");
             return new ResponseEntity<>(new RegistrationDataResponse(true, extractedValue), HttpStatus.OK);
-        else
-            return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.NOT_ACCEPTABLE);
+        } else {
+            log.warn("Device registration failed.");
+            return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.OK);
+        }
     }
 }

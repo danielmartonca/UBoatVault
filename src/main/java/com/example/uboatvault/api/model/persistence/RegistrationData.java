@@ -19,7 +19,7 @@ import java.util.Objects;
 @Table(name = "RegistrationData")
 public class RegistrationData {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "registrationDataId", nullable = false, updatable = false)
     @JsonIgnore
     private Long registrationDataId;
