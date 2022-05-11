@@ -9,14 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
 public class RegistrationService {
     private final Logger log = LoggerFactory.getLogger(RegistrationController.class);
+
+    private final TokenService tokenService;
 
     private final RegistrationDataRepository registrationDataRepository;
     private final SimCardRepository simCardRepository;
@@ -31,7 +31,8 @@ public class RegistrationService {
     private final Pattern passwordPattern = Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$");
 
     @Autowired
-    public RegistrationService(RegistrationDataRepository registrationDataRepository, SimCardRepository simCardRepository, PendingTokenRepository pendingTokenRepository, PendingAccountsRepository pendingAccountsRepository, AccountsRepository accountsRepository, PhoneNumbersRepository phoneNumbersRepository, TokensRepository tokensRepository) {
+    public RegistrationService(TokenService tokenService, RegistrationDataRepository registrationDataRepository, SimCardRepository simCardRepository, PendingTokenRepository pendingTokenRepository, PendingAccountsRepository pendingAccountsRepository, AccountsRepository accountsRepository, PhoneNumbersRepository phoneNumbersRepository, TokensRepository tokensRepository) {
+        this.tokenService = tokenService;
         this.registrationDataRepository = registrationDataRepository;
         this.simCardRepository = simCardRepository;
         this.pendingTokenRepository = pendingTokenRepository;
@@ -41,30 +42,7 @@ public class RegistrationService {
         this.tokensRepository = tokensRepository;
     }
 
-    private long getMinuteDifferenceFromNow(Date date) {
-        Date now = new Date(System.currentTimeMillis());
-        return now.getTime() - date.getTime();
-    }
 
-    private String generateToken() {
-        String token;
-        do {
-            UUID uuid = UUID.randomUUID();
-            token = uuid.toString();
-            if (tokensRepository.findFirstByTokenValue(token) != null) token = "";
-            if (pendingTokenRepository.findFirstByTokenValue(token) != null) token = "";
-        } while (token.equals(""));
-        return token;
-    }
-
-    private boolean isTokenDeprecated(Account account) {
-        return getMinuteDifferenceFromNow(account.getToken().getTokenCreation()) > 30;
-    }
-
-    private void updateToken(Account account) {
-        String token = generateToken();
-        account.setToken(new Token(token));
-    }
 
     private boolean isAccountAlreadyExisting(Account account) {
         try {
@@ -99,8 +77,8 @@ public class RegistrationService {
     public String searchForTokenBasedOnRegistrationData(RegistrationData registrationData) {
         var foundRegistrationData = registrationDataRepository.findFirstByDeviceInfo(registrationData.getDeviceInfo());
         if (foundRegistrationData != null) {
-            if (isTokenDeprecated(foundRegistrationData.getAccount())) {
-                updateToken(foundRegistrationData.getAccount());
+            if (tokenService.isTokenDeprecated(foundRegistrationData.getAccount())) {
+                tokenService.updateToken(foundRegistrationData.getAccount());
                 registrationDataRepository.save(foundRegistrationData);
             }
             log.info("Found token.");
@@ -111,8 +89,8 @@ public class RegistrationService {
             SimCard extractedSimCard = simCardRepository.findFirstByNumberAndDisplayNameAndCountryIso(simCard.getNumber(), simCard.getDisplayName(), simCard.getCountryIso());
             if (extractedSimCard != null) {
                 Account account = extractedSimCard.getRegistrationData().getAccount();
-                if (isTokenDeprecated(account)) {
-                    updateToken(account);
+                if (tokenService.isTokenDeprecated(account)) {
+                    tokenService.updateToken(account);
                     registrationDataRepository.save(registrationData);
                 }
                 log.info("Found token.");
@@ -133,8 +111,8 @@ public class RegistrationService {
             RegistrationData foundRegistrationData = token.getAccount().getRegistrationData();
             if (!foundRegistrationData.equals(registrationData)) {
                 Account account = foundRegistrationData.getAccount();
-                if (isTokenDeprecated(account)) {
-                    updateToken(account);
+                if (tokenService.isTokenDeprecated(account)) {
+                    tokenService.updateToken(account);
                     registrationDataRepository.save(foundRegistrationData);
                     log.info("Found token.");
                     return account.getToken().getTokenValue();
@@ -160,7 +138,7 @@ public class RegistrationService {
                 return getPendingAccountToken(account);
             }
 
-            String token = generateToken();
+            String token = tokenService.generateToken();
             log.info("A new token will be generated for this account.");
 
             var newPendingAccount = new PendingAccount(account);
@@ -237,7 +215,7 @@ public class RegistrationService {
                 return null;
             }
 
-            updateToken(account);
+            tokenService.updateToken(account);
 
 //            accountsRepository.save(account);TODO fix this
             pendingToken = pendingTokenRepository.findFirstByTokenValue(token);
