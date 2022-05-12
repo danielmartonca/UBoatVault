@@ -1,40 +1,34 @@
 package com.example.uboatvault.api.model.persistence;
 
-import com.example.uboatvault.api.services.EncryptionService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.Date;
 
 @NoArgsConstructor
 @Entity
 @Table(name = "Accounts")
 public class Account {
-    @Autowired
-    @Transient
     @JsonIgnore
-    EncryptionService encryptionService;
-
     @Id
+    @Getter
+    @Setter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", nullable = false, unique = true)
     private Long id;
+
+    @Getter
+    @Setter
+    @NotNull
+    private String username;
 
     @Getter
     @NotNull
     @Setter
-    @OneToOne(cascade = {CascadeType.ALL})
-    @JoinColumn
-    private PhoneNumber phoneNumber;
-
-    @Getter
-    @Setter
-    private String username;
+    private String password;
 
     @Getter
     @Setter
@@ -44,22 +38,27 @@ public class Account {
     @Setter
     private String surname;
 
-    @Getter
+
     @NotNull
+    @Getter
     @Setter
-    private String password;
+    @OneToOne(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "phone_number_id")
+    private PhoneNumber phoneNumber;
+
+    @NotNull
+    @Getter
+    @Setter
+    @OneToOne(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "registration_data_id")
+    private RegistrationData registrationData;
 
     @Getter
     @Setter
     @OneToOne(cascade = {CascadeType.ALL})
-    @JoinColumn(unique = true)
+    @JoinColumn(name = "token_id")
     private Token token;
 
-    @Getter
-    @NotNull
-    @OneToOne(cascade = {CascadeType.ALL})
-    @JoinColumn
-    private RegistrationData registrationData;
 
     @Override
     public String toString() {
@@ -76,6 +75,6 @@ public class Account {
 
     public boolean equalsPendingAccount(PendingAccount pendingAccount) {
         return this.username.equals(pendingAccount.getUsername()) &&
-                this.password.equals(pendingAccount.getPassword()) ;
+                this.password.equals(pendingAccount.getPassword());
     }
 }

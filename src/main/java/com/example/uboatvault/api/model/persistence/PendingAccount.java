@@ -1,5 +1,6 @@
 package com.example.uboatvault.api.model.persistence;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,11 +12,12 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "PendingAccounts")
 public class PendingAccount {
+    @JsonIgnore
     @Id
     @Getter
     @Setter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
     @Getter
@@ -26,6 +28,13 @@ public class PendingAccount {
     @NotNull
     @Setter
     private String password;
+
+    @JsonIgnore
+    @Getter
+    @Setter
+    @OneToOne(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "pending_token_id")
+    private PendingToken pendingToken;
 
     public PendingAccount(Account account) {
         this.username = account.getUsername();

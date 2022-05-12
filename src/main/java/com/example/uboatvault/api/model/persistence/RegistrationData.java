@@ -7,32 +7,37 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.*;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
 @Entity
 @Table(name = "RegistrationData")
 public class RegistrationData {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "registrationDataId", nullable = false, updatable = false)
     @JsonIgnore
-    private Long registrationDataId;
+    @Id
+    @Getter
+    @Setter
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, unique = true)
+    private Long id;
 
+    @Getter
+    @Setter
     @OneToMany(mappedBy = "registrationData", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    List<SimCard> mobileNumbersInfoList = new java.util.ArrayList<>();
+    private List<SimCard> mobileNumbersInfoList;
 
     @Column(unique = true)
-    String deviceInfo;
+    @Getter
+    @Setter
+    private String deviceInfo;
 
-    @OneToOne(cascade = CascadeType.ALL, optional = false)
-    @JoinColumn(nullable = false)
-    Account account;
+    @Getter
+    @Setter
+    @OneToOne(cascade = CascadeType.ALL, optional = false, mappedBy = "registrationData")
+    private Account account;
 
     @Override
     public boolean equals(Object o) {

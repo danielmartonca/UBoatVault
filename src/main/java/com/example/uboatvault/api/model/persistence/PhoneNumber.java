@@ -1,10 +1,7 @@
 package com.example.uboatvault.api.model.persistence;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.Objects;
@@ -15,29 +12,30 @@ import java.util.Objects;
 @Entity
 @Table(name = "PhoneNumbers")
 public class PhoneNumber {
-    @ToString.Include
     @JsonIgnore
     @Id
+    @Getter
+    @Setter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
+    @Getter
+    @Setter
     @Column(nullable = false)
     private String phoneNumber;
+    @Getter
+    @Setter
     @Column(nullable = false)
     private String dialCode;
+    @Getter
+    @Setter
     @Column(nullable = false)
     private String isoCode;
 
     @JsonIgnore
-    @OneToOne(cascade=CascadeType.MERGE)
+    @OneToOne(mappedBy = "phoneNumber", cascade = CascadeType.MERGE)
     private Account account;
-
-    public PhoneNumber(String phoneNumber, String dialCode, String isoCode) {
-        this.phoneNumber = phoneNumber;
-        this.dialCode = dialCode;
-        this.isoCode = isoCode;
-    }
 
     @Override
     public boolean equals(Object o) {

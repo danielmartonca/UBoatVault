@@ -11,32 +11,39 @@ import java.util.Date;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
 @Entity
 @Table(name = "Tokens")
 public class Token {
+    @JsonIgnore
     @Id
+    @Getter
+    @Setter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
+    @Getter
     @Setter
     @Column(nullable = false, unique = true)
     private String tokenValue;
 
-    @Setter
     @JsonIgnore
+    @Getter
+    @Setter
     @Column(name = "token_creation_date")
     @Temporal(TemporalType.TIMESTAMP)
     Date tokenCreation;
 
+    @JsonIgnore
+    @Getter
+    @Setter
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "token")
+    private Account account;
+
     public Token(String tokenValue) {
         this.tokenValue = tokenValue;
-        this.tokenCreation=new Date(System.currentTimeMillis());
+        this.tokenCreation = new Date(System.currentTimeMillis());
     }
-
-    @OneToOne(cascade = CascadeType.ALL)
-    private Account account;
 
     @Override
     public String toString() {

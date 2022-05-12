@@ -14,11 +14,12 @@ import javax.persistence.*;
 @Entity
 @Table(name = "PendingTokens")
 public class PendingToken {
+    @JsonIgnore
     @Id
     @Getter
     @Setter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
     @Setter
@@ -26,11 +27,14 @@ public class PendingToken {
     private String tokenValue;
 
     @JsonIgnore
+    @Getter
+    @Setter
     @OneToOne(cascade = CascadeType.REMOVE)
+    @JoinColumn(name = "pending_account_id")
     private PendingAccount account;
 
-    public PendingToken(String tokenValue,PendingAccount account) {
+    public PendingToken(String tokenValue, PendingAccount account) {
         this.tokenValue = tokenValue;
-        this.account=account;
+        this.account = account;
     }
 }
