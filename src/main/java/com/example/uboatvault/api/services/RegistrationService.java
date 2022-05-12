@@ -217,7 +217,7 @@ public class RegistrationService {
 
             tokenService.updateToken(account);
 
-//            accountsRepository.save(account);TODO fix this
+            accountsRepository.save(account);
             pendingToken = pendingTokenRepository.findFirstByTokenValue(token);
             pendingTokenRepository.delete(pendingToken);
             log.info("Registration successful. Returning token '" + token + "'.");
