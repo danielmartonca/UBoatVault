@@ -44,7 +44,7 @@ public class SimCard {
 
     @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "registration_data_id", nullable = false, unique = true)
+    @JoinColumn(name = "registration_data_id")
     private RegistrationData registrationData;
 
     @Override

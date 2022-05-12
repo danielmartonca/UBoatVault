@@ -43,7 +43,6 @@ public class RegistrationService {
     }
 
 
-
     private boolean isAccountAlreadyExisting(Account account) {
         try {
             Account foundAccount = accountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
@@ -215,9 +214,15 @@ public class RegistrationService {
                 return null;
             }
 
-            tokenService.updateToken(account);
+            if (account.getRegistrationData() == null ||
+                    account.getPhoneNumber() == null) {
+                log.warn("Account request is missing registrationData or phoneNumber");
+                return null;
+            }
 
+            tokenService.updateToken(account);
             accountsRepository.save(account);
+
             pendingToken = pendingTokenRepository.findFirstByTokenValue(token);
             pendingTokenRepository.delete(pendingToken);
             log.info("Registration successful. Returning token '" + token + "'.");
