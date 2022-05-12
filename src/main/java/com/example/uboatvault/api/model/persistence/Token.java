@@ -32,7 +32,7 @@ public class Token {
     @Setter
     @Column(name = "token_creation_date")
     @Temporal(TemporalType.TIMESTAMP)
-    Date tokenCreation;
+    private Date tokenCreation;
 
     @JsonIgnore
     @Getter

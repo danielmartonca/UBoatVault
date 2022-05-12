@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @RestController
 public class TokenController {
-    Logger log = LoggerFactory.getLogger(TokenController.class);
+    private final Logger log = LoggerFactory.getLogger(TokenController.class);
 
     RegistrationService registrationService;
     EncryptionService encryptionService;

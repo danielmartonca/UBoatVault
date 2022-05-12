@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @RestController
 public class RegistrationController {
-    Logger log = LoggerFactory.getLogger(RegistrationController.class);
+    private final Logger log = LoggerFactory.getLogger(RegistrationController.class);
 
     RegistrationService registrationService;
     EncryptionService encryptionService;
@@ -38,12 +38,6 @@ public class RegistrationController {
         this.encryptionService = encryptionService;
         this.tokenService = tokenService;
         this.cookiesService = cookiesService;
-    }
-
-    @GetMapping(value = "/api/test")
-    public String test() {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/test", null));
-        return "Running...";
     }
 
     @PostMapping(value = "/api/checkDeviceRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

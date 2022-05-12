@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @RestController
 public class LoginController {
-    Logger log = LoggerFactory.getLogger(LoginController.class);
+    private final Logger log = LoggerFactory.getLogger(LoginController.class);
 
     LoginService loginService;
     EncryptionService encryptionService;
