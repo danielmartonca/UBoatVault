@@ -34,6 +34,8 @@ public class PhoneNumber {
     private String isoCode;
 
     @JsonIgnore
+    @Getter
+    @Setter
     @OneToOne(mappedBy = "phoneNumber", cascade = CascadeType.MERGE)
     private Account account;
 

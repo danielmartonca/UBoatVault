@@ -7,9 +7,9 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -26,14 +26,15 @@ public class RegistrationData {
 
     @Getter
     @Setter
-    @OneToMany(mappedBy = "registrationData", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<SimCard> mobileNumbersInfoList;
+    @OneToMany(mappedBy = "registrationData", cascade = CascadeType.ALL)
+    private Set<SimCard> mobileNumbersInfoList;
 
     @Column(unique = true)
     @Getter
     @Setter
     private String deviceInfo;
 
+    @JsonIgnore
     @Getter
     @Setter
     @OneToOne(cascade = CascadeType.ALL, optional = false, mappedBy = "registrationData")
@@ -44,7 +45,8 @@ public class RegistrationData {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RegistrationData that = (RegistrationData) o;
-        return Objects.equals(mobileNumbersInfoList, that.mobileNumbersInfoList) && Objects.equals(deviceInfo, that.deviceInfo);
+        //return Objects.equals(mobileNumbersInfoList, that.mobileNumbersInfoList) && Objects.equals(deviceInfo, that.deviceInfo);TODO FIX THIS
+        return Objects.equals(deviceInfo, that.deviceInfo);
     }
 
     @Override

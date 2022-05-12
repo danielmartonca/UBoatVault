@@ -35,7 +35,7 @@ public class LoginController {
 
     @PostMapping(value = "/api/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public ResponseEntity<LoginResponse> register(@CookieValue(name = "token") String token,
+    public ResponseEntity<LoginResponse> login(@CookieValue(name = "token") String token,
                                                   @RequestBody Account account,
                                                   HttpServletResponse response) {
         log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/login", account));

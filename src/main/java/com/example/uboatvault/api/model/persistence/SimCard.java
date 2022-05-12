@@ -43,6 +43,8 @@ public class SimCard {
     private String countryPhonePrefix;
 
     @JsonIgnore
+    @Getter
+    @Setter
     @ManyToOne
     @JoinColumn(name = "registration_data_id")
     private RegistrationData registrationData;

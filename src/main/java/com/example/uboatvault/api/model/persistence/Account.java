@@ -53,6 +53,7 @@ public class Account {
     @JoinColumn(name = "registration_data_id")
     private RegistrationData registrationData;
 
+    @JsonIgnore
     @Getter
     @Setter
     @OneToOne(cascade = {CascadeType.ALL})
