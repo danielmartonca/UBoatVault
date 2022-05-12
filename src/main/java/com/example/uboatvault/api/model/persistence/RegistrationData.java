@@ -45,8 +45,7 @@ public class RegistrationData {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RegistrationData that = (RegistrationData) o;
-        //return Objects.equals(mobileNumbersInfoList, that.mobileNumbersInfoList) && Objects.equals(deviceInfo, that.deviceInfo);TODO FIX THIS
-        return Objects.equals(deviceInfo, that.deviceInfo);
+        return Objects.equals(mobileNumbersInfoList, that.mobileNumbersInfoList) && Objects.equals(deviceInfo, that.deviceInfo);
     }
 
     @Override

@@ -140,8 +140,10 @@ public class RegistrationService {
             String token = tokenService.generateToken();
             log.info("A new token will be generated for this account.");
 
+            //creating new pendingAccount and it's references
             var newPendingAccount = new PendingAccount(account);
             PendingToken pendingToken = new PendingToken(token, newPendingAccount);
+            newPendingAccount.setPendingToken(pendingToken);
 
             pendingAccountsRepository.save(newPendingAccount);
             pendingTokenRepository.save(pendingToken);
@@ -219,6 +221,9 @@ public class RegistrationService {
                 log.warn("Account request is missing registrationData or phoneNumber");
                 return null;
             }
+            //update sim card references to parent in order to retain id
+            for (var simCard : account.getRegistrationData().getMobileNumbersInfoList())
+                simCard.setRegistrationData(account.getRegistrationData());
 
             tokenService.updateToken(account);
             accountsRepository.save(account);

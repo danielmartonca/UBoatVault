@@ -45,8 +45,8 @@ public class SimCard {
     @JsonIgnore
     @Getter
     @Setter
-    @ManyToOne
-    @JoinColumn(name = "registration_data_id")
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "registration_data_id",nullable = false)
     private RegistrationData registrationData;
 
     @Override
