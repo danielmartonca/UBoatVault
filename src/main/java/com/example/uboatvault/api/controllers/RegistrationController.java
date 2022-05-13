@@ -55,6 +55,7 @@ public class RegistrationController {
 
             String extractedToken = registrationService.searchForTokenByValue(token, registrationData);
             if (extractedToken != null) {
+                log.info("Token is valid. Returning it");
                 cookiesService.addTokenToSetCookiesHeader(token, response);
                 return new ResponseEntity<>(new RegistrationDataResponse(true, extractedToken), HttpStatus.OK);
             }
@@ -62,10 +63,12 @@ public class RegistrationController {
 
         String dbToken = registrationService.searchForTokenBasedOnRegistrationData(registrationData);
         if (dbToken != null) {
-            cookiesService.addTokenToSetCookiesHeader(token, response);
-            return new ResponseEntity<>(new RegistrationDataResponse(true, dbToken), HttpStatus.OK);
-        } else
+            log.info("Found token in the database for the given registration data. Device must request it with credentials as well in order to retrieve it.");
+            return new ResponseEntity<>(new RegistrationDataResponse(true, null), HttpStatus.OK);
+        } else {
+            log.info("No token was found for the given registration data. Device is not registered.");
             return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.OK);
+        }
     }
 
     @GetMapping(value = "/api/checkUsername")

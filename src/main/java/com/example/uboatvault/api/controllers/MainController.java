@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class TestController {
-    private final Logger log = LoggerFactory.getLogger(TestController.class);
+public class MainController {
+    private final Logger log = LoggerFactory.getLogger(MainController.class);
 
-    @GetMapping(value = "/api/test")
+    @GetMapping(value = "/api/isVaultActive")
     public String test() {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/test", null));
+        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/isVaultActive", null));
         return "Running...";
     }
 }

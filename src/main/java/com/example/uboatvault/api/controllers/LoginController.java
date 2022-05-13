@@ -39,6 +39,7 @@ public class LoginController {
                                                   @RequestBody Account account,
                                                   HttpServletResponse response) {
         log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/login", account));
+        log.info("Token is: "+token);
 
         if (!tokenService.isTokenDecryptable(token)) {
             log.error("Token is not decryptable.");

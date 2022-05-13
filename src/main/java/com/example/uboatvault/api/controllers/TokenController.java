@@ -39,7 +39,7 @@ public class TokenController {
 
     @PostMapping(value = "/api/requestToken", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public ResponseEntity<TokenResponse> requestRegistration(@RequestBody Account account, HttpServletResponse response) {
+    public ResponseEntity<TokenResponse> requestToken(@RequestBody Account account, HttpServletResponse response) {
         log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/requestToken", account));
         String token = tokenService.requestToken(account);
         TokenResponse tokenResponse;

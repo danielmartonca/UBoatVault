@@ -66,21 +66,21 @@ public class TokenService {
     }
 
     public String requestToken(Account account) {
-        var foundAccount = accountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
+        var foundAccount = accountsRepository.findFirstByPassword(account.getPassword());
         if (foundAccount != null) {
-            if (!foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
-                log.warn("Account found but phone numbers don't match.");
+            if (!foundAccount.getPhoneNumber().equals(account.getPhoneNumber()) &&
+                    !foundAccount.getUsername().equals(account.getUsername())) {
+                log.warn("Account found by password but username or phone number don't match.");
                 return null;
             } else if (!foundAccount.getRegistrationData().equals(account.getRegistrationData())) {
-                log.warn("Account found, phone numbers matched but registration data did not.");
-                return null;
+                log.warn("Account found, username and phone number matched but registration data did not.");
             } else {
-                log.info("Account found. Updating token and returning it.");
-                updateToken(account);
-                return account.getToken().getTokenValue();
+                log.info("Account found, username phone number and registration data matched. Updating token and returning it.");
             }
+            updateToken(account);
+            return account.getToken().getTokenValue();
         }
-        log.info("No account was found with the given username and password.");
+        log.info("No account was found with the given username/phone number and password.");
         return null;
     }
 }
