@@ -1,5 +1,6 @@
 package com.example.uboatvault.api.model.persistence;
 
+import com.example.uboatvault.api.model.enums.UserType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,11 @@ public class PendingAccount {
 
     @Getter
     @Setter
+    @Enumerated(EnumType.ORDINAL)
+    private UserType userType;
+
+    @Getter
+    @Setter
     private String username;
 
     @Getter
@@ -37,6 +43,7 @@ public class PendingAccount {
     private PendingToken pendingToken;
 
     public PendingAccount(Account account) {
+        this.userType = account.getUserType();
         this.username = account.getUsername();
         this.password = account.getPassword();
     }

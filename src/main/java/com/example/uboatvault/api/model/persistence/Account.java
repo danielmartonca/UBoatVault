@@ -1,5 +1,6 @@
 package com.example.uboatvault.api.model.persistence;
 
+import com.example.uboatvault.api.model.enums.UserType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,11 @@ public class Account {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
+
+    @Getter
+    @Setter
+    @Enumerated(EnumType.ORDINAL)
+    private UserType userType;
 
     @Getter
     @Setter
