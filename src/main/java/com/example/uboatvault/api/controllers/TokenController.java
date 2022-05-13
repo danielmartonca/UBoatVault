@@ -45,7 +45,7 @@ public class TokenController {
         TokenResponse tokenResponse;
         if (token != null) {
             cookiesService.addTokenToSetCookiesHeader(token, response);
-            log.info("Generated new token and returning it.");
+            log.info("Returning token.");
             tokenResponse = new TokenResponse(true, token);
         } else {
             log.warn("The requested account does not exist or is missing information.");

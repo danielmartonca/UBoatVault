@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -37,7 +39,7 @@ public class Token {
     @JsonIgnore
     @Getter
     @Setter
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "token")
+    @OneToOne(cascade = CascadeType.REMOVE, mappedBy = "token",orphanRemoval = true)
     private Account account;
 
     public Token(String tokenValue) {

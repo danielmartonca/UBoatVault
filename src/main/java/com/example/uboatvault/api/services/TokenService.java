@@ -7,7 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
@@ -41,17 +44,34 @@ public class TokenService {
     }
 
     private long getMinuteDifferenceFromNow(Date date) {
-        Date now = new Date(System.currentTimeMillis());
-        return now.getTime() - date.getTime();
+        Date dateNow = new Date(System.currentTimeMillis());
+        Date dateCreation = new Date(date.getTime());
+
+        DateFormat format = new SimpleDateFormat("mm");
+        format.format(dateNow);
+        format.format(dateCreation);
+
+        return dateNow.getTime() - dateCreation.getTime();
     }
 
     public boolean isTokenDeprecated(Account account) {
-        return getMinuteDifferenceFromNow(account.getToken().getTokenCreation()) > 30;
+//        return getMinuteDifferenceFromNow(account.getToken().getTokenCreation()) > 30;//TODO
+        return false;
     }
 
+    @Transactional
     public void updateToken(Account account) {
+        //detach old token from parent
+        Token oldToken = account.getToken();
+        oldToken.setAccount(null);
+
+        //generate new token
         String token = generateToken();
         account.setToken(new Token(token));
+
+        tokensRepository.delete(oldToken);
+        accountsRepository.save(account);
+        log.info("Generated new token for account.");
     }
 
     public String generateToken() {
@@ -65,6 +85,7 @@ public class TokenService {
         return token;
     }
 
+    @Transactional
     public String requestToken(Account account) {
         var foundAccount = accountsRepository.findFirstByPassword(account.getPassword());
         if (foundAccount != null) {
@@ -75,10 +96,13 @@ public class TokenService {
             } else if (!foundAccount.getRegistrationData().equals(account.getRegistrationData())) {
                 log.warn("Account found, username and phone number matched but registration data did not.");
             } else {
-                log.info("Account found, username phone number and registration data matched. Updating token and returning it.");
+                log.info("Account found, username phone number and registration data matched.");
             }
-            updateToken(account);
-            return account.getToken().getTokenValue();
+
+            if (isTokenDeprecated(foundAccount))
+                updateToken(foundAccount);
+
+            return foundAccount.getToken().getTokenValue();
         }
         log.info("No account was found with the given username/phone number and password.");
         return null;

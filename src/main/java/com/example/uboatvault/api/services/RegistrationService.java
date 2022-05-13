@@ -73,14 +73,16 @@ public class RegistrationService {
     /**
      * This method searches if any part of the registrationData exists in the database and returns its token if found (or generates a new one if it's older than 30 minutes)
      */
+    @Transactional
     public String searchForTokenBasedOnRegistrationData(RegistrationData registrationData) {
         var foundRegistrationData = registrationDataRepository.findFirstByDeviceInfo(registrationData.getDeviceInfo());
         if (foundRegistrationData != null) {
             if (tokenService.isTokenDeprecated(foundRegistrationData.getAccount())) {
+                log.info("Token is deprecated.");
                 tokenService.updateToken(foundRegistrationData.getAccount());
                 registrationDataRepository.save(foundRegistrationData);
             }
-            log.info("Found token.");
+            log.info("Found token by registration data.");
             return foundRegistrationData.getAccount().getToken().getTokenValue();
         }
 
@@ -89,10 +91,11 @@ public class RegistrationService {
             if (extractedSimCard != null) {
                 Account account = extractedSimCard.getRegistrationData().getAccount();
                 if (tokenService.isTokenDeprecated(account)) {
+                    log.info("Token is deprecated.");
                     tokenService.updateToken(account);
                     registrationDataRepository.save(registrationData);
                 }
-                log.info("Found token.");
+                log.info("Found token by simCard.");
                 return account.getToken().getTokenValue();
             }
         }
@@ -104,6 +107,7 @@ public class RegistrationService {
      * This method check if the token passed as parameter corresponds to registrationData in the database
      * If they match and token is older than 30 minutes, a new token will be generated, and it will update the database.
      */
+    @Transactional
     public String searchForTokenByValue(String tokenValue, RegistrationData registrationData) {
         Token token = tokensRepository.findFirstByTokenValue(tokenValue);
         if (token != null) {
@@ -226,7 +230,6 @@ public class RegistrationService {
                 simCard.setRegistrationData(account.getRegistrationData());
 
             tokenService.updateToken(account);
-            accountsRepository.save(account);
 
             pendingToken = pendingTokenRepository.findFirstByTokenValue(token);
             pendingTokenRepository.delete(pendingToken);

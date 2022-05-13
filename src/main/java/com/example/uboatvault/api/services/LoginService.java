@@ -36,11 +36,11 @@ public class LoginService {
                 log.warn("Account found by password and registration data but tokens do not match.");
                 return null;
             } else if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
-                log.info("Found account. Updating token and returning it.");
-                String oldToken = foundAccount.getToken().getTokenValue();
+
+                log.info("Credentials matched. Found account.");
                 tokenService.updateToken(foundAccount);
-                accountsRepository.save(foundAccount);
-                tokensRepository.deleteByTokenValue(oldToken);
+
+                log.info("Login successful.");
                 return foundAccount.getToken().getTokenValue();
             } else {
                 log.warn("Account found by password, registration data and phone number match but neither username or phone number match.");
