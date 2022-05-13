@@ -66,7 +66,7 @@ public class TokenService {
         oldToken.setAccount(null);
 
         //generate new token
-        String token = generateToken();
+        String token = generateTokenString();
         account.setToken(new Token(token));
 
         tokensRepository.delete(oldToken);
@@ -74,7 +74,7 @@ public class TokenService {
         log.info("Generated new token for account.");
     }
 
-    public String generateToken() {
+    public String generateTokenString() {
         String token;
         do {
             UUID uuid = UUID.randomUUID();

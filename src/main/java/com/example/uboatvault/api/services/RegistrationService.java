@@ -129,6 +129,7 @@ public class RegistrationService {
     /**
      * This method returns a new token if registrationData is not found in database, or its token if it is found.
      */
+    @Transactional
     public String requestRegistrationToken(Account account) {
         try {
             if (isAccountAlreadyExisting(account)) {
@@ -141,17 +142,17 @@ public class RegistrationService {
                 return getPendingAccountToken(account);
             }
 
-            String token = tokenService.generateToken();
-            log.info("A new token will be generated for this account.");
+            log.info("New pendingAccount and pendingToken will be generated.");
 
-            //creating new pendingAccount and it's references
+            //creating new pendingAccount and it's pendingToken
+            String token = tokenService.generateTokenString();
             var newPendingAccount = new PendingAccount(account);
-            PendingToken pendingToken = new PendingToken(token, newPendingAccount);
-            newPendingAccount.setPendingToken(pendingToken);
+            PendingToken newPendingToken = new PendingToken(token);
+            newPendingAccount.setPendingToken(newPendingToken);
+            newPendingToken.setAccount(newPendingAccount);
 
             pendingAccountsRepository.save(newPendingAccount);
-            pendingTokenRepository.save(pendingToken);
-            log.info("Created registration request. Returning token '" + token + "'.");
+            log.info("Created new pending registration account and token. Returning token '" + token + "'.");
             return token;
         } catch (Exception e) {
             log.error("Error while requesting new registration.", e);
@@ -229,10 +230,14 @@ public class RegistrationService {
             for (var simCard : account.getRegistrationData().getMobileNumbersInfoList())
                 simCard.setRegistrationData(account.getRegistrationData());
 
-            tokenService.updateToken(account);
+            String tokenString = tokenService.generateTokenString();
+            Token accountToken=new Token(tokenString);
+            accountToken.setAccount(account);
+            account.setToken(accountToken);
 
-            pendingToken = pendingTokenRepository.findFirstByTokenValue(token);
-            pendingTokenRepository.delete(pendingToken);
+            accountsRepository.save(account);
+            pendingAccountsRepository.delete(pendingAccount);
+
             log.info("Registration successful. Returning token '" + token + "'.");
             return account.getToken().getTokenValue();
         } catch (Exception e) {

@@ -40,7 +40,7 @@ public class LoginService {
                 log.info("Credentials matched. Found account.");
                 tokenService.updateToken(foundAccount);
 
-                log.info("Login successful.");
+                log.info("Login successful. Returning token: "+foundAccount.getToken().getTokenValue());
                 return foundAccount.getToken().getTokenValue();
             } else {
                 log.warn("Account found by password, registration data and phone number match but neither username or phone number match.");

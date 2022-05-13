@@ -29,12 +29,11 @@ public class PendingToken {
     @JsonIgnore
     @Getter
     @Setter
-    @OneToOne(cascade = CascadeType.REMOVE)
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "pending_account_id")
     private PendingAccount account;
 
-    public PendingToken(String tokenValue, PendingAccount account) {
+    public PendingToken(String tokenValue) {
         this.tokenValue = tokenValue;
-        this.account = account;
     }
 }
