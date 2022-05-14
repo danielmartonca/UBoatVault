@@ -1,12 +1,8 @@
 package com.example.uboatvault.api.controllers;
 
 import com.example.uboatvault.api.model.persistence.Account;
-import com.example.uboatvault.api.model.persistence.RegistrationData;
-import com.example.uboatvault.api.model.response.RegistrationDataResponse;
 import com.example.uboatvault.api.model.response.TokenResponse;
 import com.example.uboatvault.api.services.CookiesService;
-import com.example.uboatvault.api.services.EncryptionService;
-import com.example.uboatvault.api.services.RegistrationService;
 import com.example.uboatvault.api.services.TokenService;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;
 import org.slf4j.Logger;
@@ -36,7 +32,7 @@ public class TokenController {
     @PostMapping(value = "/api/requestToken", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<TokenResponse> requestToken(@RequestBody Account account, HttpServletResponse response) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/requestToken", account));
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/requestToken", account));
         String token = tokenService.requestToken(account);
         TokenResponse tokenResponse;
         if (token != null) {

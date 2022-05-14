@@ -35,7 +35,7 @@ public class LoginController {
     public ResponseEntity<LoginResponse> login(@CookieValue(name = "token") String token,
                                                @RequestBody Account account,
                                                HttpServletResponse response) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/login", account));
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/login", account));
 
         if (tokenService.isTokenInvalid(token)) {
             log.error("Token is not decryptable.");

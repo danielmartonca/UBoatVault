@@ -39,7 +39,7 @@ public class RegistrationController {
     public ResponseEntity<RegistrationDataResponse> checkDeviceRegistration(@CookieValue(name = "token", required = false) String token,
                                                                             @RequestBody RegistrationData registrationData,
                                                                             HttpServletResponse response) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/checkDeviceRegistration", registrationData));
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/checkDeviceRegistration", registrationData));
 
         if (token != null) {
             if (tokenService.isTokenInvalid(token)) {
@@ -68,7 +68,7 @@ public class RegistrationController {
     @PostMapping(value = "/api/requestRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<RegistrationDataResponse> requestRegistration(@RequestBody Account account, HttpServletResponse response) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/requestRegistration", account));
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/requestRegistration", account));
         String token = registrationService.requestRegistrationToken(account);
         RegistrationDataResponse registrationResponse;
         if (token != null) {
@@ -87,7 +87,7 @@ public class RegistrationController {
     @ResponseBody
     public ResponseEntity<RegistrationDataResponse> register(@CookieValue(name = "token") String token,
                                                              @RequestBody Account account) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/register", account));
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/register", account));
 
         if (tokenService.isTokenInvalid(token)) {
             log.error("Token is not decryptable.");

@@ -13,7 +13,7 @@ public class MainController {
 
     @GetMapping(value = "/api/isVaultActive")
     public String test() {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/isVaultActive", null));
+        log.info(LoggingUtils.logRequest(HttpMethod.GET, "/api/isVaultActive", null));
         return "Running...";
     }
 }

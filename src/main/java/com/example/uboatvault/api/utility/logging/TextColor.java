@@ -1,6 +1,6 @@
 package com.example.uboatvault.api.utility.logging;
 
-public enum TextColorEnum {
+public enum TextColor {
     RESET("\u001B[0m"),
     BLACK("\u001B[30m"),
     RED("\u001B[31m"),
@@ -13,7 +13,7 @@ public enum TextColorEnum {
 
     private final String color;
 
-    TextColorEnum(String color) {
+    TextColor(String color) {
         this.color = color;
     }
 

@@ -57,6 +57,11 @@ public class Account {
     @JoinColumn(name = "token_id")
     private Token token;
 
+    @Getter
+    @Setter
+    @OneToOne(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "account_details_id")
+    private AccountDetails accountDetails;
 
     @Override
     public String toString() {

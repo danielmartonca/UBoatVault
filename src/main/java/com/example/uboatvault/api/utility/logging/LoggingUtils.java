@@ -9,7 +9,12 @@ import org.springframework.http.HttpMethod;
 public class LoggingUtils {
     static final ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
 
-    public static String logRequestAsString(HttpMethod requestMethod, String api, Object body) {
+    public static String colorString(String string, TextColor color) {
+        return color.getColorCode() + string + TextColor.RESET.getColorCode();
+    }
+
+
+    public static String logRequest(HttpMethod requestMethod, String api, Object body) {
         String bodyAsString;
         try {
             bodyAsString = "\n" + ow.writeValueAsString(body);
@@ -19,11 +24,11 @@ public class LoggingUtils {
         if (body == null) bodyAsString = " with no body.";
 
         return switch (requestMethod) {
-            case GET -> (TextColorEnum.GREEN.getColorCode() + '[' + requestMethod + "]      " + api + TextColorEnum.RESET.getColorCode());
-            case POST -> (TextColorEnum.PURPLE.getColorCode() + '[' + requestMethod + "]     " + api + bodyAsString + TextColorEnum.RESET.getColorCode());
-            case PUT -> (TextColorEnum.YELLOW.getColorCode() + '[' + requestMethod + "]      " + api + bodyAsString + TextColorEnum.RESET.getColorCode());
-            case DELETE -> (TextColorEnum.CYAN.getColorCode() + '[' + requestMethod + "]   " + api + bodyAsString + TextColorEnum.RESET.getColorCode());
-            default -> (TextColorEnum.RED.getColorCode() + '[' + requestMethod + "]       " + api + bodyAsString + "\n    NOT IMPLEMENTED YET" + TextColorEnum.RESET.getColorCode());
+            case GET -> colorString('[' + requestMethod.toString() + "]      " + api + bodyAsString, TextColor.BLUE);
+            case POST -> colorString('[' + requestMethod.toString() + "]      " + api + bodyAsString, TextColor.PURPLE);
+            case PUT -> colorString('[' + requestMethod.toString() + "]      " + api + bodyAsString, TextColor.YELLOW);
+            case DELETE -> colorString('[' + requestMethod.toString() + "]      " + api + bodyAsString, TextColor.CYAN);
+            default -> colorString('[' + requestMethod.toString() + "]      " + api + bodyAsString + "\n      HTTP METHOD NOT SUPPORTED BY REST API", TextColor.RED);
         };
     }
 }

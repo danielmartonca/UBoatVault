@@ -182,7 +182,7 @@ public class RegistrationService {
         boolean usernameExists = true;
         Account account = accountsRepository.findFirstByUsername(username);
         if (account == null) usernameExists = false;
-        log.info(usernameExists ? "Username is already used." : "Username is not used.");
+        log.info(usernameExists ? "Username found in the database." : "Username not found in the database.");
         return usernameExists;
     }
 

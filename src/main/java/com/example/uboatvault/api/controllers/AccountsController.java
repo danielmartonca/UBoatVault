@@ -1,6 +1,7 @@
 package com.example.uboatvault.api.controllers;
 
 import com.example.uboatvault.api.model.persistence.Account;
+import com.example.uboatvault.api.model.persistence.AccountDetails;
 import com.example.uboatvault.api.services.AccountsService;
 import com.example.uboatvault.api.services.RegistrationService;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;
@@ -28,19 +29,18 @@ public class AccountsController {
 
     @GetMapping(value = "/api/checkUsername")
     public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/checkUsername/username='" + username + "'", null));
+        log.info(LoggingUtils.logRequest(HttpMethod.GET, "/api/checkUsername/username='" + username + "'", null));
 
         if (!registrationService.usernameMatchesPattern(username)) {
             log.info("Username doesn't match pattern.");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        if (!registrationService.isUsernameUsed(username)){
-            log.info("Username is already used.");
-            return new ResponseEntity<>(true, HttpStatus.OK);
-        }
-        else {
+        if (!registrationService.isUsernameUsed(username)) {
             log.info("Username is not used.");
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        } else {
+            log.info("Username is already used.");
             return new ResponseEntity<>(false, HttpStatus.OK);
         }
     }
@@ -49,7 +49,7 @@ public class AccountsController {
     public ResponseEntity<Boolean> checkPhoneNumber(@RequestParam String phoneNumber,
                                                     @RequestParam String dialCode,
                                                     @RequestParam String isoCode) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/checkPhoneNumber?phoneNumber='" + phoneNumber + "';" + "dialCode='" + dialCode + "';isoCode='" + isoCode + "'", null));
+        log.info(LoggingUtils.logRequest(HttpMethod.GET, "/api/checkPhoneNumber?phoneNumber='" + phoneNumber + "';" + "dialCode='" + dialCode + "';isoCode='" + isoCode + "'", null));
 
         if (!registrationService.phoneNumberMatchesPattern(phoneNumber) || dialCode.length() > 5 || isoCode.length() >= 3) {
             log.info("Phone number doesn't match pattern or dial code/iso code too long .");
@@ -59,22 +59,51 @@ public class AccountsController {
         if (!registrationService.isPhoneNumberUsed(phoneNumber, dialCode, isoCode)) {
             log.info("Phone number is already used.");
             return new ResponseEntity<>(true, HttpStatus.OK);
-        }
-        else {
+        } else {
             log.info("Phone number is not used.");
             return new ResponseEntity<>(false, HttpStatus.OK);
         }
     }
 
-    @PostMapping(value = "/api/getAccountDetails")
-    public ResponseEntity<Account> getAccountDetails(@CookieValue(name = "token") String token,
-                                                     @RequestBody Account requestAccount) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/getAccountDetails", requestAccount));
+    @PostMapping(value = "/api/getMissingAccountInformation")
+    public ResponseEntity<Account> getMissingAccountInformation(@CookieValue(name = "token") String token,
+                                                                @RequestBody Account requestAccount) {
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getMissingAccountInformation", requestAccount));
 
         Account account = accountsService.getAccountByTokenAndCredentials(token, requestAccount);
         if (account != null) {
             log.info("Account sent back to the user.");
             return new ResponseEntity<>(account, HttpStatus.OK);
+        } else {
+            log.info("Null sent back to the user.");
+            return new ResponseEntity<>(null, HttpStatus.OK);
+        }
+    }
+
+    @PostMapping(value = "/api/getAccountDetails")
+    public ResponseEntity<AccountDetails> getAccountDetails(@CookieValue(name = "token") String token,
+                                                            @RequestBody Account requestAccount) {
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getAccountDetails", requestAccount));
+
+        AccountDetails accountDetails = accountsService.getAccountDetails(token, requestAccount);
+        if (accountDetails != null) {
+            log.info("Account details sent back to the user.");
+            return new ResponseEntity<>(accountDetails, HttpStatus.OK);
+        } else {
+            log.info("Null sent back to the user.");
+            return new ResponseEntity<>(null, HttpStatus.OK);
+        }
+    }
+
+    @PostMapping(value = "/api/uploadAccountDetails")
+    public ResponseEntity<AccountDetails> uploadAccountDetails(@CookieValue(name = "token") String token,
+                                                               @RequestBody Account requestAccount) {
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/uploadAccountDetails", requestAccount));
+
+        AccountDetails accountDetails = accountsService.uploadAccountDetails(token, requestAccount);
+        if (accountDetails != null) {
+            log.info("Updated account details sent back to the user.");
+            return new ResponseEntity<>(accountDetails, HttpStatus.OK);
         } else {
             log.info("Null sent back to the user.");
             return new ResponseEntity<>(null, HttpStatus.OK);
