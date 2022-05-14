@@ -44,15 +44,27 @@ public class RegistrationService {
 
 
     private boolean isAccountAlreadyExisting(Account account) {
-        try {
-            Account foundAccount = accountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
-            if (foundAccount != null) return true;
-            PhoneNumber phoneNumber = account.getPhoneNumber();
-            PhoneNumber foundPhoneNumber = phoneNumbersRepository.findFirstByPhoneNumberAndDialCodeAndIsoCode(phoneNumber.getPhoneNumber(), phoneNumber.getDialCode(), phoneNumber.getIsoCode());
-            return foundPhoneNumber != null;
-        } catch (Exception e) {
-            return false;
+        Account foundAccount;
+        foundAccount = accountsRepository.findFirstByUsername(account.getUsername());
+        if (foundAccount != null) {
+            log.warn("Account with the given username already exists.");
+            return true;
         }
+
+        foundAccount = accountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
+        if (foundAccount != null) {
+            log.warn("Account with the given username and password already exist.");
+            return true;
+        }
+
+        PhoneNumber phoneNumber = account.getPhoneNumber();
+        PhoneNumber foundPhoneNumber = phoneNumbersRepository.findFirstByPhoneNumberAndDialCodeAndIsoCode(phoneNumber.getPhoneNumber(), phoneNumber.getDialCode(), phoneNumber.getIsoCode());
+        if (foundPhoneNumber != null) {
+            log.warn("Account with the given phone number already exists.");
+            return true;
+        }
+        log.info("No account in the database with the given credentials found. Check passed.");
+        return false;
     }
 
     private boolean isPendingAccountAlreadyExisting(Account account) {
@@ -133,7 +145,7 @@ public class RegistrationService {
     public String requestRegistrationToken(Account account) {
         try {
             if (isAccountAlreadyExisting(account)) {
-                log.warn("Account already exists.");
+                log.warn("Account already exists with the given credentials.");
                 return null;
             }
 
@@ -221,8 +233,7 @@ public class RegistrationService {
                 return null;
             }
 
-            if (account.getRegistrationData() == null ||
-                    account.getPhoneNumber() == null) {
+            if (account.getRegistrationData() == null || account.getPhoneNumber() == null) {
                 log.warn("Account request is missing registrationData or phoneNumber");
                 return null;
             }
@@ -231,7 +242,7 @@ public class RegistrationService {
                 simCard.setRegistrationData(account.getRegistrationData());
 
             String tokenString = tokenService.generateTokenString();
-            Token accountToken=new Token(tokenString);
+            Token accountToken = new Token(tokenString);
             accountToken.setAccount(account);
             account.setToken(accountToken);
 
