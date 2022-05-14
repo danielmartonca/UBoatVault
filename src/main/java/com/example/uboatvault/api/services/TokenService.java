@@ -18,29 +18,23 @@ import java.util.UUID;
 public class TokenService {
     private final Logger log = LoggerFactory.getLogger(TokenService.class);
 
-    private final RegistrationDataRepository registrationDataRepository;
     private final EncryptionService encryptionService;
     private final TokensRepository tokensRepository;
     private final PendingTokenRepository pendingTokenRepository;
-    private final PendingAccountsRepository pendingAccountsRepository;
     private final AccountsRepository accountsRepository;
-    private final PhoneNumbersRepository phoneNumbersRepository;
 
     @Autowired
-    public TokenService(RegistrationDataRepository registrationDataRepository, EncryptionService encryptionService, TokensRepository tokensRepository, PendingTokenRepository pendingTokenRepository, PendingAccountsRepository pendingAccountsRepository, AccountsRepository accountsRepository, PhoneNumbersRepository phoneNumbersRepository) {
-        this.registrationDataRepository = registrationDataRepository;
+    public TokenService(EncryptionService encryptionService, TokensRepository tokensRepository, PendingTokenRepository pendingTokenRepository, AccountsRepository accountsRepository) {
         this.encryptionService = encryptionService;
         this.tokensRepository = tokensRepository;
         this.pendingTokenRepository = pendingTokenRepository;
-        this.pendingAccountsRepository = pendingAccountsRepository;
         this.accountsRepository = accountsRepository;
-        this.phoneNumbersRepository = phoneNumbersRepository;
     }
 
 
-    public boolean isTokenDecryptable(String token) {
+    public boolean isTokenInvalid(String token) {
         String decryptedToken = encryptionService.decryptString(token);
-        return !decryptedToken.isEmpty();
+        return decryptedToken.isEmpty();
     }
 
     private long getMinuteDifferenceFromNow(Date date) {

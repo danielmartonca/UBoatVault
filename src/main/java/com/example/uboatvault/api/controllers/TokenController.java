@@ -24,15 +24,11 @@ import javax.servlet.http.HttpServletResponse;
 public class TokenController {
     private final Logger log = LoggerFactory.getLogger(TokenController.class);
 
-    RegistrationService registrationService;
-    EncryptionService encryptionService;
-    TokenService tokenService;
-    CookiesService cookiesService;
+    private final TokenService tokenService;
+    private final CookiesService cookiesService;
 
     @Autowired
-    public TokenController(RegistrationService registrationService, EncryptionService encryptionService, TokenService tokenService, CookiesService cookiesService) {
-        this.registrationService = registrationService;
-        this.encryptionService = encryptionService;
+    public TokenController(TokenService tokenService, CookiesService cookiesService) {
         this.tokenService = tokenService;
         this.cookiesService = cookiesService;
     }

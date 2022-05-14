@@ -2,15 +2,11 @@ package com.example.uboatvault.api.controllers;
 
 import com.example.uboatvault.api.model.persistence.Account;
 import com.example.uboatvault.api.model.persistence.RegistrationData;
-import com.example.uboatvault.api.model.requests.RegistrationRequest;
 import com.example.uboatvault.api.model.response.RegistrationDataResponse;
 import com.example.uboatvault.api.services.CookiesService;
-import com.example.uboatvault.api.services.EncryptionService;
 import com.example.uboatvault.api.services.RegistrationService;
 import com.example.uboatvault.api.services.TokenService;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,15 +23,13 @@ import javax.servlet.http.HttpServletResponse;
 public class RegistrationController {
     private final Logger log = LoggerFactory.getLogger(RegistrationController.class);
 
-    RegistrationService registrationService;
-    EncryptionService encryptionService;
-    TokenService tokenService;
-    CookiesService cookiesService;
+    private final RegistrationService registrationService;
+    private final TokenService tokenService;
+    private final CookiesService cookiesService;
 
     @Autowired
-    public RegistrationController(RegistrationService registrationService, EncryptionService encryptionService, TokenService tokenService, CookiesService cookiesService) {
+    public RegistrationController(RegistrationService registrationService, TokenService tokenService, CookiesService cookiesService) {
         this.registrationService = registrationService;
-        this.encryptionService = encryptionService;
         this.tokenService = tokenService;
         this.cookiesService = cookiesService;
     }
@@ -48,7 +42,7 @@ public class RegistrationController {
         log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/checkDeviceRegistration", registrationData));
 
         if (token != null) {
-            if (!tokenService.isTokenDecryptable(token)) {
+            if (tokenService.isTokenInvalid(token)) {
                 log.error("Token is not decryptable.");
                 return new ResponseEntity<>(new RegistrationDataResponse(null, null), HttpStatus.NOT_ACCEPTABLE);
             }
@@ -69,34 +63,6 @@ public class RegistrationController {
             log.info("No token was found for the given registration data. Device is not registered.");
             return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.OK);
         }
-    }
-
-    @GetMapping(value = "/api/checkUsername")
-    public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/checkUsername/username='" + username + "'", null));
-
-        if (!registrationService.usernameMatchesPattern(username))
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
-        if (!registrationService.isUsernameUsed(username))
-            return new ResponseEntity<>(true, HttpStatus.OK);
-        else
-            return new ResponseEntity<>(false, HttpStatus.OK);
-    }
-
-    @GetMapping(value = "/api/checkPhoneNumber")
-    public ResponseEntity<Boolean> checkPhoneNumber(@RequestParam String phoneNumber,
-                                                    @RequestParam String dialCode,
-                                                    @RequestParam String isoCode) {
-        log.info(LoggingUtils.logRequestAsString(HttpMethod.GET, "/api/checkPhoneNumber?phoneNumber='" + phoneNumber + "';" + "dialCode='" + dialCode + "';isoCode='" + isoCode + "'", null));
-
-        if (!registrationService.phoneNumberMatchesPattern(phoneNumber) || dialCode.length() > 5 || isoCode.length() >= 3)
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
-        if (!registrationService.isPhoneNumberUsed(phoneNumber, dialCode, isoCode))
-            return new ResponseEntity<>(true, HttpStatus.OK);
-        else
-            return new ResponseEntity<>(false, HttpStatus.OK);
     }
 
     @PostMapping(value = "/api/requestRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -123,7 +89,7 @@ public class RegistrationController {
                                                              @RequestBody Account account) {
         log.info(LoggingUtils.logRequestAsString(HttpMethod.POST, "/api/register", account));
 
-        if (!tokenService.isTokenDecryptable(token)) {
+        if (tokenService.isTokenInvalid(token)) {
             log.error("Token is not decryptable.");
             return new ResponseEntity<>(new RegistrationDataResponse(null, null), HttpStatus.BAD_REQUEST);
         }

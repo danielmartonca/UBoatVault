@@ -16,13 +16,11 @@ public class LoginService {
     private final TokenService tokenService;
 
     private final AccountsRepository accountsRepository;
-    private final TokensRepository tokensRepository;
 
     @Autowired
-    public LoginService(TokenService tokenService, AccountsRepository accountsRepository, TokensRepository tokensRepository) {
+    public LoginService(TokenService tokenService, AccountsRepository accountsRepository) {
         this.tokenService = tokenService;
         this.accountsRepository = accountsRepository;
-        this.tokensRepository = tokensRepository;
     }
 
     @Transactional
