@@ -36,15 +36,6 @@ public class Account {
     @Setter
     private String password;
 
-    @Getter
-    @Setter
-    private String name;
-
-    @Getter
-    @Setter
-    private String surname;
-
-
     @NotNull
     @Getter
     @Setter
@@ -73,8 +64,6 @@ public class Account {
                 "token='" + token + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", username='" + username + '\'' +
-                ", name='" + name + '\'' +
-                ", surname='" + surname + '\'' +
                 ", password='" + "***" + '\'' +
                 ", registrationData=" + registrationData +
                 '}';
