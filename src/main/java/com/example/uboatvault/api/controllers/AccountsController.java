@@ -95,12 +95,12 @@ public class AccountsController {
         }
     }
 
-    @PostMapping(value = "/api/uploadAccountDetails")
-    public ResponseEntity<AccountDetails> uploadAccountDetails(@CookieValue(name = "token") String token,
+    @PostMapping(value = "/api/updateAccountDetails")
+    public ResponseEntity<AccountDetails> updateAccountDetails(@CookieValue(name = "token") String token,
                                                                @RequestBody Account requestAccount) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/uploadAccountDetails", requestAccount));
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/updateAccountDetails", requestAccount));
 
-        AccountDetails accountDetails = accountsService.uploadAccountDetails(token, requestAccount);
+        AccountDetails accountDetails = accountsService.updateAccountDetails(token, requestAccount);
         if (accountDetails != null) {
             log.info("Updated account details sent back to the user.");
             return new ResponseEntity<>(accountDetails, HttpStatus.OK);
@@ -109,5 +109,4 @@ public class AccountsController {
             return new ResponseEntity<>(null, HttpStatus.OK);
         }
     }
-
 }

@@ -2,8 +2,8 @@ package com.example.uboatvault.api.services;
 
 import com.example.uboatvault.api.model.persistence.Account;
 import com.example.uboatvault.api.model.persistence.AccountDetails;
+import com.example.uboatvault.api.model.persistence.Image;
 import com.example.uboatvault.api.repositories.AccountDetailsRepository;
-import com.example.uboatvault.api.repositories.AccountsRepository;
 import com.example.uboatvault.api.repositories.TokensRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,25 +11,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 
 @Service
 public class AccountsService {
     private final Logger log = LoggerFactory.getLogger(AccountsService.class);
 
+    private final ImagesService imagesService;
+
     private final TokensRepository tokensRepository;
     private final AccountDetailsRepository accountDetailsRepository;
 
     @Autowired
-    public AccountsService(TokensRepository tokensRepository, AccountDetailsRepository accountDetailsRepository) {
+    public AccountsService(ImagesService imagesService, TokensRepository tokensRepository, AccountDetailsRepository accountDetailsRepository) {
+        this.imagesService = imagesService;
         this.tokensRepository = tokensRepository;
         this.accountDetailsRepository = accountDetailsRepository;
     }
 
     private boolean areAccountsMatching(Account requestAccount, Account foundAccount) {
         if (!foundAccount.getPassword().equals(requestAccount.getPassword())) {
-            log.warn(foundAccount.getPassword());
-            log.warn(requestAccount.getPassword());
             log.warn("Passwords don't match.");
             return false;
         }
@@ -55,11 +55,7 @@ public class AccountsService {
             foundAccountDetails.setEmail(foundAccountDetails.getEmail());
             hasChanged = true;
         }
-        if (!Arrays.equals(foundAccountDetails.getProfileImage(), requestAccountDetails.getProfileImage())) {
-            log.info("Account details profile image was updated.");
-            foundAccountDetails.setProfileImage(foundAccountDetails.getProfileImage());
-            hasChanged = true;
-        }
+
         if (hasChanged) {
             accountDetailsRepository.save(foundAccountDetails);
             log.info("Updated database account details.");
@@ -95,15 +91,19 @@ public class AccountsService {
         }
 
         var accountDetails = foundAccount.getAccountDetails();
-        if (accountDetails == null)
-            log.warn("Account details is null. User hasn't setup any account details.");
-        else
+        if (accountDetails == null) {
+            log.warn("Account details is null. User hasn't setup any account details. Returning only the default profile picture.");
+            accountDetails = new AccountDetails();
+            var imageBytes = imagesService.getDefaultProfilePicture();
+            var image = new Image(imageBytes);
+            accountDetails.setImage(image);
+        } else
             log.info("Retrieved account details successfully.");
         return accountDetails;
     }
 
     @Transactional
-    public AccountDetails uploadAccountDetails(String token, Account requestAccount) {
+    public AccountDetails updateAccountDetails(String token, Account requestAccount) {
         var requestAccountDetails = requestAccount.getAccountDetails();
         if (requestAccountDetails == null) {
             log.warn("Request account details is null.");

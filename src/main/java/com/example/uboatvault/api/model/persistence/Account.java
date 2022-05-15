@@ -63,16 +63,6 @@ public class Account {
     @JoinColumn(name = "account_details_id")
     private AccountDetails accountDetails;
 
-    @Override
-    public String toString() {
-        return "RegistrationRequest{" +
-                "token='" + token + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", username='" + username + '\'' +
-                ", password='" + "***" + '\'' +
-                ", registrationData=" + registrationData +
-                '}';
-    }
 
     public boolean equalsPendingAccount(PendingAccount pendingAccount) {
         return this.username.equals(pendingAccount.getUsername()) &&

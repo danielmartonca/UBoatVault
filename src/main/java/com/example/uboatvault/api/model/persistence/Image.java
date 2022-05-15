@@ -1,14 +1,18 @@
 package com.example.uboatvault.api.model.persistence;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
-@Table(name = "AccountsDetails")
-public class AccountDetails {
+@Table(name = "Images")
+public class Image {
     @JsonIgnore
     @Id
     @Getter
@@ -19,23 +23,17 @@ public class AccountDetails {
 
     @Getter
     @Setter
-    private String fullName;
-
-    @Getter
-    @Setter
-    private String email;
-
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    private byte[] bytes;
 
     @JsonIgnore
     @Getter
     @Setter
-    @OneToOne(mappedBy = "accountDetails", orphanRemoval = true)
-    private Account account;
+    @OneToOne(cascade = CascadeType.REMOVE, mappedBy = "image", orphanRemoval = true)
+    private AccountDetails accountDetails;
 
-
-    @Getter
-    @Setter
-    @OneToOne(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "image_id")
-    private Image image;
+    public Image(byte[] bytes) {
+        this.bytes = bytes;
+    }
 }
