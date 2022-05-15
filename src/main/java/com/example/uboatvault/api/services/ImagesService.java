@@ -30,7 +30,7 @@ public class ImagesService {
 
     public byte[] getDefaultProfilePicture() {
         try {
-            File initialFile = new File("src/main/resources/default_picture.png");
+            File initialFile = new File("src/main/resources/static/default_profile_pic.png");
             if (!initialFile.exists())
                 throw new IOException("File doesn't exist.");
             InputStream in = new FileInputStream(initialFile);

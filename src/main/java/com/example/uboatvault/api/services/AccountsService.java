@@ -4,6 +4,7 @@ import com.example.uboatvault.api.model.persistence.Account;
 import com.example.uboatvault.api.model.persistence.AccountDetails;
 import com.example.uboatvault.api.model.persistence.Image;
 import com.example.uboatvault.api.repositories.AccountDetailsRepository;
+import com.example.uboatvault.api.repositories.ImagesRepository;
 import com.example.uboatvault.api.repositories.TokensRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +21,14 @@ public class AccountsService {
 
     private final TokensRepository tokensRepository;
     private final AccountDetailsRepository accountDetailsRepository;
+    private final ImagesRepository imagesRepository;
 
     @Autowired
-    public AccountsService(ImagesService imagesService, TokensRepository tokensRepository, AccountDetailsRepository accountDetailsRepository) {
+    public AccountsService(ImagesService imagesService, TokensRepository tokensRepository, AccountDetailsRepository accountDetailsRepository, ImagesRepository imagesRepository) {
         this.imagesService = imagesService;
         this.tokensRepository = tokensRepository;
         this.accountDetailsRepository = accountDetailsRepository;
+        this.imagesRepository = imagesRepository;
     }
 
     private boolean areAccountsMatching(Account requestAccount, Account foundAccount) {
@@ -45,16 +48,30 @@ public class AccountsService {
     void updateAccountDetails(AccountDetails foundAccountDetails, AccountDetails requestAccountDetails) {
         boolean hasChanged = false;
 
-        if (!foundAccountDetails.getFullName().equals(requestAccountDetails.getFullName())) {
-            log.info("Account details full name was '" + requestAccountDetails.getFullName() + "'. Updated it to '" + foundAccountDetails.getFullName() + "'.");
-            foundAccountDetails.setFullName(requestAccountDetails.getFullName());
-            hasChanged = true;
-        }
-        if (!foundAccountDetails.getEmail().equals(requestAccountDetails.getEmail())) {
-            log.info("Account details email was '" + requestAccountDetails.getEmail() + "'. Updated it to '" + foundAccountDetails.getEmail() + "'.");
-            foundAccountDetails.setEmail(foundAccountDetails.getEmail());
-            hasChanged = true;
-        }
+        if (foundAccountDetails.getFullName() != null && !requestAccountDetails.getFullName().isEmpty())
+            if (!foundAccountDetails.getFullName().equals(requestAccountDetails.getFullName())) {
+                log.info("Account details full name was '" + requestAccountDetails.getFullName() + "'. Updated it to '" + foundAccountDetails.getFullName() + "'.");
+                foundAccountDetails.setFullName(requestAccountDetails.getFullName());
+                hasChanged = true;
+            }
+
+        if (foundAccountDetails.getEmail() != null && !requestAccountDetails.getEmail().isEmpty())
+            if (!foundAccountDetails.getEmail().equals(requestAccountDetails.getEmail())) {
+                log.info("Account details email was '" + requestAccountDetails.getEmail() + "'. Updated it to '" + foundAccountDetails.getEmail() + "'.");
+                foundAccountDetails.setEmail(foundAccountDetails.getEmail());
+                hasChanged = true;
+            }
+
+        if (foundAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes() != null)
+            if (requestAccountDetails.getImage().getBytes().length != 0) {
+                log.info("Updating profile picture.");
+                var image = foundAccountDetails.getImage();
+                imagesRepository.delete(image);
+                var newImage = requestAccountDetails.getImage();
+                foundAccountDetails.setImage(newImage);
+                accountDetailsRepository.save(foundAccountDetails);
+                hasChanged = true;
+            }
 
         if (hasChanged) {
             accountDetailsRepository.save(foundAccountDetails);
@@ -80,9 +97,11 @@ public class AccountsService {
         }
 
         log.info("Credentials are ok. Account retrieved from database is sent back to the user.");
+        foundAccount.getAccountDetails().setImage(null);
         return foundAccount;
     }
 
+    @Transactional
     public AccountDetails getAccountDetails(String token, Account requestAccount) {
         Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
         if (foundAccount == null) {
@@ -93,12 +112,17 @@ public class AccountsService {
         var accountDetails = foundAccount.getAccountDetails();
         if (accountDetails == null) {
             log.warn("Account details is null. User hasn't setup any account details. Returning only the default profile picture.");
+
             accountDetails = new AccountDetails();
             var imageBytes = imagesService.getDefaultProfilePicture();
             var image = new Image(imageBytes);
+
             accountDetails.setImage(image);
-        } else
-            log.info("Retrieved account details successfully.");
+            foundAccount.setAccountDetails(accountDetails);
+            return accountDetails;
+        }
+
+        log.info("Retrieved account details successfully.");
         return accountDetails;
     }
 
