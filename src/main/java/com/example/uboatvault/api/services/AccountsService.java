@@ -97,7 +97,8 @@ public class AccountsService {
         }
 
         log.info("Credentials are ok. Account retrieved from database is sent back to the user.");
-        foundAccount.getAccountDetails().setImage(null);
+        if (foundAccount.getAccountDetails() != null && foundAccount.getAccountDetails().getImage() != null)
+            foundAccount.getAccountDetails().setImage(null);    //don't send the profile picture after every login request
         return foundAccount;
     }
 
