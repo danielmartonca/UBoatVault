@@ -39,17 +39,22 @@ public class LoginController {
 
         if (tokenService.isTokenInvalid(token)) {
             log.error("Token is not decryptable.");
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/login", new LoginResponse(null, null)));
             return new ResponseEntity<>(new LoginResponse(null, null), HttpStatus.BAD_REQUEST);
         }
 
         String returnedToken = loginService.login(account, token);
         if (returnedToken == null) {
-            log.info("Login denied.");
+            log.warn("Login denied.");
+
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/login", new LoginResponse(false, null)));
             return new ResponseEntity<>(new LoginResponse(false, null), HttpStatus.OK);
         } else {
             {
                 cookiesService.addTokenToSetCookiesHeader(token, response);
                 log.info("Login request accepted. Sending back new token.");
+
+                log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/login", new LoginResponse(true, returnedToken)));
                 return new ResponseEntity<>(new LoginResponse(true, returnedToken), HttpStatus.OK);
             }
         }

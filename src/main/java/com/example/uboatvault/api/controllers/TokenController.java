@@ -44,6 +44,7 @@ public class TokenController {
             tokenResponse = new TokenResponse(false, null);
         }
 
+        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/requestToken", tokenResponse));
         return new ResponseEntity<>(tokenResponse, HttpStatus.OK);
     }
 }

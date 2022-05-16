@@ -44,6 +44,8 @@ public class RegistrationController {
         if (token != null) {
             if (tokenService.isTokenInvalid(token)) {
                 log.error("Token is not decryptable.");
+
+                log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/checkDeviceRegistration", new RegistrationDataResponse(null, null)));
                 return new ResponseEntity<>(new RegistrationDataResponse(null, null), HttpStatus.NOT_ACCEPTABLE);
             }
 
@@ -51,6 +53,8 @@ public class RegistrationController {
             if (extractedToken != null) {
                 log.info("Token is valid. Returning it");
                 cookiesService.addTokenToSetCookiesHeader(token, response);
+
+                log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/checkDeviceRegistration", new RegistrationDataResponse(true, extractedToken)));
                 return new ResponseEntity<>(new RegistrationDataResponse(true, extractedToken), HttpStatus.OK);
             }
         }
@@ -58,9 +62,13 @@ public class RegistrationController {
         String dbToken = registrationService.searchForTokenBasedOnRegistrationData(registrationData);
         if (dbToken != null) {
             log.info("Found token in the database for the given registration data. Device must request it with credentials as well in order to retrieve it.");
+
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/checkDeviceRegistration", new RegistrationDataResponse(true, null)));
             return new ResponseEntity<>(new RegistrationDataResponse(true, null), HttpStatus.OK);
         } else {
             log.info("No token was found for the given registration data. Device is not registered.");
+
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/checkDeviceRegistration", new RegistrationDataResponse(false, null)));
             return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.OK);
         }
     }
@@ -80,6 +88,7 @@ public class RegistrationController {
             registrationResponse = new RegistrationDataResponse(false, null);
         }
 
+        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/requestRegistration", registrationResponse));
         return new ResponseEntity<>(registrationResponse, HttpStatus.OK);
     }
 
@@ -91,15 +100,21 @@ public class RegistrationController {
 
         if (tokenService.isTokenInvalid(token)) {
             log.error("Token is not decryptable.");
+
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/register", new RegistrationDataResponse(null, null)));
             return new ResponseEntity<>(new RegistrationDataResponse(null, null), HttpStatus.BAD_REQUEST);
         }
 
         String extractedValue = registrationService.register(account, token);
         if (extractedValue != null) {
             log.info("Device registered successfully.");
+
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/register", new RegistrationDataResponse(true, extractedValue)));
             return new ResponseEntity<>(new RegistrationDataResponse(true, extractedValue), HttpStatus.OK);
         } else {
             log.warn("Device registration failed.");
+
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/register", new RegistrationDataResponse(false, null)));
             return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.OK);
         }
     }

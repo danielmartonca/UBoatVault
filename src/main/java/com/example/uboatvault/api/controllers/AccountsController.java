@@ -73,9 +73,13 @@ public class AccountsController {
         Account account = accountsService.getAccountByTokenAndCredentials(token, requestAccount);
         if (account != null) {
             log.info("Account sent back to the user.");
+
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getMissingAccountInformation", account));
             return new ResponseEntity<>(account, HttpStatus.OK);
         } else {
             log.info("Null sent back to the user.");
+
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getMissingAccountInformation", null));
             return new ResponseEntity<>(null, HttpStatus.OK);
         }
     }
@@ -88,9 +92,12 @@ public class AccountsController {
         AccountDetails accountDetails = accountsService.getAccountDetails(token, requestAccount);
         if (accountDetails != null) {
             log.info("Account details sent back to the user.");
+
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getAccountDetails", accountDetails));
             return new ResponseEntity<>(accountDetails, HttpStatus.OK);
         } else {
             log.info("Null sent back to the user.");
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getAccountDetails", null));
             return new ResponseEntity<>(null, HttpStatus.OK);
         }
     }
@@ -103,9 +110,12 @@ public class AccountsController {
         AccountDetails accountDetails = accountsService.updateAccountDetails(token, requestAccount);
         if (accountDetails != null) {
             log.info("Updated account details sent back to the user.");
+
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/updateAccountDetails", accountDetails));
             return new ResponseEntity<>(accountDetails, HttpStatus.OK);
         } else {
             log.info("Null sent back to the user.");
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/updateAccountDetails", null));
             return new ResponseEntity<>(null, HttpStatus.OK);
         }
     }
