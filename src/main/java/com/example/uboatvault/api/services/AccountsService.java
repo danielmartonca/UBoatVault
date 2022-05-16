@@ -48,21 +48,30 @@ public class AccountsService {
     void updateAccountDetails(AccountDetails foundAccountDetails, AccountDetails requestAccountDetails) {
         boolean hasChanged = false;
 
-        if (foundAccountDetails.getFullName() != null && !requestAccountDetails.getFullName().isEmpty())
+        if (foundAccountDetails.getFullName() == null) {
+            foundAccountDetails.setFullName(requestAccountDetails.getFullName());
+            hasChanged = true;
+        } else if (foundAccountDetails.getFullName() != null && !requestAccountDetails.getFullName().isEmpty())
             if (!foundAccountDetails.getFullName().equals(requestAccountDetails.getFullName())) {
                 log.info("Account details full name was '" + requestAccountDetails.getFullName() + "'. Updated it to '" + foundAccountDetails.getFullName() + "'.");
                 foundAccountDetails.setFullName(requestAccountDetails.getFullName());
                 hasChanged = true;
             }
 
-        if (foundAccountDetails.getEmail() != null && !requestAccountDetails.getEmail().isEmpty())
+        if (foundAccountDetails.getEmail() == null) {
+            foundAccountDetails.setEmail(requestAccountDetails.getEmail());
+            hasChanged = true;
+        } else if (foundAccountDetails.getEmail() != null && !requestAccountDetails.getEmail().isEmpty())
             if (!foundAccountDetails.getEmail().equals(requestAccountDetails.getEmail())) {
                 log.info("Account details email was '" + requestAccountDetails.getEmail() + "'. Updated it to '" + foundAccountDetails.getEmail() + "'.");
-                foundAccountDetails.setEmail(foundAccountDetails.getEmail());
+                foundAccountDetails.setEmail(requestAccountDetails.getEmail());
                 hasChanged = true;
             }
 
-        if (foundAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes() != null)
+        if (foundAccountDetails.getImage() == null) {
+            foundAccountDetails.setImage(requestAccountDetails.getImage());
+            hasChanged = true;
+        } else if (foundAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes() != null)
             if (requestAccountDetails.getImage().getBytes().length != 0) {
                 log.info("Updating profile picture.");
                 var image = foundAccountDetails.getImage();
