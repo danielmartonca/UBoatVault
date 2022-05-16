@@ -29,7 +29,6 @@ public class RegistrationData {
     @OneToMany(mappedBy = "registrationData", cascade = CascadeType.ALL)
     private Set<SimCard> mobileNumbersInfoList;
 
-    @Column(unique = true)
     @Getter
     @Setter
     private String deviceInfo;

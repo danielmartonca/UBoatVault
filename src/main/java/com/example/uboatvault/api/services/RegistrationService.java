@@ -82,6 +82,13 @@ public class RegistrationService {
         return pendingToken.getTokenValue();
     }
 
+    private void logIfRegistrationDataIsAlreadyInDatabase(RegistrationData registrationData) {
+        RegistrationData foundRegistrationData = registrationDataRepository.findFirstByDeviceInfo(registrationData.getDeviceInfo());
+        if (foundRegistrationData != null)
+            log.warn("Registration info deviceInfo duplicate in database! User has created new account using the same phone.");
+    }
+
+
     /**
      * This method searches if any part of the registrationData exists in the database and returns its token if found (or generates a new one if it's older than 30 minutes)
      */
@@ -248,6 +255,8 @@ public class RegistrationService {
 
             accountsRepository.save(account);
             pendingAccountsRepository.delete(pendingAccount);
+
+            logIfRegistrationDataIsAlreadyInDatabase(account.getRegistrationData());
 
             log.info("Registration successful. Returning token '" + token + "'.");
             return account.getToken().getTokenValue();
