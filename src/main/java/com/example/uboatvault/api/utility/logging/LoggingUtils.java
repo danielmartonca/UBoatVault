@@ -1,9 +1,13 @@
 package com.example.uboatvault.api.utility.logging;
 
+import com.example.uboatvault.api.model.persistence.Account;
+import com.example.uboatvault.api.model.persistence.AccountDetails;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.springframework.http.HttpMethod;
+
+import java.util.Arrays;
 
 
 public class LoggingUtils {
@@ -31,13 +35,66 @@ public class LoggingUtils {
         };
     }
 
+    public static String logRequest(HttpMethod requestMethod, String api) {
+        String suffix = "       REQUEST:";
+        return colorsBasedData(suffix, requestMethod, api, null);
+    }
+
     public static String logRequest(HttpMethod requestMethod, String api, Object body) {
         String suffix = "       REQUEST:";
         return colorsBasedData(suffix, requestMethod, api, body);
     }
 
+    public static String logRequest(HttpMethod requestMethod, String api, Account requestAccount) {
+        byte[] bytes;
+        if (requestAccount.getAccountDetails() != null && requestAccount.getAccountDetails().getImage() != null && requestAccount.getAccountDetails().getImage().getBytes() != null && requestAccount.getAccountDetails().getImage().getBytes().length > 0) {
+            var existingBytes = requestAccount.getAccountDetails().getImage().getBytes();
+            bytes = Arrays.copyOf(existingBytes, existingBytes.length);
+            requestAccount.getAccountDetails().getImage().setBytes(null);
+            var returnedString = LoggingUtils.logRequest(HttpMethod.POST, "/api/updateAccountDetails", (Object) requestAccount);
+            requestAccount.getAccountDetails().getImage().setBytes(bytes);
+            return returnedString;
+        }
+
+        String suffix = "       REQUEST:";
+        return colorsBasedData(suffix, requestMethod, api, requestAccount);
+    }
+
+    public static String logResponse(HttpMethod requestMethod, String api) {
+        String suffix = "       RESPONSE:";
+        return colorsBasedData(suffix, requestMethod, api, null);
+    }
+
     public static String logResponse(HttpMethod requestMethod, String api, Object body) {
         String suffix = "       RESPONSE:";
         return colorsBasedData(suffix, requestMethod, api, body);
+    }
+
+    public static String logResponse(HttpMethod requestMethod, String api, AccountDetails accountDetails) {
+        byte[] bytes;
+        if (accountDetails != null && accountDetails.getImage() != null && accountDetails.getImage().getBytes() != null && accountDetails.getImage().getBytes().length > 0) {
+            var existingBytes = accountDetails.getImage().getBytes();
+            bytes = Arrays.copyOf(existingBytes, existingBytes.length);
+            accountDetails.getImage().setBytes(null);
+            var returnedString = LoggingUtils.logResponse(HttpMethod.POST, "/api/updateAccountDetails", (Object) accountDetails);
+            accountDetails.getImage().setBytes(bytes);
+            return returnedString;
+        }
+        String suffix = "       REQUEST:";
+        return colorsBasedData(suffix, requestMethod, api, accountDetails);
+    }
+
+    public static String logResponse(HttpMethod requestMethod, String api, Account responseAccount) {
+        byte[] bytes;
+        if (responseAccount.getAccountDetails() != null && responseAccount.getAccountDetails().getImage() != null && responseAccount.getAccountDetails().getImage().getBytes() != null && responseAccount.getAccountDetails().getImage().getBytes().length > 0) {
+            var existingBytes = responseAccount.getAccountDetails().getImage().getBytes();
+            bytes = Arrays.copyOf(existingBytes, existingBytes.length);
+            responseAccount.getAccountDetails().getImage().setBytes(null);
+            var returnedString = LoggingUtils.logResponse(HttpMethod.POST, "/api/updateAccountDetails", (Object) responseAccount);
+            responseAccount.getAccountDetails().getImage().setBytes(bytes);
+            return returnedString;
+        }
+        String suffix = "       REQUEST:";
+        return colorsBasedData(suffix, requestMethod, api, responseAccount);
     }
 }

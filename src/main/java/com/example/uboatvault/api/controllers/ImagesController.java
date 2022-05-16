@@ -31,7 +31,7 @@ public class ImagesController {
     @GetMapping(value = "/images/getDefaultProfilePicture", produces = MediaType.IMAGE_PNG_VALUE)
     public @ResponseBody
     byte[] getDefaultProfilePicture() {
-        log.info(LoggingUtils.logRequest(HttpMethod.GET, "/api/getDefaultProfilePicture", null));
+        log.info(LoggingUtils.logRequest(HttpMethod.GET, "/api/getDefaultProfilePicture"));
         return imagesService.getDefaultProfilePicture();
     }
 
@@ -42,20 +42,20 @@ public class ImagesController {
         log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getProfilePicture", requestAccount));
         if (tokenService.isTokenInvalid(token)) {
             log.warn("Token is not valid.");
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getProfilePicture", null));
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getProfilePicture"));
             return null;
         }
         var foundAccount = accountsService.getAccountByTokenAndCredentials(token, requestAccount);
         if (foundAccount == null) {
             log.warn("Invalid token or credentials. Returning null.");
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getProfilePicture", null));
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getProfilePicture"));
             return null;
         }
 
         log.info("Credentials and token match. Returning profile picture.");
         byte[] image = imagesService.getProfilePicture(foundAccount);
         if (image == null)
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getProfilePicture", null));
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getProfilePicture"));
         else
             log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getProfilePicture", "...bytes..."));
         return image;
@@ -68,13 +68,13 @@ public class ImagesController {
 
         if (tokenService.isTokenInvalid(token)) {
             log.warn("Token is not valid.");
-            log.info(LoggingUtils.logResponse(HttpMethod.PUT, "/api/uploadProfilePicture", null));
+            log.info(LoggingUtils.logResponse(HttpMethod.PUT, "/api/uploadProfilePicture"));
             return null;
         }
         var foundAccount = accountsService.getAccountByTokenAndCredentials(token, imageUploadRequest.getAccount());
         if (foundAccount == null) {
             log.warn("Invalid token or credentials. Returning null.");
-            log.info(LoggingUtils.logResponse(HttpMethod.PUT, "/api/uploadProfilePicture", null));
+            log.info(LoggingUtils.logResponse(HttpMethod.PUT, "/api/uploadProfilePicture"));
             return null;
         }
         log.info("Credentials and token match. Uploading new profile picture.");
