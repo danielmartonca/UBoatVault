@@ -2,7 +2,6 @@ package com.example.uboatvault.api.controllers;
 
 import com.example.uboatvault.api.model.persistence.Account;
 import com.example.uboatvault.api.model.persistence.AccountDetails;
-import com.example.uboatvault.api.model.persistence.Image;
 import com.example.uboatvault.api.services.AccountsService;
 import com.example.uboatvault.api.services.RegistrationService;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;
@@ -14,8 +13,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Arrays;
 
 @RestController
 public class AccountsController {

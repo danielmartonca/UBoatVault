@@ -4,6 +4,7 @@ import com.example.uboatvault.api.model.persistence.Account;
 import com.example.uboatvault.api.model.persistence.AccountDetails;
 import com.example.uboatvault.api.model.persistence.Image;
 import com.example.uboatvault.api.repositories.AccountDetailsRepository;
+import com.example.uboatvault.api.repositories.AccountsRepository;
 import com.example.uboatvault.api.repositories.ImagesRepository;
 import com.example.uboatvault.api.repositories.TokensRepository;
 import org.slf4j.Logger;
@@ -19,15 +20,17 @@ public class AccountsService {
 
     private final ImagesService imagesService;
 
-    private final TokensRepository tokensRepository;
+    private final AccountsRepository accountsRepository;
     private final AccountDetailsRepository accountDetailsRepository;
+    private final TokensRepository tokensRepository;
     private final ImagesRepository imagesRepository;
 
     @Autowired
-    public AccountsService(ImagesService imagesService, TokensRepository tokensRepository, AccountDetailsRepository accountDetailsRepository, ImagesRepository imagesRepository) {
+    public AccountsService(ImagesService imagesService, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository) {
         this.imagesService = imagesService;
-        this.tokensRepository = tokensRepository;
+        this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
+        this.tokensRepository = tokensRepository;
         this.imagesRepository = imagesRepository;
     }
 
@@ -45,10 +48,10 @@ public class AccountsService {
     }
 
     @Transactional
-    void updateAccountDetails(AccountDetails foundAccountDetails, AccountDetails requestAccountDetails) {
+    void updateDatabaseAccountDetails(AccountDetails foundAccountDetails, AccountDetails requestAccountDetails) {
         boolean hasChanged = false;
 
-        if (foundAccountDetails.getFullName() == null) {
+        if (foundAccountDetails.getFullName() == null&&requestAccountDetails.getFullName()!=null) {
             foundAccountDetails.setFullName(requestAccountDetails.getFullName());
             hasChanged = true;
         } else if (foundAccountDetails.getFullName() != null && !requestAccountDetails.getFullName().isEmpty())
@@ -58,7 +61,7 @@ public class AccountsService {
                 hasChanged = true;
             }
 
-        if (foundAccountDetails.getEmail() == null) {
+        if (foundAccountDetails.getEmail() == null&&requestAccountDetails.getEmail()!=null) {
             foundAccountDetails.setEmail(requestAccountDetails.getEmail());
             hasChanged = true;
         } else if (foundAccountDetails.getEmail() != null && !requestAccountDetails.getEmail().isEmpty())
@@ -68,17 +71,17 @@ public class AccountsService {
                 hasChanged = true;
             }
 
-        if (foundAccountDetails.getImage() == null) {
+        if (foundAccountDetails.getImage() == null&&requestAccountDetails.getImage()!=null) {
             foundAccountDetails.setImage(requestAccountDetails.getImage());
+            foundAccountDetails.getImage().setAccountDetails(foundAccountDetails);
             hasChanged = true;
         } else if (foundAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes() != null)
             if (requestAccountDetails.getImage().getBytes().length != 0) {
                 log.info("Updating profile picture.");
                 var image = foundAccountDetails.getImage();
-                imagesRepository.delete(image);
+                imagesRepository.deleteById(image.getId());
                 var newImage = requestAccountDetails.getImage();
                 foundAccountDetails.setImage(newImage);
-                accountDetailsRepository.save(foundAccountDetails);
                 hasChanged = true;
             }
 
@@ -128,7 +131,9 @@ public class AccountsService {
             var image = new Image(imageBytes);
 
             accountDetails.setImage(image);
+            image.setAccountDetails(accountDetails);
             foundAccount.setAccountDetails(accountDetails);
+            accountsRepository.save(foundAccount);
             return accountDetails;
         }
 
@@ -157,7 +162,7 @@ public class AccountsService {
         }
         log.info("Retrieved account details successfully.");
 
-        updateAccountDetails(foundAccountDetails, requestAccountDetails);
+        updateDatabaseAccountDetails(foundAccountDetails, requestAccountDetails);
 
         return foundAccountDetails;
     }

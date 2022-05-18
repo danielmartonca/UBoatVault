@@ -53,7 +53,7 @@ public class LoggingUtils {
             requestAccount.getAccountDetails().getImage().setBytes(null);
             var returnedString = LoggingUtils.logRequest(HttpMethod.POST, "/api/updateAccountDetails", (Object) requestAccount);
             requestAccount.getAccountDetails().getImage().setBytes(bytes);
-            return returnedString;
+            return returnedString.replaceAll("\"bytes\" : null","\"bytes\" : [...bytes...]");
         }
 
         String suffix = "       REQUEST:";
@@ -76,9 +76,9 @@ public class LoggingUtils {
             var existingBytes = accountDetails.getImage().getBytes();
             bytes = Arrays.copyOf(existingBytes, existingBytes.length);
             accountDetails.getImage().setBytes(null);
-            var returnedString = LoggingUtils.logResponse(HttpMethod.POST, "/api/updateAccountDetails", (Object) accountDetails);
+            var returnedString = LoggingUtils.logResponse(HttpMethod.POST, api, (Object) accountDetails);
             accountDetails.getImage().setBytes(bytes);
-            return returnedString;
+            return returnedString.replaceAll("\"bytes\" : null","\"bytes\" : [...bytes...]");
         }
         String suffix = "       REQUEST:";
         return colorsBasedData(suffix, requestMethod, api, accountDetails);
@@ -92,7 +92,7 @@ public class LoggingUtils {
             responseAccount.getAccountDetails().getImage().setBytes(null);
             var returnedString = LoggingUtils.logResponse(HttpMethod.POST, "/api/updateAccountDetails", (Object) responseAccount);
             responseAccount.getAccountDetails().getImage().setBytes(bytes);
-            return returnedString;
+            return returnedString.replaceAll("\"bytes\" : null","\"bytes\" : [...bytes...]");
         }
         String suffix = "       REQUEST:";
         return colorsBasedData(suffix, requestMethod, api, responseAccount);

@@ -30,7 +30,7 @@ public class Image {
     @JsonIgnore
     @Getter
     @Setter
-    @OneToOne(cascade = CascadeType.REMOVE, mappedBy = "image", orphanRemoval = true)
+    @OneToOne(mappedBy = "image", orphanRemoval = true)
     private AccountDetails accountDetails;
 
     public Image(byte[] bytes) {
