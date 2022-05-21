@@ -2,6 +2,7 @@ package com.example.uboatvault.api.model.persistence;
 
 import com.example.uboatvault.api.model.enums.UserType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -57,6 +58,7 @@ public class Account {
     @JoinColumn(name = "token_id")
     private Token token;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Getter
     @Setter
     @OneToOne(cascade = {CascadeType.ALL})

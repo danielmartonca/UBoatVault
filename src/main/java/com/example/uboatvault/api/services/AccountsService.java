@@ -51,7 +51,7 @@ public class AccountsService {
     void updateDatabaseAccountDetails(AccountDetails foundAccountDetails, AccountDetails requestAccountDetails) {
         boolean hasChanged = false;
 
-        if (foundAccountDetails.getFullName() == null&&requestAccountDetails.getFullName()!=null) {
+        if (foundAccountDetails.getFullName() == null && requestAccountDetails.getFullName() != null) {
             foundAccountDetails.setFullName(requestAccountDetails.getFullName());
             hasChanged = true;
         } else if (foundAccountDetails.getFullName() != null && !requestAccountDetails.getFullName().isEmpty())
@@ -61,7 +61,7 @@ public class AccountsService {
                 hasChanged = true;
             }
 
-        if (foundAccountDetails.getEmail() == null&&requestAccountDetails.getEmail()!=null) {
+        if (foundAccountDetails.getEmail() == null && requestAccountDetails.getEmail() != null) {
             foundAccountDetails.setEmail(requestAccountDetails.getEmail());
             hasChanged = true;
         } else if (foundAccountDetails.getEmail() != null && !requestAccountDetails.getEmail().isEmpty())
@@ -71,7 +71,7 @@ public class AccountsService {
                 hasChanged = true;
             }
 
-        if (foundAccountDetails.getImage() == null&&requestAccountDetails.getImage()!=null) {
+        if (foundAccountDetails.getImage() == null && requestAccountDetails.getImage() != null) {
             foundAccountDetails.setImage(requestAccountDetails.getImage());
             foundAccountDetails.getImage().setAccountDetails(foundAccountDetails);
             hasChanged = true;
@@ -124,9 +124,11 @@ public class AccountsService {
 
         var accountDetails = foundAccount.getAccountDetails();
         if (accountDetails == null) {
-            log.warn("Account details is null. User hasn't setup any account details. Returning only the default profile picture.");
-
+            log.warn("Account details is null. User hasn't setup any account details.");
             accountDetails = new AccountDetails();
+        }
+        if (accountDetails.getImage() == null) {
+            log.warn("Account details image is null. Setting up default profile picture.");
             var imageBytes = imagesService.getDefaultProfilePicture();
             var image = new Image(imageBytes);
 
