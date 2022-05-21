@@ -2,6 +2,9 @@ package com.example.uboatvault.api.controllers;
 
 import com.example.uboatvault.api.model.persistence.Account;
 import com.example.uboatvault.api.model.persistence.AccountDetails;
+import com.example.uboatvault.api.model.persistence.CreditCard;
+import com.example.uboatvault.api.model.requests.CreditCardRequest;
+import com.example.uboatvault.api.model.response.CreditCardResponse;
 import com.example.uboatvault.api.services.AccountsService;
 import com.example.uboatvault.api.services.RegistrationService;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;
@@ -13,6 +16,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
 
 @RestController
 public class AccountsController {
@@ -120,5 +125,35 @@ public class AccountsController {
             log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/updateAccountDetails"));
             return new ResponseEntity<>(null, HttpStatus.OK);
         }
+    }
+
+    @PostMapping(value = "/api/getCreditCards")
+    public ResponseEntity<CreditCardResponse> getCreditCards(@CookieValue(name = "token") String token,
+                                                             @RequestBody Account account) {
+
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getCreditCards", account));
+        Set<CreditCard> creditCards = accountsService.getCreditCards(token, account);
+        if (creditCards == null) {
+            log.warn("User is not authorized. Token/account are invalid.");
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        CreditCardResponse creditCardResponse = new CreditCardResponse(creditCards);
+        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getCreditCards", creditCardResponse));
+        return new ResponseEntity<>(creditCardResponse, HttpStatus.OK);
+    }
+
+    @PutMapping(value = "/api/addCreditCard")
+    public ResponseEntity<Boolean> addCreditCard(@CookieValue(name = "token") String token,
+                                                 @RequestBody CreditCardRequest creditCardRequest) {
+
+        log.info(LoggingUtils.logRequest(HttpMethod.PUT, "/api/addCreditCard", creditCardRequest));
+        boolean wasAdded = accountsService.addCreditCard(token, creditCardRequest.getAccount(), creditCardRequest.getCard());
+        if (wasAdded)
+            log.info("Request credit card is linked to the account. Returning true.");
+        else
+            log.warn("Request credit card was NOT added to the account. Returning false.");
+
+        return new ResponseEntity<>(wasAdded, HttpStatus.CREATED);
     }
 }

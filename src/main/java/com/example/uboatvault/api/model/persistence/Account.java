@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.Set;
 
 @NoArgsConstructor
 @Entity
@@ -65,6 +66,11 @@ public class Account {
     @JoinColumn(name = "account_details_id")
     private AccountDetails accountDetails;
 
+    @JsonIgnore
+    @Getter
+    @Setter
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    private Set<CreditCard> creditCards;
 
     public boolean equalsPendingAccount(PendingAccount pendingAccount) {
         return this.username.equals(pendingAccount.getUsername()) &&
