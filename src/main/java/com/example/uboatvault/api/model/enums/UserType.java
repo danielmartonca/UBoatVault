@@ -1,6 +1,7 @@
 package com.example.uboatvault.api.model.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 public enum UserType {
@@ -13,8 +14,8 @@ public enum UserType {
         this.type = type;
     }
 
-    @JsonCreator
-    public static UserType fromType(String type) {
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public static UserType fromType(@JsonProperty("type") String type) {
         for (UserType r : UserType.values()) {
             if (r.getType().equals(type)) {
                 return r;

@@ -24,7 +24,7 @@ public class PendingAccount {
     @Getter
     @Setter
     @Enumerated(EnumType.ORDINAL)
-    private UserType userType;
+    private UserType type;
 
     @Getter
     @Setter
@@ -43,7 +43,7 @@ public class PendingAccount {
     private PendingToken pendingToken;
 
     public PendingAccount(Account account) {
-        this.userType = account.getUserType();
+        this.type = account.getType();
         this.username = account.getUsername();
         this.password = account.getPassword();
     }

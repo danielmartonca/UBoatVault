@@ -24,8 +24,8 @@ public class Account {
 
     @Getter
     @Setter
-    @Enumerated(EnumType.ORDINAL)
-    private UserType userType;
+    @Enumerated(EnumType.STRING)
+    private UserType type;
 
     @Getter
     @Setter
