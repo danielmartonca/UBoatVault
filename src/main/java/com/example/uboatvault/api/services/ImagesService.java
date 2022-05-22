@@ -20,14 +20,6 @@ import java.io.InputStream;
 public class ImagesService {
     private final Logger log = LoggerFactory.getLogger(ImagesService.class);
 
-    private final AccountsRepository accountsRepository;
-    private final ImagesRepository imagesRepository;
-
-    public ImagesService(AccountsRepository accountsRepository, ImagesRepository imagesRepository) {
-        this.accountsRepository = accountsRepository;
-        this.imagesRepository = imagesRepository;
-    }
-
     public byte[] getDefaultProfilePicture() {
         try {
             File initialFile = new File("src/main/resources/static/default_profile_pic.png");
@@ -40,31 +32,5 @@ public class ImagesService {
             log.error("Exception while retrieving default profile picture.", e);
         }
         return null;
-    }
-
-    public byte[] getProfilePicture(Account account) {
-        if (account.getAccountDetails() == null) {
-            log.warn("Account doesn't have an profile picture set yet.");
-            return getDefaultProfilePicture();
-        }
-
-        return account.getAccountDetails().getImage().getBytes();
-    }
-
-    @Transactional
-    public boolean uploadProfilePicture(Account foundAccount, byte[] imagesBytes) {
-        try {
-            if (foundAccount.getAccountDetails() == null)
-                foundAccount.setAccountDetails(new AccountDetails());
-
-            Image image = new Image(imagesBytes);
-            imagesRepository.delete(foundAccount.getAccountDetails().getImage());
-            foundAccount.getAccountDetails().setImage(image);
-            accountsRepository.save(foundAccount);
-            return true;
-        } catch (Exception e) {
-            log.error("Exception while uploading default profile picture.", e);
-        }
-        return false;
     }
 }

@@ -82,6 +82,7 @@ public class AccountsService {
         } else if (foundAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes() != null)
             if (requestAccountDetails.getImage().getBytes().length != 0) {
                 log.info("Updating profile picture.");
+                foundAccountDetails.setImage(null);
                 var image = foundAccountDetails.getImage();
                 imagesRepository.deleteById(image.getId());
                 var newImage = requestAccountDetails.getImage();
@@ -90,7 +91,7 @@ public class AccountsService {
             }
 
         if (hasChanged) {
-            accountDetailsRepository.save(foundAccountDetails);
+            accountDetailsRepository.saveAndFlush(foundAccountDetails);
             log.info("Updated database account details.");
         } else log.info("Account details were identical.");
     }
@@ -117,7 +118,6 @@ public class AccountsService {
         return foundAccount;
     }
 
-    @Transactional
     public AccountDetails getAccountDetails(String token, Account requestAccount) {
         Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
         if (foundAccount == null) {
@@ -135,11 +135,9 @@ public class AccountsService {
             var imageBytes = imagesService.getDefaultProfilePicture();
             var image = new Image(imageBytes);
 
-            accountDetails.setImage(image);
-            image.setAccountDetails(accountDetails);
-            foundAccount.setAccountDetails(accountDetails);
-            accountsRepository.save(foundAccount);
-            return accountDetails;
+            var returnedAccountDetails = new AccountDetails(accountDetails);
+            returnedAccountDetails.setImage(image);
+            return returnedAccountDetails;
         }
 
         log.info("Retrieved account details successfully.");
