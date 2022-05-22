@@ -69,7 +69,7 @@ public class Account {
     @JsonIgnore
     @Getter
     @Setter
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "account", cascade = {CascadeType.REMOVE, CascadeType.MERGE})
     private Set<CreditCard> creditCards;
 
     public boolean equalsPendingAccount(PendingAccount pendingAccount) {

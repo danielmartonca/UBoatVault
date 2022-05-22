@@ -219,6 +219,7 @@ public class AccountsService {
         if (userCreditCards == null) {
             log.info("User did not have any credit cards setup.");
             userCreditCards = new HashSet<>();
+            foundAccount.setCreditCards(userCreditCards);
         }
         userCreditCards.add(creditCard);
 
