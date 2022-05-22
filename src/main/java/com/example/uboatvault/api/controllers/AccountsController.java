@@ -149,11 +149,13 @@ public class AccountsController {
 
         log.info(LoggingUtils.logRequest(HttpMethod.PUT, "/api/addCreditCard", creditCardRequest));
         boolean wasAdded = accountsService.addCreditCard(token, creditCardRequest.getAccount(), creditCardRequest.getCard());
-        if (wasAdded)
+        if (wasAdded) {
             log.info("Request credit card is linked to the account. Returning true.");
-        else
+            return new ResponseEntity<>(true, HttpStatus.CREATED);
+        } else {
             log.warn("Request credit card was NOT added to the account. Returning false.");
+            return new ResponseEntity<>(false, HttpStatus.OK);
+        }
 
-        return new ResponseEntity<>(wasAdded, HttpStatus.CREATED);
     }
 }

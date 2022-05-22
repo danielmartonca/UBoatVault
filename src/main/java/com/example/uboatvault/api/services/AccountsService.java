@@ -208,7 +208,7 @@ public class AccountsService {
             return false;
         }
 
-        CreditCard card = creditCardsRepository.findFirstByBankAndNumberAndCvc(creditCard.getBank(), creditCard.getNumber(), creditCard.getCvc());
+        CreditCard card = creditCardsRepository.findFirstByNumberAndCvc(creditCard.getNumber(), creditCard.getCvc());
         if (card != null) {
             log.warn("Credit card already exists in the database.");
             return true;

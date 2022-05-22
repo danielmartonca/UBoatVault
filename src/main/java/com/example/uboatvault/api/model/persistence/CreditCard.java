@@ -22,10 +22,6 @@ public class CreditCard {
 
     @Getter
     @Setter
-    private String bank;
-
-    @Getter
-    @Setter
     private String number;
 
     @Getter
