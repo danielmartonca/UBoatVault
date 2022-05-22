@@ -148,12 +148,41 @@ public class AccountsController {
                                                  @RequestBody CreditCardRequest creditCardRequest) {
 
         log.info(LoggingUtils.logRequest(HttpMethod.PUT, "/api/addCreditCard", creditCardRequest));
-        boolean wasAdded = accountsService.addCreditCard(token, creditCardRequest.getAccount(), creditCardRequest.getCard());
+        Boolean wasAdded = accountsService.addCreditCard(token, creditCardRequest.getAccount(), creditCardRequest.getCard());
+
+        if (wasAdded == null) {
+            log.warn("Token and account are not matching. Returning null.");
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        }
+
         if (wasAdded) {
             log.info("Request credit card is linked to the account. Returning true.");
             return new ResponseEntity<>(true, HttpStatus.CREATED);
         } else {
             log.warn("Request credit card was NOT added to the account. Returning false.");
+            return new ResponseEntity<>(false, HttpStatus.OK);
+        }
+
+    }
+
+    @DeleteMapping(value = "/api/deleteCreditCard")
+    public ResponseEntity<Boolean> deleteCreditCard(@CookieValue(name = "token") String token,
+                                                    @RequestBody CreditCardRequest creditCardRequest) {
+
+        log.info(LoggingUtils.logRequest(HttpMethod.DELETE, "/api/deleteCreditCard", creditCardRequest));
+        Boolean wasDeleted = accountsService.deleteCreditCard(token, creditCardRequest.getAccount(), creditCardRequest.getCard());
+
+        if (wasDeleted == null) {
+            log.warn("Token and account are not matching. Returning null.");
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        }
+
+        if (wasDeleted) {
+            log.info("Request credit card was deleted from the account. Returning true.");
+            return new ResponseEntity<>(true, HttpStatus.OK
+            );
+        } else {
+            log.warn("Request credit card was NOT deleted from the account. Returning false.");
             return new ResponseEntity<>(false, HttpStatus.OK);
         }
 

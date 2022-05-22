@@ -92,8 +92,7 @@ public class AccountsService {
         if (hasChanged) {
             accountDetailsRepository.save(foundAccountDetails);
             log.info("Updated database account details.");
-        } else
-            log.info("Account details were identical.");
+        } else log.info("Account details were identical.");
     }
 
     public Account getAccountByTokenAndCredentials(String token, Account requestAccount) {
@@ -191,11 +190,11 @@ public class AccountsService {
     }
 
     @Transactional
-    public boolean addCreditCard(String token, Account requestAccount, CreditCard creditCard) {
+    public Boolean addCreditCard(String token, Account requestAccount, CreditCard creditCard) {
         Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
-            return false;
+            return null;
         }
 
         try {
@@ -226,5 +225,30 @@ public class AccountsService {
         accountsRepository.save(foundAccount);
         log.info("Saved new credit card in the database.");
         return true;
+    }
+
+    @Transactional
+    public Boolean deleteCreditCard(String token, Account requestAccount, CreditCard creditCard) {
+        Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
+        if (foundAccount == null) {
+            log.info("Request account or token are invalid.");
+            return null;
+        }
+        log.info("Token and account are matching.");
+
+        if (foundAccount.getCreditCards() == null || foundAccount.getCreditCards().isEmpty()) {
+            log.warn("Account does not have any credit cards.");
+            return false;
+        }
+
+        for (var card : foundAccount.getCreditCards())
+            if (card.equals(creditCard)) {
+                creditCardsRepository.delete(card);
+                log.info("Found matching request credit card to the account. Deleting entry from database.");
+                return true;
+            }
+
+        log.warn("Couldn't find the request credit card belonging to the given account.");
+        return false;
     }
 }
