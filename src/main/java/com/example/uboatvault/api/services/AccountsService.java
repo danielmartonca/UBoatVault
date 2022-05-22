@@ -243,7 +243,7 @@ public class AccountsService {
 
         for (var card : foundAccount.getCreditCards())
             if (card.equals(creditCard)) {
-                creditCardsRepository.delete(card);
+                creditCardsRepository.deleteById(card.getId());
                 log.info("Found matching request credit card to the account. Deleting entry from database.");
                 return true;
             }

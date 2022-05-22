@@ -8,6 +8,7 @@ import javax.persistence.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 @Entity
 @Table(name = "CreditCards")
@@ -39,7 +40,7 @@ public class CreditCard {
     @JsonIgnore
     @Getter
     @Setter
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne()
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
@@ -50,5 +51,18 @@ public class CreditCard {
         Date dateNow = new Date();
         int comparison = dateNow.compareTo(cardDate);
         return comparison > 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CreditCard card = (CreditCard) o;
+        return number.equals(card.number) && ownerFullName.equals(card.ownerFullName) && cvc.equals(card.cvc);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(number, ownerFullName, cvc);
     }
 }

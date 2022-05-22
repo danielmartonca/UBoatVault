@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CreditCardsRepository extends JpaRepository<CreditCard, Long> {
     CreditCard findFirstByNumberAndCvc(String number, String cvc);
+    void deleteByNumberAndCvc(String number,String cvc);
 }
