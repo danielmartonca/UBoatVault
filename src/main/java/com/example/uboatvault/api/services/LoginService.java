@@ -27,10 +27,7 @@ public class LoginService {
     public String login(Account account, String token) {
         var foundAccount = accountsRepository.findFirstByPassword(account.getPassword());
         if (foundAccount != null) {
-            if (!foundAccount.getRegistrationData().equals(account.getRegistrationData())) {
-                log.warn("Account found by password but registration data does not match.");
-                return null;
-            } else if (!foundAccount.getToken().getTokenValue().equals(token)) {
+            if (!foundAccount.getToken().getTokenValue().equals(token)) {
                 log.warn("Account found by password and registration data but tokens do not match.");
                 return null;
             } else if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
@@ -38,7 +35,7 @@ public class LoginService {
                 log.info("Credentials matched. Found account.");
                 tokenService.updateToken(foundAccount);
 
-                log.info("Login successful. Returning token: "+foundAccount.getToken().getTokenValue());
+                log.info("Login successful. Returning token: " + foundAccount.getToken().getTokenValue());
                 return foundAccount.getToken().getTokenValue();
             } else {
                 log.warn("Account found by password, registration data and phone number match but neither username or phone number match.");
