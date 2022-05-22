@@ -119,6 +119,7 @@ public class AccountsService {
         return foundAccount;
     }
 
+    @Transactional
     public AccountDetails getAccountDetails(String token, Account requestAccount) {
         Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
         if (foundAccount == null) {
@@ -130,6 +131,8 @@ public class AccountsService {
         if (accountDetails == null) {
             log.warn("Account details is null. User hasn't setup any account details.");
             accountDetails = new AccountDetails();
+            foundAccount.setAccountDetails(accountDetails);
+            accountsRepository.save(foundAccount);
         }
         if (accountDetails.getImage() == null) {
             log.warn("Account details image is null. Setting up default profile picture.");
@@ -162,7 +165,7 @@ public class AccountsService {
         var foundAccountDetails = foundAccount.getAccountDetails();
         if (foundAccountDetails == null) {
             log.warn("Account details is null. User hasn't setup any account details.");
-            return null;
+            return getAccountDetails(token, requestAccount);
         }
         log.info("Retrieved account details successfully.");
 
