@@ -39,7 +39,7 @@ public class AccountDetails {
 
     @Getter
     @Setter
-    @OneToOne(cascade = {CascadeType.ALL})
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     @JoinColumn(name = "image_id")
     private Image image;
 

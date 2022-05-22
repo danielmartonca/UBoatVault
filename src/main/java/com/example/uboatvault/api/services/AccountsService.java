@@ -92,6 +92,7 @@ public class AccountsService {
 
         if (hasChanged) {
             accountDetailsRepository.saveAndFlush(foundAccountDetails);
+            imagesRepository.deleteAllUnreferencedImages();
             log.info("Updated database account details.");
         } else log.info("Account details were identical.");
     }
