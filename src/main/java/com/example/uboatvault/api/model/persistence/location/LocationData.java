@@ -45,24 +45,21 @@ public class LocationData {
 
     public static LocationData createRandomLocationData() {
         LocationData locationData = new LocationData();
-
-        byte[] array = new byte[7];
-        new Random().nextBytes(array);
-        locationData.latitude = new String(array, StandardCharsets.UTF_8);
-        locationData.longitude = "mock data";
-        locationData.accuracy = "mock data";
-        locationData.altitude = "mock data";
-        locationData.speed = "mock data";
-        locationData.speedAccuracy = "mock data";
-        locationData.heading = "mock data";
-        locationData.time = "mock data";
-        locationData.isMock = "mock data";
-        locationData.verticalAccuracy = "mock data";
-        locationData.headingAccuracy = "mock data";
-        locationData.elapsedRealtimeNanos = "mock data";
-        locationData.elapsedRealtimeUncertaintyNanos = "mock data";
-        locationData.satelliteNumber = "mock data";
-        locationData.provider = "mock data";
+        locationData.latitude = String.valueOf(new Random().nextInt() * 100);
+        locationData.longitude = "1";
+        locationData.accuracy = "1";
+        locationData.altitude = "1";
+        locationData.speed = "1";
+        locationData.speedAccuracy = "1";
+        locationData.heading = "1";
+        locationData.time = "1";
+        locationData.isMock = "0";
+        locationData.verticalAccuracy = "1";
+        locationData.headingAccuracy = "1";
+        locationData.elapsedRealtimeNanos = "1";
+        locationData.elapsedRealtimeUncertaintyNanos = "1";
+        locationData.satelliteNumber = "1";
+        locationData.provider = "1";
         return locationData;
     }
 }

@@ -8,6 +8,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Entity
 @Table(name = "Journeys")
@@ -64,7 +65,7 @@ public class Journey {
     @JsonIgnore
     @Getter
     @Setter
-    @ManyToOne
+    @ManyToOne()
     @JoinColumn(name = "client_id")
     private Account client;
 
@@ -74,4 +75,18 @@ public class Journey {
     @ManyToOne
     @JoinColumn(name = "sailor_id")
     private Account sailor;
+
+    public void calculateDuration() {
+        if (dateBooking != null && dateArrival != null) {
+            long diffInMilliseconds = Math.abs(dateArrival.getTime() - dateBooking.getTime());
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(diffInMilliseconds);
+            diffInMilliseconds -= TimeUnit.MINUTES.toMillis(minutes);
+            long seconds = TimeUnit.MILLISECONDS.toSeconds(diffInMilliseconds);
+            this.duration = "";
+            if (minutes != 0) this.duration = this.duration + minutes + " minutes";
+            if (minutes != 0 && seconds != 0) this.duration = this.duration + " and ";
+            if (seconds != 0) this.duration = this.duration + seconds + " seconds";
+        } else
+            this.duration = "has not arrived yet";
+    }
 }

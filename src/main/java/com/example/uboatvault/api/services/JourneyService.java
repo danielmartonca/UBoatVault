@@ -57,6 +57,7 @@ public class JourneyService {
             log.info("Added journey " + (i + 1) + " to the response.");
             var journey = foundJourneys.get(i);
             journey.setSailorId(journey.getSailor().getId());
+            journey.calculateDuration();
             journeys.add(journey);
         }
 
@@ -72,7 +73,7 @@ public class JourneyService {
             Set<LocationData> locationDataSet = new HashSet<>();
             var locationData = LocationData.createRandomLocationData();
             locationDataSet.add(locationData);
-            Journey journey = Journey.builder().client(clientAccount.get()).sailor(sailorAccount.get()).dateBooking(new Date()).dateArrival(new Date()).destination("Destination Name").source("Source Name").build();
+            Journey journey = Journey.builder().client(clientAccount.get()).sailor(sailorAccount.get()).dateBooking(new Date()).dateArrival(new Date()).destination("Destination Name").source("Source Name").payment("10 EUR").duration("10 minutes").build();
             locationData.setJourney(journey);
             journey.setLocationDataList(locationDataSet);
             journeyRepository.save(journey);
