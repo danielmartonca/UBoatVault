@@ -46,7 +46,7 @@ public class JourneyService {
             return null;
         }
 
-        List<Journey> foundJourneys = journeyRepository.findAllByClient_IdOrderByDateBookingAsc(foundAccount.getId());
+        List<Journey> foundJourneys = journeyRepository.findAllByClient_IdAndDateArrivalNotNullOrderByDateBookingAsc(foundAccount.getId());
         if (foundJourneys == null || foundJourneys.isEmpty()) {
             log.warn("User has no journeys.");
             return journeys;
@@ -55,7 +55,9 @@ public class JourneyService {
         log.info("Found journeys for the user.");
         for (int i = 0; i < mostRecentRidesRequest.getNrOfRides() && i < foundJourneys.size(); i++) {
             log.info("Added journey " + (i + 1) + " to the response.");
-            journeys.add(foundJourneys.get(i));
+            var journey = foundJourneys.get(i);
+            journey.setSailorId(journey.getSailor().getId());
+            journeys.add(journey);
         }
 
         return journeys;
@@ -70,7 +72,7 @@ public class JourneyService {
             Set<LocationData> locationDataSet = new HashSet<>();
             var locationData = LocationData.createRandomLocationData();
             locationDataSet.add(locationData);
-            Journey journey = Journey.builder().client(clientAccount.get()).sailor(sailorAccount.get()).dateBooking(new Date()).destination("Destination Name").source("Source Name").build();
+            Journey journey = Journey.builder().client(clientAccount.get()).sailor(sailorAccount.get()).dateBooking(new Date()).dateArrival(new Date()).destination("Destination Name").source("Source Name").build();
             locationData.setJourney(journey);
             journey.setLocationDataList(locationDataSet);
             journeyRepository.save(journey);

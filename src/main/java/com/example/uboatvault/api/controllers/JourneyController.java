@@ -1,7 +1,5 @@
 package com.example.uboatvault.api.controllers;
 
-import com.example.uboatvault.api.model.persistence.account.Account;
-import com.example.uboatvault.api.model.persistence.location.Journey;
 import com.example.uboatvault.api.model.requests.MostRecentRidesRequest;
 import com.example.uboatvault.api.model.response.MostRecentRidesResponse;
 import com.example.uboatvault.api.services.JourneyService;

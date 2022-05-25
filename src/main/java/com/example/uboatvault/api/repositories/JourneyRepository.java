@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface JourneyRepository extends JpaRepository<Journey, Long> {
-    List<Journey> findAllByClient_IdOrderByDateBookingAsc(Long client_id);
+    List<Journey> findAllByClient_IdAndDateArrivalNotNullOrderByDateBookingAsc(Long client_id);
 }

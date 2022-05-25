@@ -44,6 +44,20 @@ public class Journey {
 
     @Getter
     @Setter
+    private String payment;
+
+    @Transient
+    @Getter
+    @Setter
+    private String duration;
+
+    @Transient
+    @Getter
+    @Setter
+    private Long sailorId;
+
+    @Getter
+    @Setter
     @OneToMany(mappedBy = "journey", cascade = {CascadeType.ALL})
     private Set<LocationData> locationDataList;
 
