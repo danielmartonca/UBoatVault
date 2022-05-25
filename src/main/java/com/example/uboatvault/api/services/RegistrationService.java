@@ -1,7 +1,7 @@
 package com.example.uboatvault.api.services;
 
 import com.example.uboatvault.api.controllers.RegistrationController;
-import com.example.uboatvault.api.model.persistence.*;
+import com.example.uboatvault.api.model.persistence.account.*;
 import com.example.uboatvault.api.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

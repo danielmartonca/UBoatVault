@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.model.persistence;
+package com.example.uboatvault.api.model.persistence.account;
 
 import com.example.uboatvault.api.model.enums.UserType;
 import com.fasterxml.jackson.annotation.JsonIgnore;

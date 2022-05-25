@@ -1,7 +1,7 @@
 package com.example.uboatvault.api.model.requests;
 
-import com.example.uboatvault.api.model.persistence.Account;
-import com.example.uboatvault.api.model.persistence.CreditCard;
+import com.example.uboatvault.api.model.persistence.account.Account;
+import com.example.uboatvault.api.model.persistence.account.CreditCard;
 import lombok.Getter;
 import lombok.Setter;
 

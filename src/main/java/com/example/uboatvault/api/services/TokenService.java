@@ -1,7 +1,7 @@
 package com.example.uboatvault.api.services;
 
-import com.example.uboatvault.api.model.persistence.Account;
-import com.example.uboatvault.api.model.persistence.Token;
+import com.example.uboatvault.api.model.persistence.account.Account;
+import com.example.uboatvault.api.model.persistence.account.Token;
 import com.example.uboatvault.api.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

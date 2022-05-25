@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.model.persistence;
+package com.example.uboatvault.api.model.persistence.account;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 

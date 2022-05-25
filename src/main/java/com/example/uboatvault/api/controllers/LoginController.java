@@ -1,6 +1,6 @@
 package com.example.uboatvault.api.controllers;
 
-import com.example.uboatvault.api.model.persistence.Account;
+import com.example.uboatvault.api.model.persistence.account.Account;
 import com.example.uboatvault.api.model.response.LoginResponse;
 import com.example.uboatvault.api.services.*;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;

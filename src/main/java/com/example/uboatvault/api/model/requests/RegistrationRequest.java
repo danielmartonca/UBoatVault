@@ -1,6 +1,6 @@
 package com.example.uboatvault.api.model.requests;
 
-import com.example.uboatvault.api.model.persistence.RegistrationData;
+import com.example.uboatvault.api.model.persistence.account.RegistrationData;
 import com.example.uboatvault.api.services.EncryptionService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
@@ -13,11 +13,6 @@ import javax.persistence.Transient;
 @AllArgsConstructor
 @Getter
 public class RegistrationRequest {
-    @Autowired
-    @Transient
-    @JsonIgnore
-    EncryptionService encryptionService;
-
     @Setter
     @JsonIgnore
     private String token;
@@ -27,10 +22,6 @@ public class RegistrationRequest {
     @Setter
     private RegistrationData registrationData;
 
-    private void decryptCredentials() {
-        this.username = encryptionService.decryptString(this.username);
-        this.password = encryptionService.decryptString(this.password);
-    }
 
     @Override
     public String toString() {
