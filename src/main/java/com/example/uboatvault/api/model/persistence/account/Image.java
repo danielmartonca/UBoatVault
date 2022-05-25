@@ -24,13 +24,13 @@ public class Image {
     @Getter
     @Setter
     @Lob
-    @Basic(fetch = FetchType.LAZY)
+    @Basic(fetch = FetchType.EAGER)
     private byte[] bytes;
 
     @JsonIgnore
     @Getter
     @Setter
-    @OneToOne(mappedBy = "image", orphanRemoval = true)
+    @OneToOne(mappedBy = "image")
     private AccountDetails accountDetails;
 
     public Image(byte[] bytes) {

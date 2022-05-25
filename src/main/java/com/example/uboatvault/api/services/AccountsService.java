@@ -76,8 +76,9 @@ public class AccountsService {
             }
 
         if (foundAccountDetails.getImage() == null && requestAccountDetails.getImage() != null) {
-            foundAccountDetails.setImage(requestAccountDetails.getImage());
-            foundAccountDetails.getImage().setAccountDetails(foundAccountDetails);
+            var newImage = new Image(requestAccountDetails.getImage().getBytes());
+            newImage.setAccountDetails(foundAccountDetails);
+            foundAccountDetails.setImage(newImage);
             hasChanged = true;
         } else if (foundAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes() != null)
             if (requestAccountDetails.getImage().getBytes().length != 0) {
@@ -139,9 +140,7 @@ public class AccountsService {
             var imageBytes = imagesService.getDefaultProfilePicture();
             var image = new Image(imageBytes);
 
-            var returnedAccountDetails = new AccountDetails(accountDetails);
-            returnedAccountDetails.setImage(image);
-            return returnedAccountDetails;
+            return new AccountDetails(accountDetails.getFullName(), accountDetails.getEmail(), image);
         }
 
         log.info("Retrieved account details successfully.");

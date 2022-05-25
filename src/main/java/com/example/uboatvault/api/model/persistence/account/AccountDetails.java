@@ -39,13 +39,13 @@ public class AccountDetails {
 
     @Getter
     @Setter
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "image_id")
     private Image image;
 
-    public AccountDetails(AccountDetails accountDetails) {
-        this.fullName = accountDetails.fullName;
-        this.email = accountDetails.email;
-        this.image = accountDetails.image;
+    public AccountDetails(String fullName, String email, Image image) {
+        this.fullName = fullName;
+        this.email = email;
+        this.image = image;
     }
 }
