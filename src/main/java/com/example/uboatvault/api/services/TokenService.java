@@ -55,9 +55,10 @@ public class TokenService {
 
     @Transactional
     public void updateToken(Account account) {
-        //detach old token from parent
+        //detach old entity
         Token oldToken = account.getToken();
         oldToken.setAccount(null);
+        account.setToken(null);
 
         //generate new token
         String token = generateTokenString();
@@ -68,13 +69,14 @@ public class TokenService {
         log.info("Generated new token for account.");
     }
 
+    @Transactional
     public String generateTokenString() {
         String token;
         do {
             UUID uuid = UUID.randomUUID();
             token = uuid.toString();
-            if (tokensRepository.findFirstByTokenValue(token) != null) token = "";
-            if (pendingTokenRepository.findFirstByTokenValue(token) != null) token = "";
+//            if (tokensRepository.findFirstByTokenValue(token) != null) token = "";
+//            if (pendingTokenRepository.findFirstByTokenValue(token) != null) token = "";
         } while (token.equals(""));
         return token;
     }

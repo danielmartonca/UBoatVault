@@ -37,7 +37,7 @@ public class Token {
     @JsonIgnore
     @Getter
     @Setter
-    @OneToOne(cascade = CascadeType.REMOVE, mappedBy = "token",orphanRemoval = true)
+    @OneToOne(mappedBy = "token")
     private Account account;
 
     public Token(String tokenValue) {
