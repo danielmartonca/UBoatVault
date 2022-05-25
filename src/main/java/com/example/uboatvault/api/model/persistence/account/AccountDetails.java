@@ -36,11 +36,9 @@ public class AccountDetails {
     @OneToOne(mappedBy = "accountDetails", orphanRemoval = true)
     private Account account;
 
-
     @Getter
     @Setter
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "image_id")
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "accountDetails")
     private Image image;
 
     public AccountDetails(String fullName, String email, Image image) {

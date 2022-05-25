@@ -30,7 +30,8 @@ public class Image {
     @JsonIgnore
     @Getter
     @Setter
-    @OneToOne(mappedBy = "image")
+    @OneToOne()
+    @JoinColumn(name = "account_details_id")
     private AccountDetails accountDetails;
 
     public Image(byte[] bytes) {

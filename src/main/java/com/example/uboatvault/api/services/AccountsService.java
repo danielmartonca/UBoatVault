@@ -79,7 +79,7 @@ public class AccountsService {
             var newImage = new Image(requestAccountDetails.getImage().getBytes());
             newImage.setAccountDetails(foundAccountDetails);
             foundAccountDetails.setImage(newImage);
-            hasChanged = true;
+            imagesRepository.save(newImage);
         } else if (foundAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes() != null)
             if (requestAccountDetails.getImage().getBytes().length != 0) {
                 log.info("Updating profile picture.");
@@ -88,11 +88,12 @@ public class AccountsService {
                 imagesRepository.deleteById(image.getId());
                 var newImage = requestAccountDetails.getImage();
                 foundAccountDetails.setImage(newImage);
-                hasChanged = true;
+                newImage.setAccountDetails(foundAccountDetails);
+                imagesRepository.save(newImage);
             }
 
         if (hasChanged) {
-            accountDetailsRepository.saveAndFlush(foundAccountDetails);
+            accountDetailsRepository.save(foundAccountDetails);
             imagesRepository.deleteAllUnreferencedImages();
             log.info("Updated database account details.");
         } else log.info("Account details were identical.");
@@ -127,7 +128,6 @@ public class AccountsService {
             log.info("Request account or token are invalid.");
             return null;
         }
-
         var accountDetails = foundAccount.getAccountDetails();
         if (accountDetails == null) {
             log.warn("Account details is null. User hasn't setup any account details.");
@@ -135,12 +135,17 @@ public class AccountsService {
             foundAccount.setAccountDetails(accountDetails);
             accountsRepository.save(foundAccount);
         }
-        if (accountDetails.getImage() == null) {
+        var img=imagesRepository.findByAccountDetailsId(accountDetails.getId());
+        if (img == null) {
             log.warn("Account details image is null. Setting up default profile picture.");
             var imageBytes = imagesService.getDefaultProfilePicture();
             var image = new Image(imageBytes);
 
             return new AccountDetails(accountDetails.getFullName(), accountDetails.getEmail(), image);
+        }
+        else {
+            accountDetails.setImage(img);
+            accountDetailsRepository.save(accountDetails);
         }
 
         log.info("Retrieved account details successfully.");

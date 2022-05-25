@@ -10,4 +10,6 @@ public interface ImagesRepository extends JpaRepository<Image, Long> {
     @Modifying
     @Query("DELETE FROM Image WHERE id not in (SELECT image from AccountDetails)")
     void deleteAllUnreferencedImages();
+
+    Image findByAccountDetailsId(Long accountDetailsId);
 }
