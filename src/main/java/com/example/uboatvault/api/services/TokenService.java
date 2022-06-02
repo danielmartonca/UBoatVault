@@ -75,8 +75,8 @@ public class TokenService {
         do {
             UUID uuid = UUID.randomUUID();
             token = uuid.toString();
-//            if (tokensRepository.findFirstByTokenValue(token) != null) token = "";
-//            if (pendingTokenRepository.findFirstByTokenValue(token) != null) token = "";
+            if (tokensRepository.findFirstByTokenValue(token) != null) token = "";
+            if (pendingTokenRepository.findFirstByTokenValue(token) != null) token = "";
         } while (token.equals(""));
         return token;
     }
