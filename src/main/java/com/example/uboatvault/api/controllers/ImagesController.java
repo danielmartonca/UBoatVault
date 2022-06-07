@@ -5,7 +5,9 @@ import com.example.uboatvault.api.utility.logging.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,7 +23,22 @@ public class ImagesController {
     @GetMapping(value = "/images/getDefaultProfilePicture", produces = MediaType.IMAGE_PNG_VALUE)
     public @ResponseBody
     byte[] getDefaultProfilePicture() {
-        log.info(LoggingUtils.logRequest(HttpMethod.GET, "/api/getDefaultProfilePicture"));
+        log.info(LoggingUtils.logRequest(HttpMethod.GET, "/images/getDefaultProfilePicture"));
         return imagesService.getDefaultProfilePicture();
+    }
+
+    @GetMapping(value = "/images/getSailorProfilePicture", produces = MediaType.IMAGE_PNG_VALUE)
+    public @ResponseBody
+    ResponseEntity<byte[]> getSailorProfilePicture(@CookieValue(name = "token") String token, @RequestParam(name = "sailorId") Long sailorId) {
+        log.info(LoggingUtils.logRequest(HttpMethod.GET, "/images/getSailorProfilePicture?sailorId=" + sailorId));
+        var bytes = imagesService.getSailorProfilePicture(token, sailorId);
+
+        if (bytes == null) {
+            log.info(LoggingUtils.logResponse(HttpMethod.GET, "/images/getSailorProfilePicture?sailorId=" + sailorId));
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        }
+
+        log.info(LoggingUtils.logResponse(HttpMethod.GET, "/images/getSailorProfilePicture?sailorId=" + sailorId, " [ bytes... ]"));
+        return new ResponseEntity<>(bytes, HttpStatus.OK);
     }
 }
