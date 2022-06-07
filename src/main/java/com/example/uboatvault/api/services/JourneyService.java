@@ -22,14 +22,12 @@ public class JourneyService {
 
     private final AccountsRepository accountsRepository;
     private final JourneyRepository journeyRepository;
-    private final LocationDataRepository locationDataRepository;
 
     @Autowired
     public JourneyService(AccountsService accountsService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, LocationDataRepository locationDataRepository) {
         this.accountsService = accountsService;
         this.accountsRepository = accountsRepository;
         this.journeyRepository = journeyRepository;
-        this.locationDataRepository = locationDataRepository;
     }
 
     public List<Journey> getMostRecentRides(String token, MostRecentRidesRequest mostRecentRidesRequest) {
@@ -73,7 +71,7 @@ public class JourneyService {
             Set<LocationData> locationDataSet = new HashSet<>();
             var locationData = LocationData.createRandomLocationData();
             locationDataSet.add(locationData);
-            Journey journey = Journey.builder().client(clientAccount.get()).sailor(sailorAccount.get()).dateBooking(new Date()).dateArrival(new Date()).destination("Destination Name").source("Source Name").payment("10 EUR").duration("10 minutes").build();
+            Journey journey = Journey.builder().client(clientAccount.get()).sailor(sailorAccount.get()).dateBooking(new Date()).dateArrival(new Date()).destination("Milan").source("Source Name").payment("10 EUR").duration("10 minutes").build();
             locationData.setJourney(journey);
             journey.setLocationDataList(locationDataSet);
             journeyRepository.save(journey);
