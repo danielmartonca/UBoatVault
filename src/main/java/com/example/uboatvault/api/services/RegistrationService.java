@@ -28,7 +28,7 @@ public class RegistrationService {
 
     private final Pattern phoneNumberPattern = Pattern.compile("^\\s*(?:\\+?(\\d{1,3}))?[-. (]*(\\d{3})[-. )]*(\\d{3})[-. ]*(\\d{4})(?: *x(\\d+))?\\s*$");
     private final Pattern usernamePattern = Pattern.compile("^[a-zA-z][a-zA-z0-9]*$");
-    private final Pattern passwordPattern = Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$");
+//    private final Pattern passwordPattern = Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$");
 
     @Autowired
     public RegistrationService(TokenService tokenService, RegistrationDataRepository registrationDataRepository, SimCardRepository simCardRepository, PendingTokenRepository pendingTokenRepository, PendingAccountsRepository pendingAccountsRepository, AccountsRepository accountsRepository, PhoneNumbersRepository phoneNumbersRepository, TokensRepository tokensRepository) {
@@ -41,7 +41,6 @@ public class RegistrationService {
         this.phoneNumbersRepository = phoneNumbersRepository;
         this.tokensRepository = tokensRepository;
     }
-
 
     private boolean isAccountAlreadyExisting(Account account) {
         Account foundAccount;
@@ -87,7 +86,6 @@ public class RegistrationService {
         if (foundRegistrationData != null)
             log.warn("Registration info deviceInfo duplicate in database! User has created new account using the same phone.");
     }
-
 
     /**
      * This method searches if any part of the registrationData exists in the database and returns its token if found (or generates a new one if it's older than 30 minutes)
@@ -186,11 +184,6 @@ public class RegistrationService {
 
     public boolean phoneNumberMatchesPattern(String phoneNumber) {
         Matcher m = phoneNumberPattern.matcher(phoneNumber);
-        return m.matches();
-    }
-
-    public boolean passwordMatchesPattern(String password) {
-        Matcher m = passwordPattern.matcher(password);
         return m.matches();
     }
 

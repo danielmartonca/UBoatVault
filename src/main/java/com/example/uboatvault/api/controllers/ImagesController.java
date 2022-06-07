@@ -35,7 +35,7 @@ public class ImagesController {
 
         if (bytes == null) {
             log.info(LoggingUtils.logResponse(HttpMethod.GET, "/images/getSailorProfilePicture?sailorId=" + sailorId));
-            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
 
         log.info(LoggingUtils.logResponse(HttpMethod.GET, "/images/getSailorProfilePicture?sailorId=" + sailorId, " [ bytes... ]"));

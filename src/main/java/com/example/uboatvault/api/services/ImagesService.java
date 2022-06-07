@@ -7,6 +7,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -18,14 +19,12 @@ import java.io.InputStream;
 public class ImagesService {
     private final Logger log = LoggerFactory.getLogger(ImagesService.class);
 
-    private final TokensRepository tokensRepository;
-    private final AccountsRepository accountsRepository;
+    private final AccountsService accountsService;
 
 
     @Autowired
-    public ImagesService(TokensRepository tokensRepository, AccountsRepository accountsRepository) {
-        this.tokensRepository = tokensRepository;
-        this.accountsRepository = accountsRepository;
+    public ImagesService(@Lazy AccountsService accountsService) {
+        this.accountsService = accountsService;
     }
 
     public byte[] getDefaultProfilePicture() {
@@ -43,43 +42,23 @@ public class ImagesService {
     }
 
     public byte[] getSailorProfilePicture(String token, String sailorId) {
-        var foundToken = tokensRepository.findFirstByTokenValue(token);
-        if (foundToken == null) {
-            log.warn("Token not existing in the database.");
+        var foundAccount = accountsService.getSailorAccountById(token, sailorId);
+        if (foundAccount == null)
             return null;
+
+        var accountDetails = foundAccount.getAccountDetails();
+        if (accountDetails == null) {
+            log.info("Account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
+            return new byte[0];
+        }
+        var image = accountDetails.getImage();
+        if (image == null || image.getBytes() == null) {
+            log.info("Image of account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
+            return new byte[0];
         }
 
-        long sailorIdLong;
-        try {
-            sailorIdLong = Long.parseLong(sailorId);
-        } catch (Exception e) {
-            log.error("Exception occurred while transforming sailorId String to Long", e);
-            return null;
-        }
+        log.info("Found profile picture for sailor id " + sailorId);
+        return image.getBytes();
 
-        var foundAccountOptional = accountsRepository.findById(sailorIdLong);
-        if (foundAccountOptional.isPresent()) {
-            var foundAccount = foundAccountOptional.get();
-            if (foundAccount.getType() == UserType.CLIENT) {
-                log.warn("Account was found by id " + sailorId + " but the account is matching a client account, not a sailor.");
-                return null;
-            }
-
-            var accountDetails = foundAccount.getAccountDetails();
-            if (accountDetails == null) {
-                log.info("Account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
-                return new byte[0];
-            }
-            var image = accountDetails.getImage();
-            if (image == null || image.getBytes() == null) {
-                log.info("Image of account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
-                return new byte[0];
-            }
-
-            log.info("Found profile picture for sailor id " + sailorId);
-            return image.getBytes();
-        }
-        log.warn("No account was found by id " + sailorId);
-        return null;
     }
 }

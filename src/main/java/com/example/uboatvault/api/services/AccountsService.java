@@ -1,5 +1,6 @@
 package com.example.uboatvault.api.services;
 
+import com.example.uboatvault.api.model.enums.UserType;
 import com.example.uboatvault.api.model.persistence.account.Account;
 import com.example.uboatvault.api.model.persistence.account.AccountDetails;
 import com.example.uboatvault.api.model.persistence.account.CreditCard;
@@ -8,6 +9,7 @@ import com.example.uboatvault.api.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +31,7 @@ public class AccountsService {
     private final CreditCardsRepository creditCardsRepository;
 
     @Autowired
-    public AccountsService(ImagesService imagesService, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository) {
+    public AccountsService(@Lazy ImagesService imagesService, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository) {
         this.imagesService = imagesService;
         this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
@@ -135,15 +137,14 @@ public class AccountsService {
             foundAccount.setAccountDetails(accountDetails);
             accountsRepository.save(foundAccount);
         }
-        var img=imagesRepository.findByAccountDetailsId(accountDetails.getId());
+        var img = imagesRepository.findByAccountDetailsId(accountDetails.getId());
         if (img == null) {
             log.warn("Account details image is null. Setting up default profile picture.");
             var imageBytes = imagesService.getDefaultProfilePicture();
             var image = new Image(imageBytes);
 
             return new AccountDetails(accountDetails.getFullName(), accountDetails.getEmail(), image);
-        }
-        else {
+        } else {
             accountDetails.setImage(img);
             accountDetailsRepository.save(accountDetails);
         }
@@ -257,5 +258,55 @@ public class AccountsService {
 
         log.warn("Couldn't find the request credit card belonging to the given account.");
         return false;
+    }
+
+    /**
+     * Checks if token exists in the database and if a sailor account with id = sailorId exists
+     *
+     * @param token    token from cookies
+     * @param sailorId the id of the account to be retrieved in the database
+     * @return the account entity or null if token/sailor id are not existing in the database or the account is not corresponding to an sailor account
+     */
+    public Account getSailorAccountById(String token, String sailorId) {
+        var foundToken = tokensRepository.findFirstByTokenValue(token);
+        if (foundToken == null) {
+            log.warn("Token not existing in the database.");
+            return null;
+        }
+
+        long sailorIdLong;
+        try {
+            sailorIdLong = Long.parseLong(sailorId);
+        } catch (Exception e) {
+            log.error("Exception occurred while transforming sailorId String to Long", e);
+            return null;
+        }
+        var foundAccountOptional = accountsRepository.findById(sailorIdLong);
+
+        if (foundAccountOptional.isPresent()) {
+            var foundAccount = foundAccountOptional.get();
+            if (foundAccount.getType() == UserType.CLIENT) {
+                log.warn("Account was found by id " + sailorId + " but the account is matching a client account, not a sailor.");
+                return null;
+            }
+            return foundAccountOptional.get();
+        }
+
+        log.warn("No account was found by id " + sailorId);
+        return null;
+    }
+
+    public String getSailorName(String token, String sailorId) {
+        var foundAccount = getSailorAccountById(token, sailorId);
+        if (foundAccount == null) return null;
+
+        var accountDetails = foundAccount.getAccountDetails();
+        if (accountDetails == null || accountDetails.getFullName() == null || accountDetails.getFullName().isEmpty()) {
+            log.warn("Account details is null. Sailor does not have a username set yet. Returning username from Account.");
+            return foundAccount.getUsername();
+        }
+
+        log.info("Found username for sailor id " + sailorId + ": " + accountDetails.getFullName());
+        return accountDetails.getFullName();
     }
 }

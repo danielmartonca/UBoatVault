@@ -52,9 +52,7 @@ public class AccountsController {
     }
 
     @GetMapping(value = "/api/checkPhoneNumber")
-    public ResponseEntity<Boolean> checkPhoneNumber(@RequestParam String phoneNumber,
-                                                    @RequestParam String dialCode,
-                                                    @RequestParam String isoCode) {
+    public ResponseEntity<Boolean> checkPhoneNumber(@RequestParam String phoneNumber, @RequestParam String dialCode, @RequestParam String isoCode) {
         log.info(LoggingUtils.logRequest(HttpMethod.GET, "/api/checkPhoneNumber?phoneNumber='" + phoneNumber + "';" + "dialCode='" + dialCode + "';isoCode='" + isoCode + "'"));
 
         if (!registrationService.phoneNumberMatchesPattern(phoneNumber) || dialCode.length() > 5 || isoCode.length() >= 3) {
@@ -72,8 +70,7 @@ public class AccountsController {
     }
 
     @PostMapping(value = "/api/getMissingAccountInformation")
-    public ResponseEntity<Account> getMissingAccountInformation(@CookieValue(name = "token") String token,
-                                                                @RequestBody Account requestAccount) {
+    public ResponseEntity<Account> getMissingAccountInformation(@CookieValue(name = "token") String token, @RequestBody Account requestAccount) {
         log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getMissingAccountInformation", requestAccount));
 
         Account account = accountsService.getAccountByTokenAndCredentials(token, requestAccount);
@@ -91,8 +88,7 @@ public class AccountsController {
     }
 
     @PostMapping(value = "/api/getAccountDetails")
-    public ResponseEntity<AccountDetails> getAccountDetails(@CookieValue(name = "token") String token,
-                                                            @RequestBody Account requestAccount) {
+    public ResponseEntity<AccountDetails> getAccountDetails(@CookieValue(name = "token") String token, @RequestBody Account requestAccount) {
         log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getAccountDetails", requestAccount));
 
         AccountDetails accountDetails = accountsService.getAccountDetails(token, requestAccount);
@@ -109,8 +105,7 @@ public class AccountsController {
     }
 
     @PostMapping(value = "/api/updateAccountDetails")
-    public ResponseEntity<AccountDetails> updateAccountDetails(@CookieValue(name = "token") String token,
-                                                               @RequestBody Account requestAccount) {
+    public ResponseEntity<AccountDetails> updateAccountDetails(@CookieValue(name = "token") String token, @RequestBody Account requestAccount) {
 
         log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/updateAccountDetails", requestAccount));
 
@@ -128,8 +123,7 @@ public class AccountsController {
     }
 
     @PostMapping(value = "/api/getCreditCards")
-    public ResponseEntity<CreditCardResponse> getCreditCards(@CookieValue(name = "token") String token,
-                                                             @RequestBody Account account) {
+    public ResponseEntity<CreditCardResponse> getCreditCards(@CookieValue(name = "token") String token, @RequestBody Account account) {
 
         log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getCreditCards", account));
         Set<CreditCard> creditCards = accountsService.getCreditCards(token, account);
@@ -144,8 +138,7 @@ public class AccountsController {
     }
 
     @PutMapping(value = "/api/addCreditCard")
-    public ResponseEntity<Boolean> addCreditCard(@CookieValue(name = "token") String token,
-                                                 @RequestBody CreditCardRequest creditCardRequest) {
+    public ResponseEntity<Boolean> addCreditCard(@CookieValue(name = "token") String token, @RequestBody CreditCardRequest creditCardRequest) {
 
         log.info(LoggingUtils.logRequest(HttpMethod.PUT, "/api/addCreditCard", creditCardRequest));
         Boolean wasAdded = accountsService.addCreditCard(token, creditCardRequest.getAccount(), creditCardRequest.getCard());
@@ -166,8 +159,7 @@ public class AccountsController {
     }
 
     @DeleteMapping(value = "/api/deleteCreditCard")
-    public ResponseEntity<Boolean> deleteCreditCard(@CookieValue(name = "token") String token,
-                                                    @RequestBody CreditCardRequest creditCardRequest) {
+    public ResponseEntity<Boolean> deleteCreditCard(@CookieValue(name = "token") String token, @RequestBody CreditCardRequest creditCardRequest) {
 
         log.info(LoggingUtils.logRequest(HttpMethod.DELETE, "/api/deleteCreditCard", creditCardRequest));
         Boolean wasDeleted = accountsService.deleteCreditCard(token, creditCardRequest.getAccount(), creditCardRequest.getCard());
@@ -179,12 +171,25 @@ public class AccountsController {
 
         if (wasDeleted) {
             log.info("Request credit card was deleted from the account. Returning true.");
-            return new ResponseEntity<>(true, HttpStatus.OK
-            );
+            return new ResponseEntity<>(true, HttpStatus.OK);
         } else {
             log.warn("Request credit card was NOT deleted from the account. Returning false.");
             return new ResponseEntity<>(false, HttpStatus.OK);
         }
 
+    }
+
+    @GetMapping(value = "/api/getSailorName")
+    public ResponseEntity<String> getSailorName(@CookieValue(name = "token") String token, @RequestParam String sailorId) {
+        log.info(LoggingUtils.logRequest(HttpMethod.GET, "/api/getSailorName/sailorId='" + sailorId + "'"));
+
+        var sailorName = accountsService.getSailorName(token, sailorId);
+        if (sailorName == null) {
+            log.info(LoggingUtils.logResponse(HttpMethod.GET, "/api/getSailorName/sailorId='" + sailorId + "'"), "no body");
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+
+        log.info(LoggingUtils.logResponse(HttpMethod.GET, "/api/getSailorName/sailorId='" + sailorId + "'"), sailorName);
+        return new ResponseEntity<>(sailorName, HttpStatus.OK);
     }
 }
