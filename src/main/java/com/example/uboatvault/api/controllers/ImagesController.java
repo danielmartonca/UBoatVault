@@ -29,7 +29,7 @@ public class ImagesController {
 
     @GetMapping(value = "/images/getSailorProfilePicture", produces = MediaType.IMAGE_PNG_VALUE)
     public @ResponseBody
-    ResponseEntity<byte[]> getSailorProfilePicture(@CookieValue(name = "token") String token, @RequestParam(name = "sailorId") Long sailorId) {
+    ResponseEntity<byte[]> getSailorProfilePicture(@CookieValue(name = "token") String token, @RequestParam(name = "sailorId") String sailorId) {
         log.info(LoggingUtils.logRequest(HttpMethod.GET, "/images/getSailorProfilePicture?sailorId=" + sailorId));
         var bytes = imagesService.getSailorProfilePicture(token, sailorId);
 

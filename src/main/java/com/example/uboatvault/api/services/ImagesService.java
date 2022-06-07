@@ -42,14 +42,22 @@ public class ImagesService {
         return null;
     }
 
-    public byte[] getSailorProfilePicture(String token, Long sailorId) {
+    public byte[] getSailorProfilePicture(String token, String sailorId) {
         var foundToken = tokensRepository.findFirstByTokenValue(token);
         if (foundToken == null) {
             log.warn("Token not existing in the database.");
             return null;
         }
 
-        var foundAccountOptional = accountsRepository.findById(sailorId);
+        long sailorIdLong;
+        try {
+            sailorIdLong = Long.parseLong(sailorId);
+        } catch (Exception e) {
+            log.error("Exception occurred while transforming sailorId String to Long", e);
+            return null;
+        }
+
+        var foundAccountOptional = accountsRepository.findById(sailorIdLong);
         if (foundAccountOptional.isPresent()) {
             var foundAccount = foundAccountOptional.get();
             if (foundAccount.getType() == UserType.CLIENT) {
@@ -59,13 +67,13 @@ public class ImagesService {
 
             var accountDetails = foundAccount.getAccountDetails();
             if (accountDetails == null) {
-                log.info("Account details is null. Sailor does not have a profile picture set yet. Returning default profile picture.");
-                return getDefaultProfilePicture();
+                log.info("Account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
+                return new byte[0];
             }
             var image = accountDetails.getImage();
             if (image == null || image.getBytes() == null) {
-                log.info("Image of account details is null. Sailor does not have a profile picture set yet. Returning default profile picture.");
-                return getDefaultProfilePicture();
+                log.info("Image of account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
+                return new byte[0];
             }
 
             log.info("Found profile picture for sailor id " + sailorId);
