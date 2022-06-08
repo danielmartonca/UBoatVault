@@ -38,7 +38,7 @@ public class LocationData {
 
     @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "journey_id", nullable = false)
+    @JoinColumn(name = "journey_id")
     private Journey journey;
 
     public static LocationData createRandomLocationData() {

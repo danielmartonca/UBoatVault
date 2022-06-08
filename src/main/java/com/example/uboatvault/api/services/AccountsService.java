@@ -322,25 +322,28 @@ public class AccountsService {
                 log.info("Request account or token are invalid.");
                 return null;
             }
+            log.info("Token and credentials match.");
 
             if (foundAccount.getType() == UserType.CLIENT) {
                 log.warn("Account and token match but account is not a sailor account.");
                 return null;
             }
+            log.info("Account is a sailor account.");
 
             var sailor = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
             if (sailor == null) {
                 log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
                 return null;
             }
+            log.info("Sailor account found with the account id found earlier.");
 
             sailor.setLocationData(locationData);
             sailor.setLastUpdate(new Date());
             activeSailorsRepository.save(sailor);
-
+            log.info("Updated active sailor location data via pulse. Returning true");
             return true;
         } catch (Exception e) {
-            log.error("Exception occurred during pulse workflow.", e);
+            log.error("Exception occurred during pulse workflow. Returning false", e);
             return false;
         }
     }

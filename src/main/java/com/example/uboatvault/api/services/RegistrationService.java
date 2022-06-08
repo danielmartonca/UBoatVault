@@ -1,7 +1,10 @@
 package com.example.uboatvault.api.services;
 
 import com.example.uboatvault.api.controllers.RegistrationController;
+import com.example.uboatvault.api.model.enums.UserType;
 import com.example.uboatvault.api.model.persistence.account.*;
+import com.example.uboatvault.api.model.persistence.location.ActiveSailor;
+import com.example.uboatvault.api.model.persistence.location.Boat;
 import com.example.uboatvault.api.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +28,14 @@ public class RegistrationService {
     private final AccountsRepository accountsRepository;
     private final PhoneNumbersRepository phoneNumbersRepository;
     private final TokensRepository tokensRepository;
+    private final ActiveSailorsRepository activeSailorsRepository;
 
     private final Pattern phoneNumberPattern = Pattern.compile("^\\s*(?:\\+?(\\d{1,3}))?[-. (]*(\\d{3})[-. )]*(\\d{3})[-. ]*(\\d{4})(?: *x(\\d+))?\\s*$");
     private final Pattern usernamePattern = Pattern.compile("^[a-zA-z][a-zA-z0-9]*$");
 //    private final Pattern passwordPattern = Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$");
 
     @Autowired
-    public RegistrationService(TokenService tokenService, RegistrationDataRepository registrationDataRepository, SimCardRepository simCardRepository, PendingTokenRepository pendingTokenRepository, PendingAccountsRepository pendingAccountsRepository, AccountsRepository accountsRepository, PhoneNumbersRepository phoneNumbersRepository, TokensRepository tokensRepository) {
+    public RegistrationService(TokenService tokenService, RegistrationDataRepository registrationDataRepository, SimCardRepository simCardRepository, PendingTokenRepository pendingTokenRepository, PendingAccountsRepository pendingAccountsRepository, AccountsRepository accountsRepository, PhoneNumbersRepository phoneNumbersRepository, TokensRepository tokensRepository, ActiveSailorsRepository activeSailorsRepository) {
         this.tokenService = tokenService;
         this.registrationDataRepository = registrationDataRepository;
         this.simCardRepository = simCardRepository;
@@ -40,6 +44,7 @@ public class RegistrationService {
         this.accountsRepository = accountsRepository;
         this.phoneNumbersRepository = phoneNumbersRepository;
         this.tokensRepository = tokensRepository;
+        this.activeSailorsRepository = activeSailorsRepository;
     }
 
     private boolean isAccountAlreadyExisting(Account account) {
@@ -85,6 +90,23 @@ public class RegistrationService {
         RegistrationData foundRegistrationData = registrationDataRepository.findFirstByDeviceInfo(registrationData.getDeviceInfo());
         if (foundRegistrationData != null)
             log.warn("Registration info deviceInfo duplicate in database! User has created new account using the same phone.");
+    }
+
+    private void createActiveSailorAccount(Account account) {
+        if (account.getType() == UserType.SAILOR) {
+            var boat = new Boat();
+            var activeSailor = ActiveSailor.builder()
+                    .accountId(accountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword()).getId())
+                    .boat(boat)
+                    .averageRating(0)
+                    .build();
+            boat.setSailor(activeSailor);
+            activeSailorsRepository.save(activeSailor);
+            log.info("Successfully created active sailor entity.");
+        } else {
+            log.error("Account given as parameter is not a sailor account");
+            throw new RuntimeException("Account given as parameter is not a sailor account");
+        }
     }
 
     /**
@@ -248,6 +270,9 @@ public class RegistrationService {
 
             accountsRepository.save(account);
             pendingAccountsRepository.delete(pendingAccount);
+
+            if (account.getType() == UserType.SAILOR)
+                createActiveSailorAccount(account);
 
             logIfRegistrationDataIsAlreadyInDatabase(account.getRegistrationData());
 
