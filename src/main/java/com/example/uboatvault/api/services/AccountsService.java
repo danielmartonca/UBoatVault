@@ -5,6 +5,7 @@ import com.example.uboatvault.api.model.persistence.account.Account;
 import com.example.uboatvault.api.model.persistence.account.AccountDetails;
 import com.example.uboatvault.api.model.persistence.account.CreditCard;
 import com.example.uboatvault.api.model.persistence.account.Image;
+import com.example.uboatvault.api.model.persistence.location.LocationData;
 import com.example.uboatvault.api.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,15 +31,17 @@ public class AccountsService {
     private final TokensRepository tokensRepository;
     private final ImagesRepository imagesRepository;
     private final CreditCardsRepository creditCardsRepository;
+    private final ActiveSailorsRepository activeSailorsRepository;
 
     @Autowired
-    public AccountsService(@Lazy ImagesService imagesService, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository) {
+    public AccountsService(@Lazy ImagesService imagesService, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository) {
         this.imagesService = imagesService;
         this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
         this.tokensRepository = tokensRepository;
         this.imagesRepository = imagesRepository;
         this.creditCardsRepository = creditCardsRepository;
+        this.activeSailorsRepository = activeSailorsRepository;
     }
 
     private boolean areAccountsMatching(Account requestAccount, Account foundAccount) {
@@ -308,5 +312,36 @@ public class AccountsService {
 
         log.info("Found username for sailor id " + sailorId + ": " + accountDetails.getFullName());
         return accountDetails.getFullName();
+    }
+
+    @Transactional
+    public Boolean pulse(String token, Account account, LocationData locationData) {
+        try {
+            Account foundAccount = getAccountByTokenAndCredentials(token, account);
+            if (foundAccount == null) {
+                log.info("Request account or token are invalid.");
+                return null;
+            }
+
+            if (foundAccount.getType() == UserType.CLIENT) {
+                log.warn("Account and token match but account is not a sailor account.");
+                return null;
+            }
+
+            var sailor = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
+            if (sailor == null) {
+                log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
+                return null;
+            }
+
+            sailor.setLocationData(locationData);
+            sailor.setLastUpdate(new Date());
+            activeSailorsRepository.save(sailor);
+
+            return true;
+        } catch (Exception e) {
+            log.error("Exception occurred during pulse workflow.", e);
+            return false;
+        }
     }
 }

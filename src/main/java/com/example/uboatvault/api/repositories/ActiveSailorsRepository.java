@@ -10,4 +10,6 @@ import java.util.List;
 public interface ActiveSailorsRepository extends JpaRepository<ActiveSailor, Long> {
     @Query(value = "SELECT * FROM [UBoatDB].[dbo].[tokens] WHERE (DATEDIFF(SECOND ,[token_creation_date],GETDATE())) < :seconds", nativeQuery = true)
     List<ActiveSailor> findAllFreeActiveSailors(@Param("seconds") int seconds);
+
+    ActiveSailor findFirstByAccountId(Long accountId);
 }
