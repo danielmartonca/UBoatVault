@@ -32,9 +32,10 @@ public class AccountsService {
     private final ImagesRepository imagesRepository;
     private final CreditCardsRepository creditCardsRepository;
     private final ActiveSailorsRepository activeSailorsRepository;
+    private final LocationDataRepository locationDataRepository;
 
     @Autowired
-    public AccountsService(@Lazy ImagesService imagesService, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository) {
+    public AccountsService(@Lazy ImagesService imagesService, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository, LocationDataRepository locationDataRepository) {
         this.imagesService = imagesService;
         this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
@@ -42,6 +43,7 @@ public class AccountsService {
         this.imagesRepository = imagesRepository;
         this.creditCardsRepository = creditCardsRepository;
         this.activeSailorsRepository = activeSailorsRepository;
+        this.locationDataRepository = locationDataRepository;
     }
 
     private boolean areAccountsMatching(Account requestAccount, Account foundAccount) {
@@ -337,10 +339,15 @@ public class AccountsService {
             }
             log.info("Sailor account found with the account id found earlier.");
 
+            var oldLocationData = sailor.getLocationData();
             sailor.setLocationData(locationData);
             sailor.setLastUpdate(new Date());
             activeSailorsRepository.save(sailor);
-            log.info("Updated active sailor location data via pulse. Returning true");
+            log.info("Updated active sailor location data via pulse. ");
+            locationDataRepository.deleteById(oldLocationData.getId());
+            log.info("Deleted old location data with id: " + oldLocationData.getId());
+
+            log.info("Returning true");
             return true;
         } catch (Exception e) {
             log.error("Exception occurred during pulse workflow. Returning false", e);

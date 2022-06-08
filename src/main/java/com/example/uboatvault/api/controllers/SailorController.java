@@ -36,7 +36,7 @@ public class SailorController {
             return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
 
         if (hasProcessed) {
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/pulse"));
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/pulse"),"true");
             return new ResponseEntity<>(true, HttpStatus.OK);
         }
         return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
