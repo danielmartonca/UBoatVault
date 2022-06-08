@@ -1,6 +1,8 @@
 package com.example.uboatvault.api.controllers;
 
+import com.example.uboatvault.api.model.requests.JourneyRequest;
 import com.example.uboatvault.api.model.requests.MostRecentRidesRequest;
+import com.example.uboatvault.api.model.response.JourneyResponse;
 import com.example.uboatvault.api.model.response.MostRecentRidesResponse;
 import com.example.uboatvault.api.services.JourneyService;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;
@@ -23,30 +25,7 @@ public class JourneyController {
         this.journeyService = journeyService;
     }
 
-//    //TODO
-//    @PutMapping(value = "/api/beginJourney")
-//    public ResponseEntity<Boolean> beginJourney(@CookieValue(name = "token") String token,
-//                                                @RequestBody Account account, String sailorToken) {
-//
-//        return new ResponseEntity<>(false, HttpStatus.CREATED);
-//    }
-//
-//    //TODO
-//    @PostMapping(value = "/api/pay")
-//    public ResponseEntity<Boolean> pay(@CookieValue(name = "token") String token,
-//                                       @RequestBody Account account, String sailorToken) {
-//
-//        return new ResponseEntity<>(false, HttpStatus.OK);
-//    }
-//
-//    //TODO
-//    @PostMapping(value = "/api/endJourney")
-//    public ResponseEntity<Boolean> endJourney(@CookieValue(name = "token") String token,
-//                                              @RequestBody Account account, String sailorToken) {
-//
-//        return new ResponseEntity<>(false, HttpStatus.OK);
-//    }
-
+    //TODO delete this after it's use cases are gone
     @GetMapping(value = "/api/test/addFakeJourney")
     public ResponseEntity<Boolean> addFakeJourney(@RequestParam String clientId, @RequestParam String sailorId) {
         journeyService.addFakeJourney(clientId, sailorId);
@@ -67,6 +46,21 @@ public class JourneyController {
 
         MostRecentRidesResponse response = new MostRecentRidesResponse(journeys);
         log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getMostRecentRides", response));
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/api/requestJourney")
+    public ResponseEntity<JourneyResponse> requestJourney(@CookieValue(name = "token") String token,
+                                                          @RequestBody JourneyRequest request) {
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/requestJourney", request));
+
+        var response = journeyService.requestJourney(token, request);
+        if (response == null) {
+            log.warn("User is not authorised to request a journey.");
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        }
+
+        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/requestJourney", response));
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
