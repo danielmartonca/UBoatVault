@@ -2,6 +2,7 @@ package com.example.uboatvault.api.model.other;
 
 import lombok.*;
 
+@ToString
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

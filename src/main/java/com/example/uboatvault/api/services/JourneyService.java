@@ -28,8 +28,8 @@ import java.util.*;
 public class JourneyService {
     private final Logger log = LoggerFactory.getLogger(JourneyService.class);
 
-    private final int MAX_ACTIVE_SAILORS = 10;
-    private final int MAX_ACTIVE_SECONDS = 30;
+    private final int MAX_ACTIVE_SAILORS = 5;
+    private final int MAX_ACTIVE_SECONDS = 300;
 
     private final AccountsService accountsService;
     private final GeoService geoService;
@@ -193,6 +193,8 @@ public class JourneyService {
                 ActiveSailor sailor = pair.getFirst();
                 double totalDistance = pair.getSecond();
 
+                var sailorLocationData = sailor.getLocationData();
+
                 var accountId = sailor.getAccountId().toString();
                 var rating = sailor.getAverageRating();
 
@@ -205,6 +207,7 @@ public class JourneyService {
 
                 var sailorDetails = SailorDetails.builder()
                         .sailorId(accountId)
+                        .locationData(sailorLocationData)
                         .averageRating(rating)
                         .estimatedCost(estimatedCost)
                         .estimatedCostCurrency(estimatedCostCurrency)
@@ -242,11 +245,19 @@ public class JourneyService {
         log.info("Credentials are ok. Searching for sailors...");
 
         var freeActiveSailors = activeSailorsRepository.findAllFreeActiveSailors(MAX_ACTIVE_SECONDS);
+        if (freeActiveSailors.isEmpty()) {
+            log.info("There are no free active sailors in the last " + MAX_ACTIVE_SECONDS + " seconds.");
+            return new JourneyResponse(new LinkedList<>());
+        }
+
         var totalDistancesList = findSailorsJourneyTotalDistancesList(freeActiveSailors, currentLocationData, destinationCoordinates);
         if (totalDistancesList == null) {
             log.error("Failed to search for sailors.");
             return null;
         }
+
+        totalDistancesList.sort(Comparator.comparingDouble(Pair::getSecond));
+        totalDistancesList = totalDistancesList.subList(0, Math.min(MAX_ACTIVE_SAILORS, totalDistancesList.size()));
 
         var journeyResponse = buildResponseWithData(totalDistancesList);
 

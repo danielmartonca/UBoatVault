@@ -6,6 +6,7 @@ import lombok.*;
 import javax.persistence.*;
 import java.util.Random;
 
+@ToString()
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -14,6 +15,7 @@ import java.util.Random;
 @Table(name = "LocationData")
 @Builder
 public class LocationData {
+    @ToString.Exclude
     @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
