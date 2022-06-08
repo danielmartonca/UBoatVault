@@ -196,6 +196,16 @@ public class JourneyService {
                 var sailorLocationData = sailor.getLocationData();
 
                 var accountId = sailor.getAccountId().toString();
+
+                String name = null;
+                var accountOptional = accountsRepository.findById(sailor.getAccountId());
+                if (accountOptional.isPresent()) {
+                    var account = accountOptional.get();
+                    name = account.getUsername();
+                    if (account.getAccountDetails() != null && account.getAccountDetails().getFullName() != null)
+                        name = account.getAccountDetails().getFullName();
+                }
+
                 var rating = sailor.getAverageRating();
 
                 var costPair = geoService.estimateCost(totalDistance, sailor.getBoat());
@@ -207,6 +217,7 @@ public class JourneyService {
 
                 var sailorDetails = SailorDetails.builder()
                         .sailorId(accountId)
+                        .sailorName(name)
                         .locationData(sailorLocationData)
                         .averageRating(rating)
                         .estimatedCost(estimatedCost)

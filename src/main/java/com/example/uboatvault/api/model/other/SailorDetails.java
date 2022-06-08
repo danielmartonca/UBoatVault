@@ -14,6 +14,7 @@ import java.util.Date;
 @Setter
 public class SailorDetails {
     private String sailorId;
+    private String sailorName;
     private LocationData locationData;
     private Date estimatedTimeOfArrival;
     private Timestamp estimatedDuration;
