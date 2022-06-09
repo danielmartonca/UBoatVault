@@ -5,7 +5,9 @@ import com.example.uboatvault.api.model.persistence.account.Account;
 import com.example.uboatvault.api.model.persistence.account.info.AccountDetails;
 import com.example.uboatvault.api.model.persistence.account.info.CreditCard;
 import com.example.uboatvault.api.model.persistence.account.info.Image;
-import com.example.uboatvault.api.model.persistence.sailing.LocationData;
+import com.example.uboatvault.api.model.persistence.sailing.sailor.ActiveSailor;
+import com.example.uboatvault.api.model.persistence.sailing.sailor.Boat;
+import com.example.uboatvault.api.model.persistence.sailing.sailor.BoatImage;
 import com.example.uboatvault.api.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,10 +33,11 @@ public class AccountsService {
     private final ImagesRepository imagesRepository;
     private final CreditCardsRepository creditCardsRepository;
     private final ActiveSailorsRepository activeSailorsRepository;
-    private final LocationDataRepository locationDataRepository;
+    private final BoatsRepository boatsRepository;
+    private final BoatImagesRepository boatImagesRepository;
 
     @Autowired
-    public AccountsService(@Lazy ImagesService imagesService, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository, LocationDataRepository locationDataRepository) {
+    public AccountsService(@Lazy ImagesService imagesService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository, BoatsRepository boatsRepository) {
         this.imagesService = imagesService;
         this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
@@ -43,7 +45,8 @@ public class AccountsService {
         this.imagesRepository = imagesRepository;
         this.creditCardsRepository = creditCardsRepository;
         this.activeSailorsRepository = activeSailorsRepository;
-        this.locationDataRepository = locationDataRepository;
+        this.boatsRepository = boatsRepository;
+        this.boatImagesRepository = boatImagesRepository;
     }
 
     private boolean areAccountsMatching(Account requestAccount, Account foundAccount) {
@@ -107,6 +110,99 @@ public class AccountsService {
         } else log.info("Account details were identical.");
     }
 
+    @Transactional
+    void updateDatabaseBoat(Boat foundBoat, Boat requestBoat) {
+        boolean hasChanged = false;
+
+        if (foundBoat.getType() == null && requestBoat.getType() != null) {
+            foundBoat.setType(requestBoat.getType());
+            hasChanged = true;
+        } else if (foundBoat.getType() != null && !requestBoat.getType().isEmpty())
+            if (!foundBoat.getType().equals(requestBoat.getType())) {
+                log.info("Boat type was '" + requestBoat.getType() + "'. Updated it to '" + foundBoat.getType() + "'.");
+                foundBoat.setType(requestBoat.getType());
+                hasChanged = true;
+            }
+
+        if (foundBoat.getModel() == null && requestBoat.getModel() != null) {
+            foundBoat.setModel(requestBoat.getModel());
+            hasChanged = true;
+        } else if (foundBoat.getModel() != null && !requestBoat.getModel().isEmpty())
+            if (!foundBoat.getModel().equals(requestBoat.getModel())) {
+                log.info("Boat model was '" + requestBoat.getModel() + "'. Updated it to '" + foundBoat.getModel() + "'.");
+                foundBoat.setModel(requestBoat.getModel());
+                hasChanged = true;
+            }
+
+        if (foundBoat.getLicenseNumber() == null && requestBoat.getLicenseNumber() != null) {
+            foundBoat.setLicenseNumber(requestBoat.getLicenseNumber());
+            hasChanged = true;
+        } else if (foundBoat.getLicenseNumber() != null && !requestBoat.getLicenseNumber().isEmpty())
+            if (!foundBoat.getLicenseNumber().equals(requestBoat.getLicenseNumber())) {
+                log.info("Boat license number was '" + requestBoat.getLicenseNumber() + "'. Updated it to '" + foundBoat.getLicenseNumber() + "'.");
+                foundBoat.setLicenseNumber(requestBoat.getLicenseNumber());
+                hasChanged = true;
+            }
+
+        if (foundBoat.getColor() == null && requestBoat.getColor() != null) {
+            foundBoat.setColor(requestBoat.getColor());
+            hasChanged = true;
+        } else if (foundBoat.getColor() != null && !requestBoat.getColor().isEmpty())
+            if (!foundBoat.getColor().equals(requestBoat.getColor())) {
+                log.info("Boat color was '" + requestBoat.getColor() + "'. Updated it to '" + foundBoat.getColor() + "'.");
+                foundBoat.setColor(requestBoat.getColor());
+                hasChanged = true;
+            }
+
+        if (foundBoat.getAverageSpeedMeasureUnit() == null && requestBoat.getAverageSpeedMeasureUnit() != null) {
+            foundBoat.setAverageSpeedMeasureUnit(requestBoat.getAverageSpeedMeasureUnit());
+            hasChanged = true;
+        } else if (foundBoat.getAverageSpeedMeasureUnit() != null && !requestBoat.getAverageSpeedMeasureUnit().isEmpty())
+            if (!foundBoat.getAverageSpeedMeasureUnit().equals(requestBoat.getAverageSpeedMeasureUnit())) {
+                log.info("Boat AverageSpeedMeasureUnit was '" + requestBoat.getAverageSpeedMeasureUnit() + "'. Updated it to '" + foundBoat.getAverageSpeedMeasureUnit() + "'.");
+                foundBoat.setAverageSpeedMeasureUnit(requestBoat.getAverageSpeedMeasureUnit());
+                hasChanged = true;
+            }
+
+        if (foundBoat.getAverageSpeed() == 0 && requestBoat.getAverageSpeed() != 0) {
+            foundBoat.setAverageSpeed(requestBoat.getAverageSpeed());
+            hasChanged = true;
+        } else if (foundBoat.getAverageSpeed() != 0 && requestBoat.getAverageSpeed() != 0)
+            if (!(foundBoat.getAverageSpeed() == requestBoat.getAverageSpeed())) {
+                log.info("Boat average speed was '" + requestBoat.getAverageSpeed() + "'. Updated it to '" + foundBoat.getAverageSpeed() + "'.");
+                foundBoat.setAverageSpeed(requestBoat.getAverageSpeed());
+                hasChanged = true;
+            }
+
+        if ((foundBoat.getBoatImages() == null || foundBoat.getBoatImages().isEmpty()) &&
+                (requestBoat.getBoatImages() != null && !requestBoat.getBoatImages().isEmpty())) {
+            Set<BoatImage> boatImages = new HashSet<>();
+            for (var boatImage : requestBoat.getBoatImages())
+                boatImages.add(new BoatImage(boatImage.getBytes(), foundBoat));
+            foundBoat.setBoatImages(boatImages);
+            boatImagesRepository.saveAll(boatImages);
+            log.info("Boat had no images. Added all images from the request to the boat.");
+        } else if (foundBoat.getBoatImages() != null && requestBoat.getBoatImages() != null)
+            if (requestBoat.getBoatImages().size() != 0) {
+
+                Set<BoatImage> newBoatImages = new HashSet<>();
+                for (var requestBoatImage : requestBoat.getBoatImages())
+                    for (var boatImage : foundBoat.getBoatImages())
+                        if (!boatImage.equals(requestBoatImage))
+                            newBoatImages.add(new BoatImage(requestBoatImage.getBytes(), foundBoat));
+                if (!newBoatImages.isEmpty()) {
+                    log.info("Found new boat images. Updating boat images.");
+                    foundBoat.getBoatImages().addAll(newBoatImages);
+                    boatImagesRepository.saveAll(newBoatImages);
+                    hasChanged = true;
+                }
+            }
+        if (hasChanged) {
+            boatsRepository.save(foundBoat);
+            log.info("Updated boat.");
+        } else log.info("Boat is identical.");
+    }
+
     public Account getAccountByTokenAndCredentials(String token, Account requestAccount) {
         Account foundAccount;
 
@@ -127,6 +223,55 @@ public class AccountsService {
         if (foundAccount.getAccountDetails() != null && foundAccount.getAccountDetails().getImage() != null)
             foundAccount.getAccountDetails().setImage(null);    //don't send the profile picture after every login request
         return foundAccount;
+    }
+
+    public ActiveSailor getActiveSailorByTokenAndCredentials(String token, Account requestAccount) {
+        Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
+        if (foundAccount == null) {
+            log.info("Request account or token are invalid.");
+            return null;
+        }
+
+        if (foundAccount.getType() != UserType.SAILOR) {
+            log.warn("Account found is not matching a sailor account. Aborting.");
+            return null;
+        }
+
+        var foundSailorAccount = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
+        if (foundSailorAccount == null) {
+            log.warn("Sailor account is null. User hasn't setup any account details.");
+            return null;
+        }
+        return foundSailorAccount;
+    }
+
+    public Account getSailorAccountById(String token, String sailorId) {
+        var foundToken = tokensRepository.findFirstByTokenValue(token);
+        if (foundToken == null) {
+            log.warn("Token not existing in the database.");
+            return null;
+        }
+
+        long sailorIdLong;
+        try {
+            sailorIdLong = Long.parseLong(sailorId);
+        } catch (Exception e) {
+            log.error("Exception occurred while transforming sailorId String to Long", e);
+            return null;
+        }
+        var foundAccountOptional = accountsRepository.findById(sailorIdLong);
+
+        if (foundAccountOptional.isPresent()) {
+            var foundAccount = foundAccountOptional.get();
+            if (foundAccount.getType() == UserType.CLIENT) {
+                log.warn("Account was found by id " + sailorId + " but the account is matching a client account, not a sailor.");
+                return null;
+            }
+            return foundAccountOptional.get();
+        }
+
+        log.warn("No account was found by id " + sailorId);
+        return null;
     }
 
     @Transactional
@@ -266,42 +411,6 @@ public class AccountsService {
         return false;
     }
 
-    /**
-     * Checks if token exists in the database and if a sailor account with id = sailorId exists
-     *
-     * @param token    token from cookies
-     * @param sailorId the id of the account to be retrieved in the database
-     * @return the account entity or null if token/sailor id are not existing in the database or the account is not corresponding to an sailor account
-     */
-    public Account getSailorAccountById(String token, String sailorId) {
-        var foundToken = tokensRepository.findFirstByTokenValue(token);
-        if (foundToken == null) {
-            log.warn("Token not existing in the database.");
-            return null;
-        }
-
-        long sailorIdLong;
-        try {
-            sailorIdLong = Long.parseLong(sailorId);
-        } catch (Exception e) {
-            log.error("Exception occurred while transforming sailorId String to Long", e);
-            return null;
-        }
-        var foundAccountOptional = accountsRepository.findById(sailorIdLong);
-
-        if (foundAccountOptional.isPresent()) {
-            var foundAccount = foundAccountOptional.get();
-            if (foundAccount.getType() == UserType.CLIENT) {
-                log.warn("Account was found by id " + sailorId + " but the account is matching a client account, not a sailor.");
-                return null;
-            }
-            return foundAccountOptional.get();
-        }
-
-        log.warn("No account was found by id " + sailorId);
-        return null;
-    }
-
     public String getSailorName(String token, String sailorId) {
         var foundAccount = getSailorAccountById(token, sailorId);
         if (foundAccount == null) return null;
@@ -317,41 +426,38 @@ public class AccountsService {
     }
 
     @Transactional
-    public Boolean pulse(String token, Account account, LocationData locationData) {
-        try {
-            Account foundAccount = getAccountByTokenAndCredentials(token, account);
-            if (foundAccount == null) {
-                log.info("Request account or token are invalid.");
-                return null;
-            }
-            log.info("Token and credentials match.");
+    public Boat getBoat(String token, Account requestAccount) {
+        var foundActiveSailor = getActiveSailorByTokenAndCredentials(token, requestAccount);
 
-            if (foundAccount.getType() == UserType.CLIENT) {
-                log.warn("Account and token match but account is not a sailor account.");
-                return null;
-            }
-            log.info("Account is a sailor account.");
-
-            var sailor = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
-            if (sailor == null) {
-                log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
-                return null;
-            }
-            log.info("Sailor account found with the account id found earlier.");
-
-            var oldLocationData = sailor.getLocationData();
-            sailor.setLocationData(locationData);
-            sailor.setLastUpdate(new Date());
-            activeSailorsRepository.save(sailor);
-            log.info("Updated active sailor location data via pulse. ");
-            locationDataRepository.deleteById(oldLocationData.getId());
-            log.info("Deleted old location data with id: " + oldLocationData.getId());
-
-            log.info("Returning true");
-            return true;
-        } catch (Exception e) {
-            log.error("Exception occurred during pulse workflow. Returning false", e);
-            return false;
+        if (foundActiveSailor == null) {
+            log.warn("No account was retrieved. Aborting");
+            return null;
         }
+
+        if (foundActiveSailor.getBoat() == null) {
+            log.warn("Sailor does not have any boat set. Creating empty boat now.");
+            var boat = new Boat();
+            boat.setSailor(foundActiveSailor);
+            foundActiveSailor.setBoat(boat);
+            activeSailorsRepository.save(foundActiveSailor);
+            return boat;
+        }
+
+        log.info("Found boat details for sailor with id " + foundActiveSailor.getAccountId());
+        return foundActiveSailor.getBoat();
+    }
+
+    @Transactional
+    public Boat updateBoat(String token, Account requestAccount, Boat boat) {
+        var foundActiveSailor = getActiveSailorByTokenAndCredentials(token, requestAccount);
+
+        if (foundActiveSailor == null) {
+            log.warn("No active sailor was retrieved. Aborting");
+            return null;
+        }
+
+        updateDatabaseBoat(foundActiveSailor.getBoat(), boat);
+
+        return foundActiveSailor.getBoat();
     }
 }

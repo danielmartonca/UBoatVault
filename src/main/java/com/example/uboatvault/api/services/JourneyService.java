@@ -3,6 +3,7 @@ package com.example.uboatvault.api.services;
 import com.example.uboatvault.api.model.enums.UserType;
 import com.example.uboatvault.api.model.other.LatLng;
 import com.example.uboatvault.api.model.other.SailorDetails;
+import com.example.uboatvault.api.model.persistence.account.Account;
 import com.example.uboatvault.api.model.persistence.sailing.sailor.ActiveSailor;
 import com.example.uboatvault.api.model.persistence.sailing.Journey;
 import com.example.uboatvault.api.model.persistence.sailing.LocationData;
@@ -37,14 +38,16 @@ public class JourneyService {
     private final AccountsRepository accountsRepository;
     private final JourneyRepository journeyRepository;
     private final ActiveSailorsRepository activeSailorsRepository;
+    private final LocationDataRepository locationDataRepository;
 
     @Autowired
-    public JourneyService(AccountsService accountsService, GeoService geoService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, LocationDataRepository locationDataRepository, ActiveSailorsRepository activeSailorsRepository) {
+    public JourneyService(AccountsService accountsService, GeoService geoService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, LocationDataRepository locationDataRepository, ActiveSailorsRepository activeSailorsRepository, LocationDataRepository locationDataRepository1) {
         this.accountsService = accountsService;
         this.geoService = geoService;
         this.accountsRepository = accountsRepository;
         this.journeyRepository = journeyRepository;
         this.activeSailorsRepository = activeSailorsRepository;
+        this.locationDataRepository = locationDataRepository1;
     }
 
     public List<Journey> getMostRecentRides(String token, MostRecentRidesRequest mostRecentRidesRequest) {
@@ -277,5 +280,50 @@ public class JourneyService {
             return null;
         }
         return journeyResponse;
+    }
+
+    /**
+     * This method updates the active sailor account found by token and credentials location data to locationData and lastUpdate to the current system time
+     * in order to mark this user as currently active.
+     *
+     * @return true if the update was done successfully, null if the account couldn't be found and false if there was any exception during the flow
+     */
+    @Transactional
+    public Boolean pulse(String token, Account account, LocationData locationData) {
+        try {
+            Account foundAccount = accountsService.getAccountByTokenAndCredentials(token, account);
+            if (foundAccount == null) {
+                log.info("Request account or token are invalid.");
+                return null;
+            }
+            log.info("Token and credentials match.");
+
+            if (foundAccount.getType() == UserType.CLIENT) {
+                log.warn("Account and token match but account is not a sailor account.");
+                return null;
+            }
+            log.info("Account is a sailor account.");
+
+            var sailor = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
+            if (sailor == null) {
+                log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
+                return null;
+            }
+            log.info("Sailor account found with the account id found earlier.");
+
+            var oldLocationData = sailor.getLocationData();
+            sailor.setLocationData(locationData);
+            sailor.setLastUpdate(new Date());
+            activeSailorsRepository.save(sailor);
+            log.info("Updated active sailor location data via pulse. ");
+            locationDataRepository.deleteById(oldLocationData.getId());
+            log.info("Deleted old location data with id: " + oldLocationData.getId());
+
+            log.info("Returning true");
+            return true;
+        } catch (Exception e) {
+            log.error("Exception occurred during pulse workflow. Returning false", e);
+            return false;
+        }
     }
 }

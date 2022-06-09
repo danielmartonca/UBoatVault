@@ -3,7 +3,9 @@ package com.example.uboatvault.api.controllers;
 import com.example.uboatvault.api.model.persistence.account.Account;
 import com.example.uboatvault.api.model.persistence.account.info.AccountDetails;
 import com.example.uboatvault.api.model.persistence.account.info.CreditCard;
+import com.example.uboatvault.api.model.persistence.sailing.sailor.Boat;
 import com.example.uboatvault.api.model.requests.CreditCardRequest;
+import com.example.uboatvault.api.model.requests.UpdateBoatRequest;
 import com.example.uboatvault.api.model.response.CreditCardResponse;
 import com.example.uboatvault.api.services.AccountsService;
 import com.example.uboatvault.api.services.RegistrationService;
@@ -191,5 +193,39 @@ public class AccountsController {
 
         log.info(LoggingUtils.logResponse(HttpMethod.GET, "/api/getSailorName/sailorId='" + sailorId + "'"), sailorName);
         return new ResponseEntity<>(sailorName, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/api/getBoat")
+    public ResponseEntity<Boat> getBoat(@CookieValue(name = "token") String token, @RequestBody Account requestAccount) {
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getBoat", requestAccount));
+
+        var boat = accountsService.getBoat(token, requestAccount);
+        if (boat != null) {
+            log.info(LoggingUtils.colorString("Boat sent back to the user.", TextColor.PURPLE));
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getBoat", boat));
+            return new ResponseEntity<>(boat, HttpStatus.OK);
+        } else {
+            log.info("Null sent back to the user.");
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getBoat"));
+            return new ResponseEntity<>(null, HttpStatus.OK);
+        }
+    }
+
+    @PostMapping(value = "/api/updateBoat")
+    public ResponseEntity<Boat> updateBoat(@CookieValue(name = "token") String token, @RequestBody UpdateBoatRequest request) {
+
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/updateBoat", request));
+
+        var boat = accountsService.updateBoat(token, request.getAccount(), request.getBoat());
+        if (boat != null) {
+            log.info("Updated boat and sending it back to the user without the images.");
+            request.getBoat().setBoatImages(null);
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/updateBoat", request.getBoat()));
+            return new ResponseEntity<>(request.getBoat(), HttpStatus.OK);
+        } else {
+            log.info("Null sent back to the user.");
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/updateBoat"));
+            return new ResponseEntity<>(null, HttpStatus.OK);
+        }
     }
 }

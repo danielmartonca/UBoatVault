@@ -43,12 +43,12 @@ public class Boat {
     @Setter
     private String averageSpeedMeasureUnit;
 
+    @JsonIgnore
     @Getter
     @Setter
     @OneToOne(mappedBy = "boat", cascade = CascadeType.MERGE)
     private ActiveSailor sailor;
 
-    @JsonIgnore
     @Getter
     @Setter
     @OneToMany(mappedBy = "boat", cascade = CascadeType.ALL)
