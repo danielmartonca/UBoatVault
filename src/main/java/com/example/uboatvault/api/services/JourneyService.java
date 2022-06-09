@@ -316,8 +316,10 @@ public class JourneyService {
             sailor.setLastUpdate(new Date());
             activeSailorsRepository.save(sailor);
             log.info("Updated active sailor location data via pulse. ");
-            locationDataRepository.deleteById(oldLocationData.getId());
-            log.info("Deleted old location data with id: " + oldLocationData.getId());
+            if(oldLocationData!=null) {
+                locationDataRepository.deleteById(oldLocationData.getId());
+                log.info("Deleted old location data with id: " + oldLocationData.getId());
+            }
 
             log.info("Returning true");
             return true;
