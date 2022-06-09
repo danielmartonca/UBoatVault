@@ -1,6 +1,6 @@
 package com.example.uboatvault.api.utility.logging;
 
-import com.example.uboatvault.api.model.persistence.location.ActiveSailor;
+import com.example.uboatvault.api.model.persistence.sailing.sailor.ActiveSailor;
 import com.example.uboatvault.api.services.AccountsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

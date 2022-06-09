@@ -1,6 +1,11 @@
 package com.example.uboatvault.api.model.persistence.account;
 
 import com.example.uboatvault.api.model.enums.UserType;
+import com.example.uboatvault.api.model.persistence.account.info.AccountDetails;
+import com.example.uboatvault.api.model.persistence.account.info.CreditCard;
+import com.example.uboatvault.api.model.persistence.account.info.PhoneNumber;
+import com.example.uboatvault.api.model.persistence.account.info.RegistrationData;
+import com.example.uboatvault.api.model.persistence.account.pending.PendingAccount;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;

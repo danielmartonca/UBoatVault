@@ -1,6 +1,6 @@
 package com.example.uboatvault.api.repositories;
 
-import com.example.uboatvault.api.model.persistence.account.PhoneNumber;
+import com.example.uboatvault.api.model.persistence.account.info.PhoneNumber;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PhoneNumbersRepository extends JpaRepository<PhoneNumber, Long> {

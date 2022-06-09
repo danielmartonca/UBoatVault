@@ -1,5 +1,6 @@
-package com.example.uboatvault.api.model.persistence.location;
+package com.example.uboatvault.api.model.persistence.sailing.sailor;
 
+import com.example.uboatvault.api.model.persistence.sailing.LocationData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;

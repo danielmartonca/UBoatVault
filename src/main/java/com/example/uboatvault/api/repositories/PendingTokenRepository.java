@@ -1,6 +1,6 @@
 package com.example.uboatvault.api.repositories;
 
-import com.example.uboatvault.api.model.persistence.account.PendingToken;
+import com.example.uboatvault.api.model.persistence.account.pending.PendingToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PendingTokenRepository extends JpaRepository<PendingToken, Long> {

@@ -1,8 +1,8 @@
 package com.example.uboatvault.api.controllers;
 
 import com.example.uboatvault.api.model.persistence.account.Account;
-import com.example.uboatvault.api.model.persistence.account.AccountDetails;
-import com.example.uboatvault.api.model.persistence.account.CreditCard;
+import com.example.uboatvault.api.model.persistence.account.info.AccountDetails;
+import com.example.uboatvault.api.model.persistence.account.info.CreditCard;
 import com.example.uboatvault.api.model.requests.CreditCardRequest;
 import com.example.uboatvault.api.model.response.CreditCardResponse;
 import com.example.uboatvault.api.services.AccountsService;

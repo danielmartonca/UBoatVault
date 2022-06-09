@@ -2,10 +2,10 @@ package com.example.uboatvault.api.services;
 
 import com.example.uboatvault.api.model.enums.UserType;
 import com.example.uboatvault.api.model.persistence.account.Account;
-import com.example.uboatvault.api.model.persistence.account.AccountDetails;
-import com.example.uboatvault.api.model.persistence.account.CreditCard;
-import com.example.uboatvault.api.model.persistence.account.Image;
-import com.example.uboatvault.api.model.persistence.location.LocationData;
+import com.example.uboatvault.api.model.persistence.account.info.AccountDetails;
+import com.example.uboatvault.api.model.persistence.account.info.CreditCard;
+import com.example.uboatvault.api.model.persistence.account.info.Image;
+import com.example.uboatvault.api.model.persistence.sailing.LocationData;
 import com.example.uboatvault.api.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

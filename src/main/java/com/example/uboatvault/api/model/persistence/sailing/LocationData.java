@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.model.persistence.location;
+package com.example.uboatvault.api.model.persistence.sailing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;

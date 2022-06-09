@@ -1,6 +1,6 @@
 package com.example.uboatvault.api.repositories;
 
-import com.example.uboatvault.api.model.persistence.location.ActiveSailor;
+import com.example.uboatvault.api.model.persistence.sailing.sailor.ActiveSailor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

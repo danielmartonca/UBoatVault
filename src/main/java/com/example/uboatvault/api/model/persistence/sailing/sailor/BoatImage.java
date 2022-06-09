@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.model.persistence.location;
+package com.example.uboatvault.api.model.persistence.sailing.sailor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
@@ -7,13 +7,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.util.Date;
 
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
-@Table(name = "Rankings")
-public class Ranking {
+@Table(name = "BoatImages")
+public class BoatImage {
+    @JsonIgnore
     @Id
     @Getter
     @Setter
@@ -23,23 +23,18 @@ public class Ranking {
 
     @Getter
     @Setter
-    private Long clientId;
-
-    @Getter
-    @Setter
-    private double evaluation;
-
-    @Getter
-    @Setter
-    @Column(name = "evaluation_date")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date evaluationDate;
+    @Lob
+    @Basic(fetch = FetchType.EAGER)
+    private byte[] bytes;
 
     @JsonIgnore
     @Getter
     @Setter
     @ManyToOne()
-    @JoinColumn(name = "active_sailor_id", nullable = false)
-    private ActiveSailor activeSailor;
-}
+    @JoinColumn(name = "boat_id", nullable = false)
+    private Boat boat;
 
+    public BoatImage(byte[] bytes) {
+        this.bytes = bytes;
+    }
+}

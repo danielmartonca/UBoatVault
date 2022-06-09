@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.model.persistence.account;
+package com.example.uboatvault.api.model.persistence.account.pending;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
@@ -8,11 +8,12 @@ import lombok.Setter;
 
 import javax.persistence.*;
 
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
+@Getter
 @Entity
-@Table(name = "Images")
-public class Image {
+@Table(name = "PendingTokens")
+public class PendingToken {
     @JsonIgnore
     @Id
     @Getter
@@ -21,20 +22,18 @@ public class Image {
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
-    @Getter
     @Setter
-    @Lob
-    @Basic(fetch = FetchType.EAGER)
-    private byte[] bytes;
+    @Column(nullable = false, unique = true)
+    private String tokenValue;
 
     @JsonIgnore
     @Getter
     @Setter
-    @OneToOne()
-    @JoinColumn(name = "account_details_id")
-    private AccountDetails accountDetails;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "pending_account_id")
+    private PendingAccount account;
 
-    public Image(byte[] bytes) {
-        this.bytes = bytes;
+    public PendingToken(String tokenValue) {
+        this.tokenValue = tokenValue;
     }
 }

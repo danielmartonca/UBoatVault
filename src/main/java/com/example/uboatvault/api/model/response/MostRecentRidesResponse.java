@@ -1,6 +1,6 @@
 package com.example.uboatvault.api.model.response;
 
-import com.example.uboatvault.api.model.persistence.location.Journey;
+import com.example.uboatvault.api.model.persistence.sailing.Journey;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

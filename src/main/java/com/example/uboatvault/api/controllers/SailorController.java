@@ -25,6 +25,23 @@ public class SailorController {
         this.accountsService = accountsService;
     }
 
+    @PostMapping(value = "/api/updateBoatDetails")
+    public ResponseEntity<Boolean> updateBoatDetails(@CookieValue(name = "token") String token,
+                                         @RequestBody PulseRequest request) {
+
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/updateBoatDetails", request));
+
+        var hasProcessed = accountsService.pulse(token, request.getAccount(), request.getLocationData());
+        if (hasProcessed == null)
+            return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
+
+        if (hasProcessed) {
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/updateBoatDetails"),"true");
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+    }
+
     @PostMapping(value = "/api/pulse")
     public ResponseEntity<Boolean> pulse(@CookieValue(name = "token") String token,
                                          @RequestBody PulseRequest request) {

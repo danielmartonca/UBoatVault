@@ -1,14 +1,10 @@
 package com.example.uboatvault.api.model.requests;
 
-import com.example.uboatvault.api.model.persistence.account.RegistrationData;
-import com.example.uboatvault.api.services.EncryptionService;
+import com.example.uboatvault.api.model.persistence.account.info.RegistrationData;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.persistence.Transient;
 
 @AllArgsConstructor
 @Getter

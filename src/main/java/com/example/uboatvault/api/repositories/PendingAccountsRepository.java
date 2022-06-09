@@ -1,6 +1,6 @@
 package com.example.uboatvault.api.repositories;
 
-import com.example.uboatvault.api.model.persistence.account.PendingAccount;
+import com.example.uboatvault.api.model.persistence.account.pending.PendingAccount;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PendingAccountsRepository extends JpaRepository<PendingAccount, Long> {

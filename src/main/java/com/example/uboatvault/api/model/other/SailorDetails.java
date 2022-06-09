@@ -1,7 +1,7 @@
 package com.example.uboatvault.api.model.other;
 
 import com.example.uboatvault.api.model.enums.Currency;
-import com.example.uboatvault.api.model.persistence.location.LocationData;
+import com.example.uboatvault.api.model.persistence.sailing.LocationData;
 import lombok.*;
 
 import java.sql.Timestamp;

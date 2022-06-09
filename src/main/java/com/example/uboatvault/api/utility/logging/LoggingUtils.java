@@ -1,7 +1,7 @@
 package com.example.uboatvault.api.utility.logging;
 
 import com.example.uboatvault.api.model.persistence.account.Account;
-import com.example.uboatvault.api.model.persistence.account.AccountDetails;
+import com.example.uboatvault.api.model.persistence.account.info.AccountDetails;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;

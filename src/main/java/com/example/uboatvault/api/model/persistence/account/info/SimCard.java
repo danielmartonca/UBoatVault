@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.model.persistence.account;
+package com.example.uboatvault.api.model.persistence.account.info;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
