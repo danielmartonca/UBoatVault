@@ -202,7 +202,13 @@ public class AccountsController {
         var boat = accountsService.getBoat(token, requestAccount);
         if (boat != null) {
             log.info(LoggingUtils.colorString("Boat sent back to the user.", TextColor.PURPLE));
+
+            var images = boat.getBoatImages();
+            boat.setBoatImages(null);
             log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getBoat", boat));
+            if (images != null && !images.isEmpty())
+                log.info(LoggingUtils.colorString("Request body had " + images.size() + " images as bytes so they were not logged.", TextColor.PURPLE));
+            boat.setBoatImages(images);
             return new ResponseEntity<>(boat, HttpStatus.OK);
         } else {
             log.info("Null sent back to the user.");
@@ -217,7 +223,7 @@ public class AccountsController {
         request.getBoat().setBoatImages(null);
         log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/updateBoat", request));
         if (images != null && !images.isEmpty())
-            log.info(LoggingUtils.colorString("Request bdy had images as bytes so they were not logged.", TextColor.PURPLE));
+            log.info(LoggingUtils.colorString("Request body had " + images.size() + " images as bytes so they were not logged.", TextColor.PURPLE));
         request.getBoat().setBoatImages(images);
 
         var boat = accountsService.updateBoat(token, request.getAccount(), request.getBoat());
