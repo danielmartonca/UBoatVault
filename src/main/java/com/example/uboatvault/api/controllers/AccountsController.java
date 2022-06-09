@@ -213,8 +213,12 @@ public class AccountsController {
 
     @PostMapping(value = "/api/updateBoat")
     public ResponseEntity<Boat> updateBoat(@CookieValue(name = "token") String token, @RequestBody UpdateBoatRequest request) {
-
+        var images = request.getBoat().getBoatImages();
+        request.getBoat().setBoatImages(null);
         log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/updateBoat", request));
+        if (images != null && !images.isEmpty())
+            log.info(LoggingUtils.colorString("Request bdy had images as bytes so they were not logged.", TextColor.PURPLE));
+        request.getBoat().setBoatImages(images);
 
         var boat = accountsService.updateBoat(token, request.getAccount(), request.getBoat());
         if (boat != null) {
