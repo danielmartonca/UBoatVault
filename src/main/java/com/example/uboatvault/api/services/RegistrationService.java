@@ -115,35 +115,35 @@ public class RegistrationService {
     }
 
     /**
-     * This method searches if any part of the registrationData exists in the database and returns its token if found (or generates a new one if it's older than 30 minutes)
+     * This method searches if any part of the registrationData exists in the database and returns its token if found (or generates a new one if it's deprecated)
      */
     @Transactional
     public String searchForTokenBasedOnRegistrationData(RegistrationData registrationData) {
         var foundRegistrationData = registrationDataRepository.findFirstByDeviceInfo(registrationData.getDeviceInfo());
         if (foundRegistrationData != null) {
-            if (tokenService.isTokenDeprecated(foundRegistrationData.getAccount())) {
-                log.info("Token is deprecated.");
-                tokenService.updateToken(foundRegistrationData.getAccount());
-                registrationDataRepository.save(foundRegistrationData);
+            log.info("Found registration data by device info.");
+            if (foundRegistrationData.getAccounts().size() == 1) {
+                log.info("There is only one account bound to this registration data. Returning it's token: " + foundRegistrationData.getAccounts().get(0).getToken().getTokenValue());
+                return foundRegistrationData.getAccounts().get(0).getToken().getTokenValue();
             }
-            log.info("Found token by registration data.");
-            return foundRegistrationData.getAccount().getToken().getTokenValue();
+            log.warn("There are more than one account bound to this registration data. Will not return any token.");
+            return null;
         }
 
         for (var simCard : registrationData.getMobileNumbersInfoList()) {
             SimCard extractedSimCard = simCardRepository.findFirstByNumberAndDisplayNameAndCountryIso(simCard.getNumber(), simCard.getDisplayName(), simCard.getCountryIso());
             if (extractedSimCard != null) {
-                Account account = extractedSimCard.getRegistrationData().getAccount();
-                if (tokenService.isTokenDeprecated(account)) {
-                    log.info("Token is deprecated.");
-                    tokenService.updateToken(account);
-                    registrationDataRepository.save(registrationData);
+                log.info("Found registration data by simCard.");
+                foundRegistrationData = extractedSimCard.getRegistrationData();
+                if (foundRegistrationData.getAccounts().size() == 1) {
+                    log.info("There is only one account bound to this registration data. Returning it's token: " + foundRegistrationData.getAccounts().get(0).getToken().getTokenValue());
+                    return foundRegistrationData.getAccounts().get(0).getToken().getTokenValue();
                 }
-                log.info("Found token by simCard.");
-                return account.getToken().getTokenValue();
+                log.warn("There are more than one account bound to this registration data. Will not return any token.");
+                return null;
             }
         }
-        log.info("Couldn't find any token.");
+        log.info("Couldn't find any token by the given registration data.");
         return null;
     }
 
@@ -157,13 +157,8 @@ public class RegistrationService {
         if (token != null) {
             RegistrationData foundRegistrationData = token.getAccount().getRegistrationData();
             if (!foundRegistrationData.equals(registrationData)) {
-                Account account = foundRegistrationData.getAccount();
-                if (tokenService.isTokenDeprecated(account)) {
-                    tokenService.updateToken(account);
-                    registrationDataRepository.save(foundRegistrationData);
-                    log.info("Found token.");
-                    return account.getToken().getTokenValue();
-                }
+                log.info("Found token.");
+                return token.getTokenValue();
             }
         }
         log.info("Couldn't find any token.");
@@ -241,7 +236,7 @@ public class RegistrationService {
      * Saves a new device in the database based on registrationData and returns its token if successful.
      */
     @Transactional
-    public String register(Account account, String token) {
+    public String register(Account requestAccount, String token) {
         try {
             PendingToken pendingToken = pendingTokenRepository.findFirstByTokenValue(token);
             if (pendingToken == null) {
@@ -254,26 +249,34 @@ public class RegistrationService {
                 return null;
             }
 
-            PendingAccount pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
-            if (pendingAccount == null || !account.equalsPendingAccount(pendingAccount)) {
+            PendingAccount pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(requestAccount.getUsername(), requestAccount.getPassword());
+            if (pendingAccount == null || !requestAccount.equalsPendingAccount(pendingAccount)) {
                 log.warn("Token found but credentials don't match.");
                 return null;
             }
 
-            if (account.getRegistrationData() == null || account.getPhoneNumber() == null) {
+            if (requestAccount.getRegistrationData() == null || requestAccount.getPhoneNumber() == null) {
                 log.warn("Account request is missing registrationData or phoneNumber");
                 return null;
             }
-            //update sim card references to parent in order to retain id
-            for (var simCard : account.getRegistrationData().getMobileNumbersInfoList())
-                simCard.setRegistrationData(account.getRegistrationData());
+
+            RegistrationData registrationData = registrationDataRepository.findFirstByDeviceInfo(requestAccount.getRegistrationData().getDeviceInfo());
+            if (registrationData != null) {
+                log.warn("Registration data is already used by another account. There will be two accounts bound to this device.");
+                requestAccount.setRegistrationData(registrationData);
+            } else {
+                registrationData = requestAccount.getRegistrationData();
+                //update sim card references to parent in order to retain id
+                for (var simCard : registrationData.getMobileNumbersInfoList())
+                    simCard.setRegistrationData(registrationData);
+            }
 
             String tokenString = tokenService.generateTokenString();
             Token accountToken = new Token(tokenString);
-            accountToken.setAccount(account);
-            account.setToken(accountToken);
+            accountToken.setAccount(requestAccount);
+            requestAccount.setToken(accountToken);
 
-            accountsRepository.save(account);
+            var account = accountsRepository.save(requestAccount);
             pendingAccountsRepository.delete(pendingAccount);
 
             if (account.getType() == UserType.SAILOR)

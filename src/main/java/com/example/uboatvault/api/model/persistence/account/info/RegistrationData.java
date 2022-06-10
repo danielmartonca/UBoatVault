@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -36,8 +37,8 @@ public class RegistrationData {
     @JsonIgnore
     @Getter
     @Setter
-    @OneToOne(cascade = CascadeType.ALL, optional = false, mappedBy = "registrationData")
-    private Account account;
+    @OneToMany(mappedBy = "registrationData", cascade = CascadeType.ALL,orphanRemoval = true)
+    private List<Account> accounts;
 
     @Override
     public boolean equals(Object o) {

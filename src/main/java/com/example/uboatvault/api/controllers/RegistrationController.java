@@ -62,12 +62,10 @@ public class RegistrationController {
         String dbToken = registrationService.searchForTokenBasedOnRegistrationData(registrationData);
         if (dbToken != null) {
             log.info("Found token in the database for the given registration data. Device must request it with credentials as well in order to retrieve it.");
-
             log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/checkDeviceRegistration", new RegistrationDataResponse(true, null)));
             return new ResponseEntity<>(new RegistrationDataResponse(true, null), HttpStatus.OK);
         } else {
-            log.info("No token was found for the given registration data. Device is not registered.");
-
+            log.info("Token could not be retrieved. Either registration data is not in the database or it is bound to multiple accounts.");
             log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/checkDeviceRegistration", new RegistrationDataResponse(false, null)));
             return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.OK);
         }

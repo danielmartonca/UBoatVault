@@ -205,7 +205,7 @@ public class AccountsService {
 
     public Account getAccountByTokenAndCredentials(String token, Account requestAccount) {
         Account foundAccount;
-
+        log.info("Token  is: " + token);
         var foundToken = tokensRepository.findFirstByTokenValue(token);
         if (foundToken == null) {
             log.warn("Token not existing in the database.");

@@ -24,22 +24,23 @@ public class LoginService {
 
     @Transactional
     public String login(Account account, String token) {
-        var foundAccount = accountsRepository.findFirstByPassword(account.getPassword());
-        if (foundAccount != null) {
-            if (!foundAccount.getToken().getTokenValue().equals(token)) {
-                log.warn("Account found by password and registration data but tokens do not match.");
-                return null;
-            } else if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
+        var foundAccountsList = accountsRepository.findAllByPassword(account.getPassword());
+        if (foundAccountsList == null) {
+            log.warn("No account was found with the given username/phone number and password.");
+            return null;
+        }
 
+        for (var foundAccount : foundAccountsList) {
+            if (!foundAccount.getToken().getTokenValue().equals(token)) {
+                log.warn("An account with given password found but tokens do not match.");
+            } else if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
                 log.info("Credentials matched. Found account.");
                 tokenService.updateToken(foundAccount);
-
                 log.info("Login successful. Returning token: " + foundAccount.getToken().getTokenValue());
                 return foundAccount.getToken().getTokenValue();
-            } else {
-                log.warn("Account found by password, registration data and phone number match but neither username or phone number match.");
-                return null;
-            }
+            } else
+                log.warn("An account with given password found but neither username or phone number match.");
+
         }
         log.warn("Invalid credentials. Login failed");
         return null;

@@ -53,8 +53,8 @@ public class Account {
     @NotNull
     @Getter
     @Setter
-    @OneToOne(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "registration_data_id")
+    @ManyToOne(cascade = {CascadeType.PERSIST})
+    @JoinColumn(name = "registration_data_id", nullable = false)
     private RegistrationData registrationData;
 
     @JsonIgnore
