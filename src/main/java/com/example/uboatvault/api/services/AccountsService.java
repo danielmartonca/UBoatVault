@@ -87,6 +87,7 @@ public class AccountsService {
             }
 
         if (foundAccountDetails.getImage() == null && requestAccountDetails.getImage() != null) {
+            log.info("Setting up profile picture for the first time.");
             var newImage = new Image(requestAccountDetails.getImage().getBytes());
             newImage.setAccountDetails(foundAccountDetails);
             foundAccountDetails.setImage(newImage);
@@ -94,9 +95,9 @@ public class AccountsService {
         } else if (foundAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes() != null)
             if (requestAccountDetails.getImage().getBytes().length != 0) {
                 log.info("Updating profile picture.");
-                foundAccountDetails.setImage(null);
                 var image = foundAccountDetails.getImage();
                 imagesRepository.deleteById(image.getId());
+                foundAccountDetails.setImage(null);
                 var newImage = requestAccountDetails.getImage();
                 foundAccountDetails.setImage(newImage);
                 newImage.setAccountDetails(foundAccountDetails);
@@ -288,7 +289,8 @@ public class AccountsService {
             foundAccount.setAccountDetails(accountDetails);
             accountsRepository.save(foundAccount);
         }
-        var img = imagesRepository.findByAccountDetailsId(accountDetails.getId());
+
+        var img = imagesRepository.findByAccountDetailsIdNative(accountDetails.getId());
         if (img == null) {
             log.warn("Account details image is null. Setting up default profile picture.");
             var imageBytes = imagesService.getDefaultProfilePicture();
@@ -325,9 +327,16 @@ public class AccountsService {
         }
         log.info("Retrieved account details successfully.");
 
+        if (foundAccountDetails.getImage() == null)
+            fixAccountDetailsImage(foundAccountDetails);
         updateDatabaseAccountDetails(foundAccountDetails, requestAccountDetails);
-
         return foundAccountDetails;
+    }
+
+    private void fixAccountDetailsImage(AccountDetails foundAccountDetails) {
+        var image=imagesRepository.findByAccountDetailsIdNative(foundAccountDetails.getId());
+        if (image!=null)
+            foundAccountDetails.setImage(image);
     }
 
     public Set<CreditCard> getCreditCards(String token, Account requestAccount) {
