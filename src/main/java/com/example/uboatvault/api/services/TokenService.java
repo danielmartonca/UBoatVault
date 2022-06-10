@@ -37,22 +37,6 @@ public class TokenService {
         return decryptedToken.isEmpty();
     }
 
-    private long getMinuteDifferenceFromNow(Date date) {
-        Date dateNow = new Date(System.currentTimeMillis());
-        Date dateCreation = new Date(date.getTime());
-
-        DateFormat format = new SimpleDateFormat("mm");
-        format.format(dateNow);
-        format.format(dateCreation);
-
-        return dateNow.getTime() - dateCreation.getTime();
-    }
-
-    public boolean isTokenDeprecated(Account account) {
-//        return getMinuteDifferenceFromNow(account.getToken().getTokenCreation()) > 30;//TODO
-        return false;
-    }
-
     @Transactional
     public void updateToken(Account account) {
         //detach old entity
@@ -97,9 +81,6 @@ public class TokenService {
             } else {
                 log.info("Account found, username phone number and registration data matched.");
             }
-
-            if (isTokenDeprecated(foundAccount))
-                updateToken(foundAccount);
 
             return foundAccount.getToken().getTokenValue();
         }
