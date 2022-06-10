@@ -86,27 +86,25 @@ public class AccountsService {
                 hasChanged = true;
             }
 
-        if (foundAccountDetails.getImage() == null && requestAccountDetails.getImage() != null) {
+        if (foundAccountDetails.getImage() == null && requestAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes().length != 0) {
             log.info("Setting up profile picture for the first time.");
             var newImage = new Image(requestAccountDetails.getImage().getBytes());
             newImage.setAccountDetails(foundAccountDetails);
             foundAccountDetails.setImage(newImage);
             imagesRepository.save(newImage);
-        } else if (foundAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes() != null)
-            if (requestAccountDetails.getImage().getBytes().length != 0) {
-                log.info("Updating profile picture.");
-                var image = foundAccountDetails.getImage();
-                imagesRepository.deleteById(image.getId());
-                foundAccountDetails.setImage(null);
-                var newImage = requestAccountDetails.getImage();
-                foundAccountDetails.setImage(newImage);
-                newImage.setAccountDetails(foundAccountDetails);
-                imagesRepository.save(newImage);
-            }
+        } else if (foundAccountDetails.getImage() != null && requestAccountDetails.getImage().getBytes() != null && requestAccountDetails.getImage().getBytes().length != 0) {
+            log.info("Updating profile picture.");
+            var image = foundAccountDetails.getImage();
+            imagesRepository.deleteById(image.getId());
+            foundAccountDetails.setImage(null);
+            var newImage = requestAccountDetails.getImage();
+            foundAccountDetails.setImage(newImage);
+            newImage.setAccountDetails(foundAccountDetails);
+            imagesRepository.save(newImage);
+        }
 
         if (hasChanged) {
             accountDetailsRepository.save(foundAccountDetails);
-            imagesRepository.deleteAllUnreferencedImages();
             log.info("Updated database account details.");
         } else log.info("Account details were identical.");
     }
@@ -334,8 +332,8 @@ public class AccountsService {
     }
 
     private void fixAccountDetailsImage(AccountDetails foundAccountDetails) {
-        var image=imagesRepository.findByAccountDetailsIdNative(foundAccountDetails.getId());
-        if (image!=null)
+        var image = imagesRepository.findByAccountDetailsIdNative(foundAccountDetails.getId());
+        if (image != null)
             foundAccountDetails.setImage(image);
     }
 
