@@ -28,8 +28,7 @@ public class JourneyController {
     //TODO delete this after it's use cases are gone
     @GetMapping(value = "/api/test/addFakeJourney")
     public ResponseEntity<Boolean> addFakeJourney(@RequestParam String clientId, @RequestParam String sailorId) {
-        journeyService.addFakeJourney(clientId, sailorId);
-        return new ResponseEntity<>(true, HttpStatus.CREATED);
+        return new ResponseEntity<>(journeyService.addFakeJourney(clientId, sailorId), HttpStatus.CREATED);
     }
 
 

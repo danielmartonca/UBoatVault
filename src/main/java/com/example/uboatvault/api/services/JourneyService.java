@@ -83,7 +83,7 @@ public class JourneyService {
     }
 
     @Transactional
-    public void addFakeJourney(String clientId, String sailorId) {
+    public boolean addFakeJourney(String clientId, String sailorId) {
         var clientAccount = accountsRepository.findById(Long.parseLong(clientId));
         var sailorAccount = accountsRepository.findById(Long.parseLong(sailorId));
 
@@ -96,7 +96,10 @@ public class JourneyService {
             journey.setLocationDataList(locationDataSet);
             journeyRepository.save(journey);
             log.info("Added mock data with success.");
+            return true;
         }
+        log.info("Client account or sailor account don't exist");
+        return false;
     }
 
     /**
@@ -316,7 +319,7 @@ public class JourneyService {
             sailor.setLastUpdate(new Date());
             activeSailorsRepository.save(sailor);
             log.info("Updated active sailor location data via pulse. ");
-            if(oldLocationData!=null) {
+            if (oldLocationData != null) {
                 locationDataRepository.deleteById(oldLocationData.getId());
                 log.info("Deleted old location data with id: " + oldLocationData.getId());
             }
