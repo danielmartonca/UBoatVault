@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 public class ImagesController {
     private final Logger log = LoggerFactory.getLogger(ImagesController.class);
@@ -40,5 +42,20 @@ public class ImagesController {
 
         log.info(LoggingUtils.logResponse(HttpMethod.GET, "/images/getSailorProfilePicture?sailorId=" + sailorId, " [ bytes... ]"));
         return new ResponseEntity<>(bytes, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/images/getSailorBoatImages", produces = MediaType.APPLICATION_JSON_VALUE)
+    public @ResponseBody
+    ResponseEntity<List<byte[]>> getSailorBoatImages(@CookieValue(name = "token") String token, @RequestParam(name = "sailorId") String sailorId) {
+        log.info(LoggingUtils.logRequest(HttpMethod.GET, "/images/getSailorBoatImages?sailorId=" + sailorId));
+        var imagesBytesList = imagesService.getSailorBoatImages(token, sailorId);
+
+        if (imagesBytesList == null) {
+            log.info(LoggingUtils.logResponse(HttpMethod.GET, "/images/getSailorBoatImages?sailorId=" + sailorId));
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+
+        log.info(LoggingUtils.logResponse(HttpMethod.GET, "/images/getSailorBoatImages?sailorId=" + sailorId, imagesBytesList.size() != 0 ? "[ list of bytes... ]" : "[]"));
+        return new ResponseEntity<>(imagesBytesList, HttpStatus.OK);
     }
 }

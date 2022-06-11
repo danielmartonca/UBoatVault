@@ -31,6 +31,12 @@ public class TokenService {
         this.accountsRepository = accountsRepository;
     }
 
+    public boolean isTokenExisting(String token) {
+        var foundToken = tokensRepository.findFirstByTokenValue(token);
+        if (foundToken == null)
+            log.warn("Token " + token + " does not exist in the database.");
+        return foundToken != null;
+    }
 
     public boolean isTokenInvalid(String token) {
         String decryptedToken = encryptionService.decryptString(token);
