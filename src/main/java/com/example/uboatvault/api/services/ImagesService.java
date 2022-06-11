@@ -21,15 +21,10 @@ public class ImagesService {
     private final Logger log = LoggerFactory.getLogger(ImagesService.class);
 
     private final AccountsService accountsService;
-    private final TokenService tokenService;
-
-    private final ActiveSailorsRepository activeSailorsRepository;
 
     @Autowired
-    public ImagesService(@Lazy AccountsService accountsService, TokenService tokenService, ActiveSailorsRepository activeSailorsRepository) {
+    public ImagesService(@Lazy AccountsService accountsService) {
         this.accountsService = accountsService;
-        this.tokenService = tokenService;
-        this.activeSailorsRepository = activeSailorsRepository;
     }
 
     public byte[] getDefaultProfilePicture() {
@@ -68,25 +63,12 @@ public class ImagesService {
     }
 
     public List<byte[]> getSailorBoatImages(String token, String sailorId) {
-        if (!tokenService.isTokenExisting(token))
+        var foundActiveSailor = accountsService.getSailorAccountBySailorId(token, sailorId);
+
+        if (foundActiveSailor == null)
             return null;
 
-        long sailorIdLong;
-        try {
-            sailorIdLong = Long.parseLong(sailorId);
-        } catch (Exception e) {
-            log.error("Exception while parsing sailorId " + sailorId);
-            return null;
-        }
-
-        var foundActiveSailorAccount = activeSailorsRepository.findFirstByAccountId(sailorIdLong);
-        if (foundActiveSailorAccount == null) {
-            log.warn("Couldn't find active sailor account by id " + sailorIdLong);
-            return null;
-        }
-
-
-        var boat = foundActiveSailorAccount.getBoat();
+        var boat = foundActiveSailor.getBoat();
         if (boat == null) {
             log.warn("Boat is null. Sailor does not have a boat set yet. Returning empty list.");
             return new LinkedList<>();

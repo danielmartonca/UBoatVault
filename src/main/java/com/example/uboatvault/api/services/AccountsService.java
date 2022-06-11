@@ -26,6 +26,7 @@ public class AccountsService {
     private final Logger log = LoggerFactory.getLogger(AccountsService.class);
 
     private final ImagesService imagesService;
+    private final TokenService tokenService;
 
     private final AccountsRepository accountsRepository;
     private final AccountDetailsRepository accountDetailsRepository;
@@ -37,8 +38,9 @@ public class AccountsService {
     private final BoatImagesRepository boatImagesRepository;
 
     @Autowired
-    public AccountsService(@Lazy ImagesService imagesService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository, BoatsRepository boatsRepository) {
+    public AccountsService(@Lazy ImagesService imagesService, TokenService tokenService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository, BoatsRepository boatsRepository) {
         this.imagesService = imagesService;
+        this.tokenService = tokenService;
         this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
         this.tokensRepository = tokensRepository;
@@ -60,6 +62,26 @@ public class AccountsService {
             return false;
         }
         return true;
+    }
+
+    ActiveSailor getSailorAccountBySailorId(String token, String sailorId) {
+        if (!tokenService.isTokenExisting(token))
+            return null;
+
+        long sailorIdLong;
+        try {
+            sailorIdLong = Long.parseLong(sailorId);
+        } catch (Exception e) {
+            log.error("Exception while parsing sailorId " + sailorId);
+            return null;
+        }
+
+        var foundActiveSailor = activeSailorsRepository.findFirstByAccountId(sailorIdLong);
+        if (foundActiveSailor == null) {
+            log.warn("Couldn't find active sailor account by id " + sailorIdLong);
+            return null;
+        }
+        return foundActiveSailor;
     }
 
     @Transactional
@@ -432,6 +454,9 @@ public class AccountsService {
         return accountDetails.getFullName();
     }
 
+    /**
+     * Used by sailors to get and initialise their boat account
+     */
     @Transactional
     public Boat getBoat(String token, Account requestAccount) {
         var foundActiveSailor = getActiveSailorByTokenAndCredentials(token, requestAccount);
@@ -448,6 +473,25 @@ public class AccountsService {
             foundActiveSailor.setBoat(boat);
             activeSailorsRepository.save(foundActiveSailor);
             return boat;
+        }
+
+        log.info("Found boat details for sailor with id " + foundActiveSailor.getAccountId());
+        return foundActiveSailor.getBoat();
+    }
+
+    /**
+     * Used by clients to retrieve informations about their journey.
+     */
+    @Transactional
+    public Boat getBoat(String token, String sailorId) {
+        var foundActiveSailor = getSailorAccountBySailorId(token, sailorId);
+
+        if (foundActiveSailor == null)
+            return null;
+
+        if (foundActiveSailor.getBoat() == null) {
+            log.warn("Sailor does not have any boat set. Creating empty boat now.");
+            return null;
         }
 
         log.info("Found boat details for sailor with id " + foundActiveSailor.getAccountId());

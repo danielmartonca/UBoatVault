@@ -21,7 +21,6 @@ public class ImagesController {
         this.imagesService = imagesService;
     }
 
-
     @GetMapping(value = "/images/getDefaultProfilePicture", produces = MediaType.IMAGE_PNG_VALUE)
     public @ResponseBody
     byte[] getDefaultProfilePicture() {
