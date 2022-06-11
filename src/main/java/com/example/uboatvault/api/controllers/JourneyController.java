@@ -68,9 +68,9 @@ public class JourneyController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/api/getBoat")
+    @GetMapping(value = "/api/getJourneyBoat")
     public ResponseEntity<Boat> getBoat(@CookieValue(name = "token") String token, @RequestParam(name = "sailorId") String sailorId) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getBoat?sailorId=" + sailorId));
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getJourneyBoat?sailorId=" + sailorId));
 
         var boat = accountsService.getBoat(token, sailorId);
         if (boat != null) {
@@ -78,14 +78,14 @@ public class JourneyController {
 
             var images = boat.getBoatImages();
             boat.setBoatImages(null);
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getBoat?sailorId=" + sailorId, boat));
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getJourneyBoat?sailorId=" + sailorId, boat));
             if (images != null && !images.isEmpty())
                 log.info(LoggingUtils.colorString("Request body had " + images.size() + " images as bytes so they were not logged.", TextColor.PURPLE));
             boat.setBoatImages(images);
             return new ResponseEntity<>(boat, HttpStatus.OK);
         } else {
             log.info("Null sent back to the client.");
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getBoat?sailorId=" + sailorId));
+            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getJourneyBoat?sailorId=" + sailorId));
             return new ResponseEntity<>(null, HttpStatus.OK);
         }
     }
