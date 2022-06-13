@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface JourneyRepository extends JpaRepository<Journey, Long> {
     List<Journey> findAllByClient_IdAndStatus(Long client_id, Stage status);
+    List<Journey> findAllBySailor_IdAndStatus(Long sailorId, Stage status);
+
 }

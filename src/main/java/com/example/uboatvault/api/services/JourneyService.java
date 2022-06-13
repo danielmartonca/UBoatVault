@@ -45,7 +45,7 @@ public class JourneyService {
     private final LocationDataRepository locationDataRepository;
 
     @Autowired
-    public JourneyService(AccountsService accountsService, GeoService geoService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, LocationDataRepository locationDataRepository, ActiveSailorsRepository activeSailorsRepository, LocationDataRepository locationDataRepository1) {
+    public JourneyService(AccountsService accountsService, GeoService geoService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, ActiveSailorsRepository activeSailorsRepository, LocationDataRepository locationDataRepository1) {
         this.accountsService = accountsService;
         this.geoService = geoService;
         this.accountsRepository = accountsRepository;
@@ -423,6 +423,51 @@ public class JourneyService {
         } catch (Exception e) {
             log.error("Exception occurred during pulse workflow. Returning false", e);
             return false;
+        }
+    }
+
+    /**
+     * This method searches for journey objects that have status ESTABLISHING_CONNECTION for the sailor from request and returns the objects.
+     * Returns null if any authentication problems occurred, a list of journeys if there are clients that chose this sailor or empty list otherwise
+     */
+    public List<Journey> findClients(String token, Account account) {
+        try {
+            var foundAccount = accountsService.getAccountByTokenAndCredentials(token, account);
+            if (foundAccount == null) {
+                log.info("Request account or token are invalid.");
+                return null;
+            }
+            log.info("Token and credentials match.");
+
+            if (foundAccount.getType() == UserType.CLIENT) {
+                log.warn("Account and token match but account is not a sailor account.");
+                return null;
+            }
+            log.info("Account is a sailor account.");
+
+            var sailor = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
+            if (sailor == null) {
+                log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
+                return null;
+            }
+            log.info("Sailor account found with the account id found earlier.");
+
+            if (!sailor.isLookingForClients()) {
+                log.info("Setting status of sailor of lookingForClients to true.");
+                sailor.setLookingForClients(true);
+                activeSailorsRepository.save(sailor);
+            }
+
+            var journeys = journeyRepository.findAllBySailor_IdAndStatus(foundAccount.getId(), Stage.ESTABLISHING_CONNECTION);
+            if (journeys == null || journeys.isEmpty()) {
+                log.info("No new clients for the sailor.");
+                return new LinkedList<>();
+            }
+            journeys.forEach((journey -> journey.setSailorId(sailor.getId())));
+            return journeys;
+        } catch (Exception e) {
+            log.error("Exception occurred during findClients workflow. Returning null.", e);
+            return null;
         }
     }
 }
