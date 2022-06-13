@@ -6,7 +6,7 @@ import com.example.uboatvault.api.model.requests.MostRecentRidesRequest;
 import com.example.uboatvault.api.model.requests.SailorConnectionRequest;
 import com.example.uboatvault.api.model.response.JourneyResponse;
 import com.example.uboatvault.api.model.response.MostRecentRidesResponse;
-import com.example.uboatvault.api.model.response.SailorConnectionResponse;
+import com.example.uboatvault.api.model.response.JourneyConnectionResponse;
 import com.example.uboatvault.api.services.AccountsService;
 import com.example.uboatvault.api.services.JourneyService;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;
@@ -93,21 +93,22 @@ public class JourneyController {
     }
 
     @PostMapping(value = "/api/connectToSailor")
-    public ResponseEntity<SailorConnectionResponse> connectToSailor(@CookieValue(name = "token") String token,
-                                                                    @RequestBody SailorConnectionRequest request) {
+    public ResponseEntity<JourneyConnectionResponse> connectToSailor(@CookieValue(name = "token") String token,
+                                                                     @RequestBody SailorConnectionRequest request) {
         log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/connectToSailor", request));
 
-        var possibleResponse = journeyService.connectToSailor(token, request);
-        if (possibleResponse == null || possibleResponse.getMsg() == null) {
+        var response = journeyService.connectToSailor(token, request);
+        if (response == null || response.getMsg() == null) {
             log.warn("User is not authorised to connect to the sailor.");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }
 
-        var backendResponse = SailorConnectionResponse.builder()
-                .message(possibleResponse.getMsg())
+        var backendResponse = JourneyConnectionResponse.builder()
+                .status(response)
+                .message(response.getMsg())
                 .build();
 
-        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/connectToSailor", possibleResponse));
+        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/connectToSailor", response));
         return new ResponseEntity<>(backendResponse, HttpStatus.OK);
     }
 }

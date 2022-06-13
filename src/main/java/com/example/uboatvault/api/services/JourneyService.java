@@ -13,7 +13,7 @@ import com.example.uboatvault.api.model.requests.MostRecentRidesRequest;
 import com.example.uboatvault.api.model.requests.PulseRequest;
 import com.example.uboatvault.api.model.requests.SailorConnectionRequest;
 import com.example.uboatvault.api.model.response.JourneyResponse;
-import com.example.uboatvault.api.model.response.SailorConnectionResponse;
+import com.example.uboatvault.api.model.response.JourneyConnectionResponse;
 import com.example.uboatvault.api.repositories.AccountsRepository;
 import com.example.uboatvault.api.repositories.ActiveSailorsRepository;
 import com.example.uboatvault.api.repositories.JourneyRepository;
@@ -312,10 +312,10 @@ public class JourneyService {
      * If id given by client is wrong, null is returned. If the account is not found, returns message notifying user that the sailor may be busy or has gone offline.
      * - if the active sailor was found, a new journey with status ESTABLISHING_CONNECTION will be created with the given data by the client
      */
-    public SailorConnectionResponse.PossibleResponse connectToSailor(String token, SailorConnectionRequest request) {
+    public JourneyConnectionResponse.PossibleResponse connectToSailor(String token, SailorConnectionRequest request) {
         var clientAccount = accountsService.getAccountByTokenAndCredentials(token, request.getJourneyRequest().getClientAccount());
         if (clientAccount == null)
-            return SailorConnectionResponse.PossibleResponse.CLIENT_ERROR;
+            return JourneyConnectionResponse.PossibleResponse.ERROR;
 
         if (request.getJourneyRequest().getClientAccount().getType() == UserType.SAILOR || clientAccount.getType() == UserType.SAILOR) {
             log.warn("Request account or account found in the database are not client accounts.");
@@ -328,19 +328,19 @@ public class JourneyService {
             sailorId = Long.parseLong(request.getSailorId());
         } catch (Exception e) {
             log.warn("Failed to parse sailor id from request. SailorId: " + request.getSailorId(), e);
-            return SailorConnectionResponse.PossibleResponse.CLIENT_ERROR;
+            return JourneyConnectionResponse.PossibleResponse.ERROR;
         }
 
         var activeSailor = activeSailorsRepository.findFreeActiveSailorById(MAX_ACTIVE_SECONDS, sailorId);
         if (activeSailor == null) {
             log.warn("Couldn't find the active sailor. Either the sailor is busy,not active or the user request is wrong.");
-            return SailorConnectionResponse.PossibleResponse.SAILOR_NOT_FOUND;
+            return JourneyConnectionResponse.PossibleResponse.SAILOR_NOT_FOUND;
         }
 
         var activeSailorAccountOptional = accountsRepository.findById(activeSailor.getAccountId());
         if (activeSailorAccountOptional.isEmpty()) {
             log.warn("Found active sailor but couldn't find account.");
-            return SailorConnectionResponse.PossibleResponse.SERVER_ERROR;
+            return JourneyConnectionResponse.PossibleResponse.SERVER_ERROR;
         }
 
         var sailorAccount = activeSailorAccountOptional.get();
@@ -353,7 +353,7 @@ public class JourneyService {
             Double.parseDouble(currentLocationData.getLongitude());
         } catch (Exception e) {
             log.error("Failed to parse current location data coordinates.");
-            return SailorConnectionResponse.PossibleResponse.CLIENT_ERROR;
+            return JourneyConnectionResponse.PossibleResponse.ERROR;
         }
 
         var newJourney = Journey.builder()
@@ -371,7 +371,7 @@ public class JourneyService {
 
         journeyRepository.save(newJourney);
 
-        return SailorConnectionResponse.PossibleResponse.SUCCESS;
+        return JourneyConnectionResponse.PossibleResponse.CONNECT_TO_SAILOR_SUCCESS;
     }
 
     /**
@@ -468,6 +468,61 @@ public class JourneyService {
         } catch (Exception e) {
             log.error("Exception occurred during findClients workflow. Returning null.", e);
             return null;
+        }
+    }
+
+    public JourneyConnectionResponse.PossibleResponse selectClient(String token, Account account, Journey journey) {
+        try {
+            var foundAccount = accountsService.getAccountByTokenAndCredentials(token, account);
+            if (foundAccount == null) {
+                log.info("Request account or token are invalid.");
+                return JourneyConnectionResponse.PossibleResponse.ERROR;
+            }
+            log.info("Token and credentials match.");
+
+            if (foundAccount.getType() == UserType.CLIENT) {
+                log.warn("Account and token match but account is not a sailor account.");
+                return JourneyConnectionResponse.PossibleResponse.ERROR;
+            }
+            log.info("Account is a sailor account.");
+
+            var sailor = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
+            if (sailor == null) {
+                log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
+                return JourneyConnectionResponse.PossibleResponse.ERROR;
+            }
+            log.info("Sailor account found with the account id found earlier.");
+
+            if (!sailor.isLookingForClients()) {
+                log.info("Setting status of sailor of lookingForClients to true.");
+                sailor.setLookingForClients(true);
+                activeSailorsRepository.save(sailor);
+            }
+
+            var latitude = journey.getDestinationLatitude();
+            var longitude = journey.getDestinationLongitude();
+
+            var foundJourney = journeyRepository.findBySailor_IdAndStatusAndDestinationLatitudeAndDestinationLongitude(foundAccount.getId(), Stage.ESTABLISHING_CONNECTION, latitude, longitude);
+            if (foundJourney == null) {
+                log.warn("Failed to find journey in request");
+                return JourneyConnectionResponse.PossibleResponse.JOURNEY_NOT_FOUND;
+            }
+            log.info("Found journey in the request with status ESTABLISHING_CONNECTION. Journey id:" + foundJourney.getId());
+            var otherJourneys = journeyRepository.findAllBySailor_IdAndStatus(foundAccount.getId(), Stage.ESTABLISHING_CONNECTION);
+            if (otherJourneys != null && !otherJourneys.isEmpty())
+                for (var otherJourney : otherJourneys)
+                    if (!Objects.equals(otherJourney.getClient().getId(), foundJourney.getClient().getId())) {
+                        otherJourney.setStatus(Stage.CANCELED);
+                        journeyRepository.save(otherJourney);
+                    }
+
+            foundJourney.setStatus(Stage.SAILOR_ACCEPTED);
+            journeyRepository.save(foundJourney);
+            log.info("Set status of journey from ESTABLISHING_CONNECTION to SAILOR_ACCEPTED. Journey id:" + foundJourney.getId());
+            return JourneyConnectionResponse.PossibleResponse.SELECT_CLIENT_SUCCESS;
+        } catch (Exception e) {
+            log.error("Exception occurred during selectClient workflow. Returning null.", e);
+            return JourneyConnectionResponse.PossibleResponse.SERVER_ERROR;
         }
     }
 }

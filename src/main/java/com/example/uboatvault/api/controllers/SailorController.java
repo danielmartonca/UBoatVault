@@ -3,10 +3,9 @@ package com.example.uboatvault.api.controllers;
 import com.example.uboatvault.api.model.persistence.account.Account;
 import com.example.uboatvault.api.model.persistence.sailing.Journey;
 import com.example.uboatvault.api.model.requests.PulseRequest;
-import com.example.uboatvault.api.model.requests.SailorConnectionRequest;
-import com.example.uboatvault.api.model.requests.UpdateBoatRequest;
-import com.example.uboatvault.api.model.response.SailorConnectionResponse;
-import com.example.uboatvault.api.services.AccountsService;
+import com.example.uboatvault.api.model.requests.SelectClientRequest;
+import com.example.uboatvault.api.model.response.JourneyConnectionResponse;
+import com.example.uboatvault.api.model.response.JourneyResponse;
 import com.example.uboatvault.api.services.JourneyService;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;
 import org.slf4j.Logger;
@@ -60,5 +59,25 @@ public class SailorController {
 
         log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/findClients", response));
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/api/selectClient")
+    public ResponseEntity<JourneyConnectionResponse> selectClient(@CookieValue(name = "token") String token,
+                                                                  @RequestBody SelectClientRequest request) {
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/selectClient", request));
+
+        var response = journeyService.selectClient(token, request.getAccount(), request.getJourney());
+        if (response == null) {
+            log.warn("User is not authorised to select client.");
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        }
+
+        var backendResponse = JourneyConnectionResponse.builder()
+                .status(response)
+                .message(response.getMsg())
+                .build();
+
+        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/selectClient", backendResponse));
+        return new ResponseEntity<>(backendResponse, HttpStatus.OK);
     }
 }

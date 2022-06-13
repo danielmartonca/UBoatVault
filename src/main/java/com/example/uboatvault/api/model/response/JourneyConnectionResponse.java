@@ -6,17 +6,19 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class SailorConnectionResponse {
+public class JourneyConnectionResponse {
     String message;
+    PossibleResponse status;
 
     @AllArgsConstructor
     @Getter
     public enum PossibleResponse {
-        CLIENT_ERROR(null),
+        ERROR(null),
         SERVER_ERROR("Internal server error."),
         SAILOR_NOT_FOUND("Did not find the active sailor."),
-        SUCCESS("Driver was notified of journey request.");
-
+        JOURNEY_NOT_FOUND("Did not find journey given."),
+        CONNECT_TO_SAILOR_SUCCESS("Driver was notified of journey request."),
+        SELECT_CLIENT_SUCCESS("Client was notified that he is selected.");
         final String msg;
     }
 }
