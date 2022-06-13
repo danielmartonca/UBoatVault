@@ -3,8 +3,10 @@ package com.example.uboatvault.api.controllers;
 import com.example.uboatvault.api.model.persistence.sailing.sailor.Boat;
 import com.example.uboatvault.api.model.requests.JourneyRequest;
 import com.example.uboatvault.api.model.requests.MostRecentRidesRequest;
+import com.example.uboatvault.api.model.requests.SailorConnectionRequest;
 import com.example.uboatvault.api.model.response.JourneyResponse;
 import com.example.uboatvault.api.model.response.MostRecentRidesResponse;
+import com.example.uboatvault.api.model.response.SailorConnectionResponse;
 import com.example.uboatvault.api.services.AccountsService;
 import com.example.uboatvault.api.services.JourneyService;
 import com.example.uboatvault.api.utility.logging.LoggingUtils;
@@ -53,21 +55,6 @@ public class JourneyController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/api/requestJourney")
-    public ResponseEntity<JourneyResponse> requestJourney(@CookieValue(name = "token") String token,
-                                                          @RequestBody JourneyRequest request) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/requestJourney", request));
-
-        var response = journeyService.requestJourney(token, request);
-        if (response == null) {
-            log.warn("User is not authorised to request a journey.");
-            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
-        }
-
-        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/requestJourney", response));
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
     @GetMapping(value = "/api/getJourneyBoat")
     public ResponseEntity<Boat> getBoat(@CookieValue(name = "token") String token, @RequestParam(name = "sailorId") String sailorId) {
         log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getJourneyBoat?sailorId=" + sailorId));
@@ -88,5 +75,39 @@ public class JourneyController {
             log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getJourneyBoat?sailorId=" + sailorId));
             return new ResponseEntity<>(null, HttpStatus.OK);
         }
+    }
+
+    @PostMapping(value = "/api/requestJourney")
+    public ResponseEntity<JourneyResponse> requestJourney(@CookieValue(name = "token") String token,
+                                                          @RequestBody JourneyRequest request) {
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/requestJourney", request));
+
+        var response = journeyService.requestJourney(token, request);
+        if (response == null) {
+            log.warn("User is not authorised to request a journey.");
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        }
+
+        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/requestJourney", response));
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/api/connectToSailor")
+    public ResponseEntity<SailorConnectionResponse> connectToSailor(@CookieValue(name = "token") String token,
+                                                                    @RequestBody SailorConnectionRequest request) {
+        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/connectToSailor", request));
+
+        var possibleResponse = journeyService.connectToSailor(token, request);
+        if (possibleResponse == null || possibleResponse.getMsg() == null) {
+            log.warn("User is not authorised to connect to the sailor.");
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        }
+
+        var backendResponse = SailorConnectionResponse.builder()
+                .message(possibleResponse.getMsg())
+                .build();
+
+        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/connectToSailor", possibleResponse));
+        return new ResponseEntity<>(backendResponse, HttpStatus.OK);
     }
 }

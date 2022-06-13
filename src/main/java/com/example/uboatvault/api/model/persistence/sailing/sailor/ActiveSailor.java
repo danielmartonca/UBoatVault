@@ -38,6 +38,10 @@ public class ActiveSailor {
 
     @Getter
     @Setter
+    private boolean lookingForClients=false;
+
+    @Getter
+    @Setter
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "location_data_id")
     private LocationData locationData;

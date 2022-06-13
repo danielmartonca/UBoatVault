@@ -26,11 +26,12 @@ public class LoggingUtils {
         }
         if (body == null) bodyAsString = " with no body.";
 
+        final String str = '[' + requestMethod.toString() + "]      " + api + suffix + bodyAsString;
         return switch (requestMethod) {
-            case GET -> colorString('[' + requestMethod.toString() + "]      " + api + suffix + bodyAsString, TextColor.BLUE);
-            case POST -> colorString('[' + requestMethod.toString() + "]      " + api + suffix + bodyAsString, TextColor.PURPLE);
-            case PUT -> colorString('[' + requestMethod.toString() + "]      " + api + suffix + bodyAsString, TextColor.YELLOW);
-            case DELETE -> colorString('[' + requestMethod.toString() + "]      " + api + suffix + bodyAsString, TextColor.CYAN);
+            case GET -> colorString(str, TextColor.BLUE);
+            case POST -> colorString(str, TextColor.PURPLE);
+            case PUT -> colorString(str, TextColor.YELLOW);
+            case DELETE -> colorString(str, TextColor.CYAN);
             default -> colorString('[' + requestMethod.toString() + "]      " + api + suffix + bodyAsString + "\n      HTTP METHOD NOT SUPPORTED BY REST API", TextColor.RED);
         };
     }

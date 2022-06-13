@@ -7,7 +7,7 @@ import lombok.*;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Entity
@@ -24,6 +24,13 @@ public class Journey {
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
+    @JsonIgnore
+    @Getter
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Stage status;
+
     @Getter
     @Setter
     @Temporal(TemporalType.TIMESTAMP)
@@ -37,15 +44,40 @@ public class Journey {
     @Getter
     @Setter
     @NotNull
-    private String source;
+    private double sourceLatitude;
 
     @Getter
     @Setter
-    private String destination;
+    @NotNull
+    private double sourceLongitude;
+
+    @Getter
+    @Setter
+    @NotNull
+    private String sourceAddress;
+
+    @Getter
+    @Setter
+    @NotNull
+    private double destinationLatitude;
+
+    @Getter
+    @Setter
+    @NotNull
+    private double destinationLongitude;
+
+    @Getter
+    @Setter
+    private String destinationAddress;
 
     @Getter
     @Setter
     private String payment;
+
+    @Getter
+    @Setter
+    @OneToMany(mappedBy = "journey", cascade = {CascadeType.ALL})
+    private List<LocationData> locationDataList;
 
     @Transient
     @Getter
@@ -56,11 +88,6 @@ public class Journey {
     @Getter
     @Setter
     private Long sailorId;
-
-    @Getter
-    @Setter
-    @OneToMany(mappedBy = "journey", cascade = {CascadeType.ALL})
-    private Set<LocationData> locationDataList;
 
     @JsonIgnore
     @Getter
@@ -89,4 +116,5 @@ public class Journey {
         } else
             this.duration = "has not arrived yet";
     }
+
 }

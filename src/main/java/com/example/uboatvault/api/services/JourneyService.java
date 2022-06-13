@@ -4,12 +4,16 @@ import com.example.uboatvault.api.model.enums.UserType;
 import com.example.uboatvault.api.model.other.LatLng;
 import com.example.uboatvault.api.model.other.SailorDetails;
 import com.example.uboatvault.api.model.persistence.account.Account;
+import com.example.uboatvault.api.model.persistence.sailing.Stage;
 import com.example.uboatvault.api.model.persistence.sailing.sailor.ActiveSailor;
 import com.example.uboatvault.api.model.persistence.sailing.Journey;
 import com.example.uboatvault.api.model.persistence.sailing.LocationData;
 import com.example.uboatvault.api.model.requests.JourneyRequest;
 import com.example.uboatvault.api.model.requests.MostRecentRidesRequest;
+import com.example.uboatvault.api.model.requests.PulseRequest;
+import com.example.uboatvault.api.model.requests.SailorConnectionRequest;
 import com.example.uboatvault.api.model.response.JourneyResponse;
+import com.example.uboatvault.api.model.response.SailorConnectionResponse;
 import com.example.uboatvault.api.repositories.AccountsRepository;
 import com.example.uboatvault.api.repositories.ActiveSailorsRepository;
 import com.example.uboatvault.api.repositories.JourneyRepository;
@@ -64,9 +68,9 @@ public class JourneyService {
             return null;
         }
 
-        List<Journey> foundJourneys = journeyRepository.findAllByClient_IdAndDateArrivalNotNullOrderByDateBookingAsc(foundAccount.getId());
+        List<Journey> foundJourneys = journeyRepository.findAllByClient_IdAndStatus(foundAccount.getId(), Stage.FINISHED);
         if (foundJourneys == null || foundJourneys.isEmpty()) {
-            log.warn("User has no journeys.");
+            log.warn("User has no completed journeys.");
             return journeys;
         }
 
@@ -88,10 +92,23 @@ public class JourneyService {
         var sailorAccount = accountsRepository.findById(Long.parseLong(sailorId));
 
         if (clientAccount.isPresent() && sailorAccount.isPresent()) {
-            Set<LocationData> locationDataSet = new HashSet<>();
+            List<LocationData> locationDataSet = new LinkedList<>();
             var locationData = LocationData.createRandomLocationData();
             locationDataSet.add(locationData);
-            Journey journey = Journey.builder().client(clientAccount.get()).sailor(sailorAccount.get()).dateBooking(new Date()).dateArrival(new Date()).destination("Milan").source("Source Name").payment("10 EUR").duration("10 minutes").build();
+            Journey journey = Journey.builder().client(clientAccount.get()).sailor(
+                            sailorAccount.get())
+                    .status(Stage.FINISHED)
+                    .dateBooking(new Date())
+                    .dateArrival(new Date())
+                    .sourceLatitude(37.430857)
+                    .sourceLongitude(-122.091288)
+                    .sourceAddress("CWJ5+ 79 Mountain View,CA,USA")
+                    .destinationLatitude(37.434588)
+                    .destinationLongitude(-122.093799)
+                    .destinationAddress("CWM4+RFP Mountain View,CA,USA")
+                    .payment("10 EUR")
+                    .duration("10 minutes")
+                    .build();
             locationData.setJourney(journey);
             journey.setLocationDataList(locationDataSet);
             journeyRepository.save(journey);
@@ -245,6 +262,9 @@ public class JourneyService {
         return new JourneyResponse(availableSailorsDetails);
     }
 
+    /**
+     * This method returns to the client all the available sailors that will be rendered on his map after clicking find sailor
+     */
     public JourneyResponse requestJourney(String token, JourneyRequest request) {
         var foundAccount = accountsService.getAccountByTokenAndCredentials(token, request.getClientAccount());
         if (foundAccount == null) {
@@ -286,14 +306,87 @@ public class JourneyService {
     }
 
     /**
+     * This method establishes the connection between the client and the sailor after the client has chosen the sailorId sent from the request body.
+     * - it searches first checks the token and account in the request. If any have problems, null is returned
+     * - then it finds the free active sailor in the database active in the last MAX_ACTIVE_SECONDS seconds and has boolean lookingForClients=true.
+     * If id given by client is wrong, null is returned. If the account is not found, returns message notifying user that the sailor may be busy or has gone offline.
+     * - if the active sailor was found, a new journey with status ESTABLISHING_CONNECTION will be created with the given data by the client
+     */
+    public SailorConnectionResponse.PossibleResponse connectToSailor(String token, SailorConnectionRequest request) {
+        var clientAccount = accountsService.getAccountByTokenAndCredentials(token, request.getJourneyRequest().getClientAccount());
+        if (clientAccount == null)
+            return SailorConnectionResponse.PossibleResponse.CLIENT_ERROR;
+
+        if (request.getJourneyRequest().getClientAccount().getType() == UserType.SAILOR || clientAccount.getType() == UserType.SAILOR) {
+            log.warn("Request account or account found in the database are not client accounts.");
+            return null;
+        }
+        log.info("Credentials are ok. Connecting to the sailor...");
+
+        long sailorId;
+        try {
+            sailorId = Long.parseLong(request.getSailorId());
+        } catch (Exception e) {
+            log.warn("Failed to parse sailor id from request. SailorId: " + request.getSailorId(), e);
+            return SailorConnectionResponse.PossibleResponse.CLIENT_ERROR;
+        }
+
+        var activeSailor = activeSailorsRepository.findFreeActiveSailorById(MAX_ACTIVE_SECONDS, sailorId);
+        if (activeSailor == null) {
+            log.warn("Couldn't find the active sailor. Either the sailor is busy,not active or the user request is wrong.");
+            return SailorConnectionResponse.PossibleResponse.SAILOR_NOT_FOUND;
+        }
+
+        var activeSailorAccountOptional = accountsRepository.findById(activeSailor.getAccountId());
+        if (activeSailorAccountOptional.isEmpty()) {
+            log.warn("Found active sailor but couldn't find account.");
+            return SailorConnectionResponse.PossibleResponse.SERVER_ERROR;
+        }
+
+        var sailorAccount = activeSailorAccountOptional.get();
+
+        var currentLocationData = request.getJourneyRequest().getCurrentLocationData();
+        var destinationCoordinates = request.getJourneyRequest().getDestinationCoordinates();
+
+        try {
+            Double.parseDouble(currentLocationData.getLatitude());
+            Double.parseDouble(currentLocationData.getLongitude());
+        } catch (Exception e) {
+            log.error("Failed to parse current location data coordinates.");
+            return SailorConnectionResponse.PossibleResponse.CLIENT_ERROR;
+        }
+
+        var newJourney = Journey.builder()
+                .status(Stage.ESTABLISHING_CONNECTION)
+                .client(clientAccount)
+                .sailor(sailorAccount)
+                .dateBooking(new Date())
+                .sourceLatitude(Double.parseDouble(currentLocationData.getLatitude()))
+                .sourceLongitude(Double.parseDouble(currentLocationData.getLongitude()))
+                .sourceAddress(request.getSourceAddress())
+                .destinationLatitude(destinationCoordinates.getLatitude())
+                .destinationLongitude(destinationCoordinates.getLongitude())
+                .destinationAddress(request.getDestinationAddress())
+                .build();
+
+        journeyRepository.save(newJourney);
+
+        return SailorConnectionResponse.PossibleResponse.SUCCESS;
+    }
+
+    /**
      * This method updates the active sailor account found by token and credentials location data to locationData and lastUpdate to the current system time
      * in order to mark this user as currently active.
      *
      * @return true if the update was done successfully, null if the account couldn't be found and false if there was any exception during the flow
      */
     @Transactional
-    public Boolean pulse(String token, Account account, LocationData locationData) {
+    public Boolean pulse(String token, PulseRequest request) {
+        var account = request.getAccount();
+        var locationData = request.getLocationData();
+        var lookingForClients = request.isLookingForClients();
         try {
+
             Account foundAccount = accountsService.getAccountByTokenAndCredentials(token, account);
             if (foundAccount == null) {
                 log.info("Request account or token are invalid.");
@@ -317,8 +410,9 @@ public class JourneyService {
             var oldLocationData = sailor.getLocationData();
             sailor.setLocationData(locationData);
             sailor.setLastUpdate(new Date());
+            sailor.setLookingForClients(lookingForClients);
             activeSailorsRepository.save(sailor);
-            log.info("Updated active sailor location data via pulse. ");
+            log.info("Updated active sailor location data and status via pulse. ");
             if (oldLocationData != null) {
                 locationDataRepository.deleteById(oldLocationData.getId());
                 log.info("Deleted old location data with id: " + oldLocationData.getId());

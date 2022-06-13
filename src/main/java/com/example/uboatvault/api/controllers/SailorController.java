@@ -31,7 +31,7 @@ public class SailorController {
     public ResponseEntity<Boolean> pulse(@CookieValue(name = "token") String token, @RequestBody PulseRequest request) {
         log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/pulse", request));
 
-        var hasProcessed = journeyService.pulse(token, request.getAccount(), request.getLocationData());
+        var hasProcessed = journeyService.pulse(token, request);
         if (hasProcessed == null) return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
 
         if (hasProcessed) {

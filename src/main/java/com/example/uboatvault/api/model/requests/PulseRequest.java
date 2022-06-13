@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class PulseRequest {
     private Account account;
     private LocationData locationData;
+    boolean lookingForClients;
 }
