@@ -36,16 +36,12 @@ public class RegistrationController {
 
     @PostMapping(value = "/api/checkDeviceRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public ResponseEntity<RegistrationDataResponse> checkDeviceRegistration(@CookieValue(name = "token", required = false) String token,
-                                                                            @RequestBody RegistrationData registrationData,
-                                                                            HttpServletResponse response) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/checkDeviceRegistration", registrationData));
+    public ResponseEntity<RegistrationDataResponse> checkDeviceRegistration(@CookieValue(name = "token", required = false) String token, @RequestBody RegistrationData registrationData, HttpServletResponse response) {
 
         if (token != null) {
             if (tokenService.isTokenInvalid(token)) {
                 log.error("Token is not decryptable.");
 
-                log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/checkDeviceRegistration", new RegistrationDataResponse(null, null)));
                 return new ResponseEntity<>(new RegistrationDataResponse(null, null), HttpStatus.NOT_ACCEPTABLE);
             }
 
@@ -54,7 +50,6 @@ public class RegistrationController {
                 log.info("Token is valid. Returning it");
                 cookiesService.addTokenToSetCookiesHeader(token, response);
 
-                log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/checkDeviceRegistration", new RegistrationDataResponse(true, extractedToken)));
                 return new ResponseEntity<>(new RegistrationDataResponse(true, extractedToken), HttpStatus.OK);
             }
         }
@@ -62,11 +57,9 @@ public class RegistrationController {
         String dbToken = registrationService.searchForTokenBasedOnRegistrationData(registrationData);
         if (dbToken != null) {
             log.info("Found token in the database for the given registration data. Device must request it with credentials as well in order to retrieve it.");
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/checkDeviceRegistration", new RegistrationDataResponse(true, null)));
             return new ResponseEntity<>(new RegistrationDataResponse(true, null), HttpStatus.OK);
         } else {
             log.info("Token could not be retrieved. Either registration data is not in the database or it is bound to multiple accounts.");
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/checkDeviceRegistration", new RegistrationDataResponse(false, null)));
             return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.OK);
         }
     }
@@ -74,7 +67,6 @@ public class RegistrationController {
     @PostMapping(value = "/api/requestRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<RegistrationDataResponse> requestRegistration(@RequestBody Account account, HttpServletResponse response) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/requestRegistration", account));
         String token = registrationService.requestRegistrationToken(account);
         RegistrationDataResponse registrationResponse;
         if (token != null) {
@@ -86,20 +78,16 @@ public class RegistrationController {
             registrationResponse = new RegistrationDataResponse(false, null);
         }
 
-        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/requestRegistration", registrationResponse));
         return new ResponseEntity<>(registrationResponse, HttpStatus.OK);
     }
 
     @PostMapping(value = "/api/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public ResponseEntity<RegistrationDataResponse> register(@CookieValue(name = "token") String token,
-                                                             @RequestBody Account account) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/register", account));
+    public ResponseEntity<RegistrationDataResponse> register(@CookieValue(name = "token") String token, @RequestBody Account account) {
 
         if (tokenService.isTokenInvalid(token)) {
             log.error("Token is not decryptable.");
 
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/register", new RegistrationDataResponse(null, null)));
             return new ResponseEntity<>(new RegistrationDataResponse(null, null), HttpStatus.BAD_REQUEST);
         }
 
@@ -107,12 +95,10 @@ public class RegistrationController {
         if (extractedValue != null) {
             log.info("Device registered successfully.");
 
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/register", new RegistrationDataResponse(true, extractedValue)));
             return new ResponseEntity<>(new RegistrationDataResponse(true, extractedValue), HttpStatus.OK);
         } else {
             log.warn("Device registration failed.");
 
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/register", new RegistrationDataResponse(false, null)));
             return new ResponseEntity<>(new RegistrationDataResponse(false, null), HttpStatus.OK);
         }
     }

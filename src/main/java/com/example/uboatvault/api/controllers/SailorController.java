@@ -34,13 +34,11 @@ public class SailorController {
 
     @PostMapping(value = "/api/pulse")
     public ResponseEntity<Boolean> pulse(@CookieValue(name = "token") String token, @RequestBody PulseRequest request) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/pulse", request));
 
         var hasProcessed = journeyService.pulse(token, request);
         if (hasProcessed == null) return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
 
         if (hasProcessed) {
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/pulse"), "true");
             return new ResponseEntity<>(true, HttpStatus.OK);
         }
         return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
@@ -49,7 +47,6 @@ public class SailorController {
     @PostMapping(value = "/api/findClients")
     public ResponseEntity<List<Journey>> findClients(@CookieValue(name = "token") String token,
                                                      @RequestBody Account request) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/findClients", request));
 
         var response = journeyService.findClients(token, request);
         if (response == null) {
@@ -57,14 +54,12 @@ public class SailorController {
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }
 
-        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/findClients", response));
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping(value = "/api/selectClient")
     public ResponseEntity<JourneyConnectionResponse> selectClient(@CookieValue(name = "token") String token,
                                                                   @RequestBody SelectClientRequest request) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/selectClient", request));
 
         var response = journeyService.selectClient(token, request.getAccount(), request.getJourney());
         if (response == null) {
@@ -77,7 +72,6 @@ public class SailorController {
                 .message(response.getMsg())
                 .build();
 
-        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/selectClient", backendResponse));
         return new ResponseEntity<>(backendResponse, HttpStatus.OK);
     }
 }

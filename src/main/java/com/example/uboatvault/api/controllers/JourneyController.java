@@ -42,60 +42,36 @@ public class JourneyController {
     @PostMapping(value = "/api/getMostRecentRides")
     public ResponseEntity<MostRecentRidesResponse> getMostRecentRides(@CookieValue(name = "token") String token,
                                                                       @RequestBody MostRecentRidesRequest request) {
-
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getMostRecentRides", request));
-
         var journeys = journeyService.getMostRecentRides(token, request);
 
         if (journeys == null)
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
 
         MostRecentRidesResponse response = new MostRecentRidesResponse(journeys);
-        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getMostRecentRides", response));
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping(value = "/api/getJourneyBoat")
     public ResponseEntity<Boat> getBoat(@CookieValue(name = "token") String token, @RequestParam(name = "sailorId") String sailorId) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/getJourneyBoat?sailorId=" + sailorId));
-
         var boat = accountsService.getBoat(token, sailorId);
-        if (boat != null) {
-            log.info(LoggingUtils.colorString("Boat sent back to the client.", TextColor.PURPLE));
-
-            var images = boat.getBoatImages();
-            boat.setBoatImages(null);
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getJourneyBoat?sailorId=" + sailorId, boat));
-            if (images != null && !images.isEmpty())
-                log.info(LoggingUtils.colorString("Request body had " + images.size() + " images as bytes so they were not logged.", TextColor.PURPLE));
-            boat.setBoatImages(images);
-            return new ResponseEntity<>(boat, HttpStatus.OK);
-        } else {
-            log.info("Null sent back to the client.");
-            log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/getJourneyBoat?sailorId=" + sailorId));
-            return new ResponseEntity<>(null, HttpStatus.OK);
-        }
+        return new ResponseEntity<>(boat, HttpStatus.OK);
     }
 
     @PostMapping(value = "/api/requestJourney")
     public ResponseEntity<JourneyResponse> requestJourney(@CookieValue(name = "token") String token,
                                                           @RequestBody JourneyRequest request) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/requestJourney", request));
 
         var response = journeyService.requestJourney(token, request);
         if (response == null) {
             log.warn("User is not authorised to request a journey.");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }
-
-        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/requestJourney", response));
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping(value = "/api/connectToSailor")
     public ResponseEntity<JourneyConnectionResponse> connectToSailor(@CookieValue(name = "token") String token,
                                                                      @RequestBody SailorConnectionRequest request) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/connectToSailor", request));
 
         var response = journeyService.connectToSailor(token, request);
         if (response == null || response.getMsg() == null) {
@@ -108,7 +84,6 @@ public class JourneyController {
                 .message(response.getMsg())
                 .build();
 
-        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/connectToSailor", response));
         return new ResponseEntity<>(backendResponse, HttpStatus.OK);
     }
 }

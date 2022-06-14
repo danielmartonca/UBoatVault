@@ -57,7 +57,7 @@ public class AccountsService {
             return false;
         }
 
-        if (!foundAccount.getUsername().equals(requestAccount.getUsername()) && !foundAccount.getPhoneNumber().equals(requestAccount.getPhoneNumber())) {
+        if (!foundAccount.getUsername().equals(requestAccount.getUsername()) || !foundAccount.getPhoneNumber().equals(requestAccount.getPhoneNumber())) {
             log.warn("Password matches but neither username or phone number match.");
             return false;
         }

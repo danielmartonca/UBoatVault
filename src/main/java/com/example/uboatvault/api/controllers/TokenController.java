@@ -32,7 +32,6 @@ public class TokenController {
     @PostMapping(value = "/api/requestToken", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<TokenResponse> requestToken(@RequestBody Account account, HttpServletResponse response) {
-        log.info(LoggingUtils.logRequest(HttpMethod.POST, "/api/requestToken", account));
         String token = tokenService.requestToken(account);
         TokenResponse tokenResponse;
         if (token != null) {
@@ -44,7 +43,6 @@ public class TokenController {
             tokenResponse = new TokenResponse(false, null);
         }
 
-        log.info(LoggingUtils.logResponse(HttpMethod.POST, "/api/requestToken", tokenResponse));
         return new ResponseEntity<>(tokenResponse, HttpStatus.OK);
     }
 }
