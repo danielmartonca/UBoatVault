@@ -23,6 +23,7 @@ import com.example.uboatvault.api.utilities.ListUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,8 +34,10 @@ import java.util.*;
 public class JourneyService {
     private final Logger log = LoggerFactory.getLogger(JourneyService.class);
 
-    private final int MAX_ACTIVE_SAILORS = 5;
-    private final int MAX_ACTIVE_SECONDS = 300;
+    @Value("${uboat.MAX_ACTIVE_SECONDS}")
+    private int MAX_ACTIVE_SECONDS;
+    @Value("${uboat.MAX_ACTIVE_SAILORS}")
+    private int MAX_ACTIVE_SAILORS;
 
     private final AccountsService accountsService;
     private final GeoService geoService;
@@ -46,6 +49,7 @@ public class JourneyService {
 
     @Autowired
     public JourneyService(AccountsService accountsService, GeoService geoService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, ActiveSailorsRepository activeSailorsRepository, LocationDataRepository locationDataRepository1) {
+
         this.accountsService = accountsService;
         this.geoService = geoService;
         this.accountsRepository = accountsRepository;
@@ -331,7 +335,7 @@ public class JourneyService {
             return JourneyConnectionResponse.PossibleResponse.ERROR;
         }
 
-        var activeSailor = activeSailorsRepository.findFreeActiveSailorById(MAX_ACTIVE_SECONDS, sailorId);
+        var activeSailor = activeSailorsRepository.findFreeActiveSailorById(MAX_ACTIVE_SAILORS, sailorId);
         if (activeSailor == null) {
             log.warn("Couldn't find the active sailor. Either the sailor is busy,not active or the user request is wrong.");
             return JourneyConnectionResponse.PossibleResponse.SAILOR_NOT_FOUND;
