@@ -3,7 +3,7 @@ package com.example.uboatvault.api.services;
 import com.example.uboatvault.api.model.enums.Currency;
 import com.example.uboatvault.api.model.other.LatLng;
 import com.example.uboatvault.api.model.persistence.sailing.sailor.Boat;
-import com.example.uboatvault.api.utility.logging.GeoUtils;
+import com.example.uboatvault.api.utilities.GeoUtils;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 

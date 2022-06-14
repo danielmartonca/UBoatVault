@@ -1,10 +1,8 @@
 package com.example.uboatvault.api.controllers;
 
 import com.example.uboatvault.api.services.ImagesService;
-import com.example.uboatvault.api.utility.logging.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

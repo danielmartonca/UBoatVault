@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.utility.logging;
+package com.example.uboatvault.api.utilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +14,7 @@ public class LoggingUtils {
 
     private static String colorsBasedData(String suffix, HttpMethod requestMethod, String api, String body) {
         if (body == null || body.isEmpty()) body = " no body";
-        if(body.startsWith("�PNG")) body = "[ bytes... ]";
+        if (body.startsWith("�PNG")) body = "[ bytes... ]";
 
         final String str = '[' + requestMethod.toString() + "]      " + api + suffix + body;
         return switch (requestMethod) {
@@ -35,4 +35,27 @@ public class LoggingUtils {
         String suffix = "       RESPONSE:\n";
         log.info(colorsBasedData(suffix, requestMethod, api, body));
     }
+
+    private enum TextColor {
+        RESET("\u001B[0m"),
+        BLACK("\u001B[30m"),
+        RED("\u001B[31m"),
+        GREEN("\u001B[32m"),
+        YELLOW("\u001B[33m"),
+        BLUE("\u001B[34m"),
+        PURPLE("\u001B[35m"),
+        CYAN("\u001B[36m"),
+        WHITE("\u001B[37m");
+
+        private final String color;
+
+        TextColor(String color) {
+            this.color = color;
+        }
+
+        public String getColorCode() {
+            return color;
+        }
+    }
+
 }

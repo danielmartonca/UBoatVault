@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.utility.logging;
+package com.example.uboatvault.api.utilities;
 
 import com.example.uboatvault.api.model.other.LatLng;
 import com.example.uboatvault.api.model.persistence.sailing.LocationData;
