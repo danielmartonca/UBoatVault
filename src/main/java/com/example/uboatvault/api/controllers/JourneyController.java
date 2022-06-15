@@ -35,30 +35,25 @@ public class JourneyController {
         return new ResponseEntity<>(journeyService.addFakeJourney(clientId, sailorId), HttpStatus.CREATED);
     }
 
-
     @PostMapping(value = "/api/getMostRecentRides")
-    public ResponseEntity<MostRecentRidesResponse> getMostRecentRides(@CookieValue(name = "token") String token,
-                                                                      @RequestBody MostRecentRidesRequest request) {
-        var journeys = journeyService.getMostRecentRides(token, request);
+    public ResponseEntity<MostRecentRidesResponse> getMostRecentRides(@RequestBody MostRecentRidesRequest request) {
+        var journeys = journeyService.getMostRecentRides(request);
 
-        if (journeys == null)
-            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        if (journeys == null) return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
 
         MostRecentRidesResponse response = new MostRecentRidesResponse(journeys);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping(value = "/api/getJourneyBoat")
-    public ResponseEntity<Boat> getBoat(@CookieValue(name = "token") String token, @RequestParam(name = "sailorId") String sailorId) {
-        var boat = accountsService.getBoat(token, sailorId);
+    public ResponseEntity<Boat> getBoat(@RequestParam(name = "sailorId") String sailorId) {
+        var boat = accountsService.getBoat(sailorId);
         return new ResponseEntity<>(boat, HttpStatus.OK);
     }
 
     @PostMapping(value = "/api/requestJourney")
-    public ResponseEntity<JourneyResponse> requestJourney(@CookieValue(name = "token") String token,
-                                                          @RequestBody JourneyRequest request) {
-
-        var response = journeyService.requestJourney(token, request);
+    public ResponseEntity<JourneyResponse> requestJourney(@RequestBody JourneyRequest request) {
+        var response = journeyService.requestJourney(request);
         if (response == null) {
             log.warn("User is not authorised to request a journey.");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
@@ -67,19 +62,14 @@ public class JourneyController {
     }
 
     @PostMapping(value = "/api/connectToSailor")
-    public ResponseEntity<JourneyConnectionResponse> connectToSailor(@CookieValue(name = "token") String token,
-                                                                     @RequestBody SailorConnectionRequest request) {
-
-        var response = journeyService.connectToSailor(token, request);
+    public ResponseEntity<JourneyConnectionResponse> connectToSailor(@RequestBody SailorConnectionRequest request) {
+        var response = journeyService.connectToSailor(request);
         if (response == null || response.getMsg() == null) {
             log.warn("User is not authorised to connect to the sailor.");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }
 
-        var backendResponse = JourneyConnectionResponse.builder()
-                .status(response)
-                .message(response.getMsg())
-                .build();
+        var backendResponse = JourneyConnectionResponse.builder().status(response).message(response.getMsg()).build();
 
         return new ResponseEntity<>(backendResponse, HttpStatus.OK);
     }

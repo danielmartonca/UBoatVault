@@ -36,7 +36,7 @@ public class LoggingUtils {
         log.info(colorsBasedData(suffix, requestMethod, api, body));
     }
 
-    private enum TextColor {
+    public enum TextColor {
         RESET("\u001B[0m"),
         BLACK("\u001B[30m"),
         RED("\u001B[31m"),

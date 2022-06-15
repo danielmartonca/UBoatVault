@@ -1,7 +1,6 @@
 package com.example.uboatvault.api.services;
 
 import com.example.uboatvault.api.model.persistence.sailing.sailor.BoatImage;
-import com.example.uboatvault.api.repositories.ActiveSailorsRepository;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +19,11 @@ import java.util.List;
 public class ImagesService {
     private final Logger log = LoggerFactory.getLogger(ImagesService.class);
 
-    private final AccountsService accountsService;
+    private final EntityService entityService;
 
     @Autowired
-    public ImagesService(@Lazy AccountsService accountsService) {
-        this.accountsService = accountsService;
+    public ImagesService(EntityService entityService) {
+        this.entityService = entityService;
     }
 
     public byte[] getDefaultProfilePicture() {
@@ -41,8 +40,8 @@ public class ImagesService {
         return null;
     }
 
-    public byte[] getSailorProfilePicture(String token, String sailorId) {
-        var foundAccount = accountsService.getSailorAccountById(token, sailorId);
+    public byte[] getSailorProfilePicture(String sailorId) {
+        var foundAccount = entityService.findSailorAccountById(sailorId);
         if (foundAccount == null)
             return null;
 
@@ -62,8 +61,8 @@ public class ImagesService {
 
     }
 
-    public List<byte[]> getSailorBoatImages(String token, String sailorId) {
-        var foundActiveSailor = accountsService.getSailorAccountBySailorId(token, sailorId);
+    public List<byte[]> getSailorBoatImages(String sailorId) {
+        var foundActiveSailor = entityService.findActiveSailorBySailorId(sailorId);
 
         if (foundActiveSailor == null)
             return null;

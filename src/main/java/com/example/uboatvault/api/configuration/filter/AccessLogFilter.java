@@ -1,4 +1,4 @@
-package com.example.uboatvault.api.configuration;
+package com.example.uboatvault.api.configuration.filter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

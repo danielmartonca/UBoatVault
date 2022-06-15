@@ -8,14 +8,14 @@ import com.example.uboatvault.api.model.persistence.account.info.RegistrationDat
 import com.example.uboatvault.api.model.persistence.account.pending.PendingAccount;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Set;
 
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "Accounts")
@@ -56,13 +56,6 @@ public class Account {
     @ManyToOne(cascade = {CascadeType.PERSIST})
     @JoinColumn(name = "registration_data_id", nullable = false)
     private RegistrationData registrationData;
-
-    @JsonIgnore
-    @Getter
-    @Setter
-    @OneToOne(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "token_id")
-    private Token token;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Getter

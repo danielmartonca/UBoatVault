@@ -39,7 +39,7 @@ public class JourneyService {
     @Value("${uboat.MAX_ACTIVE_SAILORS}")
     private int MAX_ACTIVE_SAILORS;
 
-    private final AccountsService accountsService;
+    private final EntityService entityService;
     private final GeoService geoService;
 
     private final AccountsRepository accountsRepository;
@@ -48,9 +48,8 @@ public class JourneyService {
     private final LocationDataRepository locationDataRepository;
 
     @Autowired
-    public JourneyService(AccountsService accountsService, GeoService geoService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, ActiveSailorsRepository activeSailorsRepository, LocationDataRepository locationDataRepository1) {
-
-        this.accountsService = accountsService;
+    public JourneyService(EntityService entityService, GeoService geoService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, ActiveSailorsRepository activeSailorsRepository, LocationDataRepository locationDataRepository1) {
+        this.entityService = entityService;
         this.geoService = geoService;
         this.accountsRepository = accountsRepository;
         this.journeyRepository = journeyRepository;
@@ -58,7 +57,7 @@ public class JourneyService {
         this.locationDataRepository = locationDataRepository1;
     }
 
-    public List<Journey> getMostRecentRides(String token, MostRecentRidesRequest mostRecentRidesRequest) {
+    public List<Journey> getMostRecentRides(MostRecentRidesRequest mostRecentRidesRequest) {
         List<Journey> journeys = new LinkedList<>();
         if (mostRecentRidesRequest.getNrOfRides() <= 0) {
             log.warn("Invalid number of journeys requested: " + mostRecentRidesRequest.getNrOfRides());
@@ -66,7 +65,7 @@ public class JourneyService {
         }
 
 
-        var foundAccount = accountsService.getAccountByTokenAndCredentials(token, mostRecentRidesRequest.getAccount());
+        var foundAccount = entityService.findAccountByCredentials(mostRecentRidesRequest.getAccount());
         if (foundAccount == null) {
             log.warn("Credentials are invalid. User is not authorized to receive recent rides data.");
             return null;
@@ -269,8 +268,8 @@ public class JourneyService {
     /**
      * This method returns to the client all the available sailors that will be rendered on his map after clicking find sailor
      */
-    public JourneyResponse requestJourney(String token, JourneyRequest request) {
-        var foundAccount = accountsService.getAccountByTokenAndCredentials(token, request.getClientAccount());
+    public JourneyResponse requestJourney(JourneyRequest request) {
+        var foundAccount = entityService.findAccountByCredentials(request.getClientAccount());
         if (foundAccount == null) {
             log.warn("Token not found or token not matching the request account.");
             return null;
@@ -316,8 +315,8 @@ public class JourneyService {
      * If id given by client is wrong, null is returned. If the account is not found, returns message notifying user that the sailor may be busy or has gone offline.
      * - if the active sailor was found, a new journey with status ESTABLISHING_CONNECTION will be created with the given data by the client
      */
-    public JourneyConnectionResponse.PossibleResponse connectToSailor(String token, SailorConnectionRequest request) {
-        var clientAccount = accountsService.getAccountByTokenAndCredentials(token, request.getJourneyRequest().getClientAccount());
+    public JourneyConnectionResponse.PossibleResponse connectToSailor(SailorConnectionRequest request) {
+        var clientAccount = entityService.findAccountByCredentials(request.getJourneyRequest().getClientAccount());
         if (clientAccount == null)
             return JourneyConnectionResponse.PossibleResponse.ERROR;
 
@@ -385,13 +384,13 @@ public class JourneyService {
      * @return true if the update was done successfully, null if the account couldn't be found and false if there was any exception during the flow
      */
     @Transactional
-    public Boolean pulse(String token, PulseRequest request) {
+    public Boolean pulse(PulseRequest request) {
         var account = request.getAccount();
         var locationData = request.getLocationData();
         var lookingForClients = request.isLookingForClients();
         try {
 
-            Account foundAccount = accountsService.getAccountByTokenAndCredentials(token, account);
+            var foundAccount = entityService.findAccountByCredentials(account);
             if (foundAccount == null) {
                 log.info("Request account or token are invalid.");
                 return null;
@@ -434,9 +433,9 @@ public class JourneyService {
      * This method searches for journey objects that have status ESTABLISHING_CONNECTION for the sailor from request and returns the objects.
      * Returns null if any authentication problems occurred, a list of journeys if there are clients that chose this sailor or empty list otherwise
      */
-    public List<Journey> findClients(String token, Account account) {
+    public List<Journey> findClients(Account account) {
         try {
-            var foundAccount = accountsService.getAccountByTokenAndCredentials(token, account);
+            var foundAccount = entityService.findAccountByCredentials(account);
             if (foundAccount == null) {
                 log.info("Request account or token are invalid.");
                 return null;
@@ -475,9 +474,9 @@ public class JourneyService {
         }
     }
 
-    public JourneyConnectionResponse.PossibleResponse selectClient(String token, Account account, Journey journey) {
+    public JourneyConnectionResponse.PossibleResponse selectClient(Account account, Journey journey) {
         try {
-            var foundAccount = accountsService.getAccountByTokenAndCredentials(token, account);
+            var foundAccount = entityService.findAccountByCredentials(account);
             if (foundAccount == null) {
                 log.info("Request account or token are invalid.");
                 return JourneyConnectionResponse.PossibleResponse.ERROR;

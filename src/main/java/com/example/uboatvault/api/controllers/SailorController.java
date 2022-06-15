@@ -32,7 +32,7 @@ public class SailorController {
     @PostMapping(value = "/api/pulse")
     public ResponseEntity<Boolean> pulse(@CookieValue(name = "token") String token, @RequestBody PulseRequest request) {
 
-        var hasProcessed = journeyService.pulse(token, request);
+        var hasProcessed = journeyService.pulse(request);
         if (hasProcessed == null) return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
 
         if (hasProcessed) {
@@ -45,7 +45,7 @@ public class SailorController {
     public ResponseEntity<List<Journey>> findClients(@CookieValue(name = "token") String token,
                                                      @RequestBody Account request) {
 
-        var response = journeyService.findClients(token, request);
+        var response = journeyService.findClients(request);
         if (response == null) {
             log.warn("User is not authorised to find clients.");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
@@ -58,7 +58,7 @@ public class SailorController {
     public ResponseEntity<JourneyConnectionResponse> selectClient(@CookieValue(name = "token") String token,
                                                                   @RequestBody SelectClientRequest request) {
 
-        var response = journeyService.selectClient(token, request.getAccount(), request.getJourney());
+        var response = journeyService.selectClient(request.getAccount(), request.getJourney());
         if (response == null) {
             log.warn("User is not authorised to select client.");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);

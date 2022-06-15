@@ -1,11 +1,7 @@
 package com.example.uboatvault.api.services;
 
-import com.example.uboatvault.api.model.enums.UserType;
 import com.example.uboatvault.api.model.persistence.account.Account;
-import com.example.uboatvault.api.model.persistence.account.info.AccountDetails;
-import com.example.uboatvault.api.model.persistence.account.info.CreditCard;
-import com.example.uboatvault.api.model.persistence.account.info.Image;
-import com.example.uboatvault.api.model.persistence.sailing.sailor.ActiveSailor;
+import com.example.uboatvault.api.model.persistence.account.info.*;
 import com.example.uboatvault.api.model.persistence.sailing.sailor.Boat;
 import com.example.uboatvault.api.model.persistence.sailing.sailor.BoatImage;
 import com.example.uboatvault.api.repositories.*;
@@ -26,11 +22,11 @@ public class AccountsService {
     private final Logger log = LoggerFactory.getLogger(AccountsService.class);
 
     private final ImagesService imagesService;
-    private final TokenService tokenService;
+    private final EntityService entityService;
+
 
     private final AccountsRepository accountsRepository;
     private final AccountDetailsRepository accountDetailsRepository;
-    private final TokensRepository tokensRepository;
     private final ImagesRepository imagesRepository;
     private final CreditCardsRepository creditCardsRepository;
     private final ActiveSailorsRepository activeSailorsRepository;
@@ -38,12 +34,11 @@ public class AccountsService {
     private final BoatImagesRepository boatImagesRepository;
 
     @Autowired
-    public AccountsService(@Lazy ImagesService imagesService, TokenService tokenService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, TokensRepository tokensRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository, BoatsRepository boatsRepository) {
+    public AccountsService(@Lazy ImagesService imagesService, EntityService entityService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository, BoatsRepository boatsRepository) {
         this.imagesService = imagesService;
-        this.tokenService = tokenService;
+        this.entityService = entityService;
         this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
-        this.tokensRepository = tokensRepository;
         this.imagesRepository = imagesRepository;
         this.creditCardsRepository = creditCardsRepository;
         this.activeSailorsRepository = activeSailorsRepository;
@@ -51,37 +46,14 @@ public class AccountsService {
         this.boatImagesRepository = boatImagesRepository;
     }
 
-    private boolean areAccountsMatching(Account requestAccount, Account foundAccount) {
-        if (!foundAccount.getPassword().equals(requestAccount.getPassword())) {
-            log.warn("Passwords don't match.");
-            return false;
-        }
-
-        if (!foundAccount.getUsername().equals(requestAccount.getUsername()) || !foundAccount.getPhoneNumber().equals(requestAccount.getPhoneNumber())) {
-            log.warn("Password matches but neither username or phone number match.");
-            return false;
-        }
-        return true;
-    }
-
-    ActiveSailor getSailorAccountBySailorId(String token, String sailorId) {
-        if (!tokenService.isTokenExisting(token))
-            return null;
-
-        long sailorIdLong;
-        try {
-            sailorIdLong = Long.parseLong(sailorId);
-        } catch (Exception e) {
-            log.error("Exception while parsing sailorId " + sailorId);
-            return null;
-        }
-
-        var foundActiveSailor = activeSailorsRepository.findFirstByAccountId(sailorIdLong);
-        if (foundActiveSailor == null) {
-            log.warn("Couldn't find active sailor account by id " + sailorIdLong);
-            return null;
-        }
-        return foundActiveSailor;
+    /**
+     * This method returns full account information for the account in the request that is missing phone number/username
+     */
+    public Account getMissingAccountInformation(Account requestAccount) {
+        var foundAccount = entityService.findAccountByCredentials(requestAccount);
+        if (foundAccount == null)
+            log.warn("Failed to find any account matching request account.");
+        return foundAccount;
     }
 
     @Transactional
@@ -224,80 +196,9 @@ public class AccountsService {
         } else log.info("Boat is identical.");
     }
 
-    public Account getAccountByTokenAndCredentials(String token, Account requestAccount) {
-        Account foundAccount;
-        log.info("Token  is: " + token);
-        var foundToken = tokensRepository.findFirstByTokenValue(token);
-        if (foundToken == null) {
-            log.warn("Token not existing in the database.");
-            return null;
-        }
-
-        foundAccount = foundToken.getAccount();
-
-        if (!areAccountsMatching(requestAccount, foundAccount)) {
-            log.warn("Account in request doesn't match with the account found by token in the database.");
-            return null;
-        }
-
-        log.info("Credentials are ok. Account retrieved from database is sent back to the user.");
-        if (foundAccount.getAccountDetails() != null && foundAccount.getAccountDetails().getImage() != null)
-            foundAccount.getAccountDetails().setImage(null);    //don't send the profile picture after every login request
-        return foundAccount;
-    }
-
-    public ActiveSailor getActiveSailorByTokenAndCredentials(String token, Account requestAccount) {
-        Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
-        if (foundAccount == null) {
-            log.info("Request account or token are invalid.");
-            return null;
-        }
-
-        if (foundAccount.getType() != UserType.SAILOR) {
-            log.warn("Account found is not matching a sailor account. Aborting.");
-            return null;
-        }
-
-        var foundSailorAccount = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
-        if (foundSailorAccount == null) {
-            log.warn("Sailor account is null. User hasn't setup any account details.");
-            return null;
-        }
-        return foundSailorAccount;
-    }
-
-    public Account getSailorAccountById(String token, String sailorId) {
-        var foundToken = tokensRepository.findFirstByTokenValue(token);
-        if (foundToken == null) {
-            log.warn("Token not existing in the database.");
-            return null;
-        }
-
-        long sailorIdLong;
-        try {
-            sailorIdLong = Long.parseLong(sailorId);
-        } catch (Exception e) {
-            log.error("Exception occurred while transforming sailorId String to Long", e);
-            return null;
-        }
-        var foundAccountOptional = accountsRepository.findById(sailorIdLong);
-
-        if (foundAccountOptional.isPresent()) {
-            var foundAccount = foundAccountOptional.get();
-            if (foundAccount.getType() == UserType.CLIENT) {
-                log.warn("Account was found by id " + sailorId + " but the account is matching a client account, not a sailor.");
-                return null;
-            }
-            return foundAccountOptional.get();
-        }
-
-        log.warn("No account was found by id " + sailorId);
-        return null;
-    }
-
     @Transactional
-    public AccountDetails getAccountDetails(String token, Account requestAccount) {
-        Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
+    public AccountDetails getAccountDetails(Account requestAccount) {
+        var foundAccount = entityService.findAccountByCredentials(requestAccount);
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
             return null;
@@ -327,14 +228,14 @@ public class AccountsService {
     }
 
     @Transactional
-    public AccountDetails updateAccountDetails(String token, Account requestAccount) {
+    public AccountDetails updateAccountDetails(Account requestAccount) {
         var requestAccountDetails = requestAccount.getAccountDetails();
         if (requestAccountDetails == null) {
             log.warn("Request account details is null.");
             return null;
         }
 
-        Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
+        var foundAccount = entityService.findAccountByCredentials(requestAccount);
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
             return null;
@@ -343,7 +244,7 @@ public class AccountsService {
         var foundAccountDetails = foundAccount.getAccountDetails();
         if (foundAccountDetails == null) {
             log.warn("Account details is null. User hasn't setup any account details.");
-            return getAccountDetails(token, requestAccount);
+            return getAccountDetails(requestAccount);
         }
         log.info("Retrieved account details successfully.");
 
@@ -359,26 +260,23 @@ public class AccountsService {
             foundAccountDetails.setImage(image);
     }
 
-    public Set<CreditCard> getCreditCards(String token, Account requestAccount) {
-        Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
-        if (foundAccount == null) {
-            log.info("Request account or token are invalid.");
+    public Set<CreditCard> getCreditCards(Account requestAccount) {
+        var foundAccount = entityService.findAccountByCredentials(requestAccount);
+        if (foundAccount == null)
             return null;
-        }
-        log.info("Token and account match.");
 
         var creditCards = foundAccount.getCreditCards();
         if (creditCards == null) {
             log.warn("User does not have any credit cards set. Returning empty set.");
             creditCards = new HashSet<>();
         }
-        log.info("Returning credit cards.");
+        log.info("Returning " + creditCards.size() + " credit cards.");
         return creditCards;
     }
 
     @Transactional
-    public Boolean addCreditCard(String token, Account requestAccount, CreditCard creditCard) {
-        Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
+    public Boolean addCreditCard(Account requestAccount, CreditCard creditCard) {
+        var foundAccount = entityService.findAccountByCredentials(requestAccount);
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
             return null;
@@ -416,8 +314,8 @@ public class AccountsService {
     }
 
     @Transactional
-    public Boolean deleteCreditCard(String token, Account requestAccount, CreditCard creditCard) {
-        Account foundAccount = getAccountByTokenAndCredentials(token, requestAccount);
+    public Boolean deleteCreditCard(Account requestAccount, CreditCard creditCard) {
+        var foundAccount = entityService.findAccountByCredentials(requestAccount);
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
             return null;
@@ -440,8 +338,8 @@ public class AccountsService {
         return false;
     }
 
-    public String getSailorName(String token, String sailorId) {
-        var foundAccount = getSailorAccountById(token, sailorId);
+    public String getSailorName(String sailorId) {
+        var foundAccount = entityService.findSailorAccountById(sailorId);
         if (foundAccount == null) return null;
 
         var accountDetails = foundAccount.getAccountDetails();
@@ -458,8 +356,8 @@ public class AccountsService {
      * Used by sailors to get and initialise their boat account
      */
     @Transactional
-    public Boat getBoat(String token, Account requestAccount) {
-        var foundActiveSailor = getActiveSailorByTokenAndCredentials(token, requestAccount);
+    public Boat getBoat(Account requestAccount) {
+        var foundActiveSailor = entityService.findActiveSailorByCredentials(requestAccount);
 
         if (foundActiveSailor == null) {
             log.warn("No account was retrieved. Aborting");
@@ -483,8 +381,8 @@ public class AccountsService {
      * Used by clients to retrieve informations about their journey.
      */
     @Transactional
-    public Boat getBoat(String token, String sailorId) {
-        var foundActiveSailor = getSailorAccountBySailorId(token, sailorId);
+    public Boat getBoat(String sailorId) {
+        var foundActiveSailor = entityService.findActiveSailorBySailorId(sailorId);
 
         if (foundActiveSailor == null)
             return null;
@@ -499,8 +397,8 @@ public class AccountsService {
     }
 
     @Transactional
-    public Boat updateBoat(String token, Account requestAccount, Boat boat) {
-        var foundActiveSailor = getActiveSailorByTokenAndCredentials(token, requestAccount);
+    public Boat updateBoat(Account requestAccount, Boat boat) {
+        var foundActiveSailor = entityService.findActiveSailorByCredentials(requestAccount);
 
         if (foundActiveSailor == null) {
             log.warn("No active sailor was retrieved. Aborting");

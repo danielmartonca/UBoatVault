@@ -28,7 +28,7 @@ public class ImagesController {
     @GetMapping(value = "/images/getSailorProfilePicture", produces = MediaType.IMAGE_PNG_VALUE)
     public @ResponseBody
     ResponseEntity<byte[]> getSailorProfilePicture(@CookieValue(name = "token") String token, @RequestParam(name = "sailorId") String sailorId) {
-        var bytes = imagesService.getSailorProfilePicture(token, sailorId);
+        var bytes = imagesService.getSailorProfilePicture(sailorId);
 
         if (bytes == null)
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -40,7 +40,7 @@ public class ImagesController {
     @GetMapping(value = "/images/getSailorBoatImages", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody
     ResponseEntity<List<byte[]>> getSailorBoatImages(@CookieValue(name = "token") String token, @RequestParam(name = "sailorId") String sailorId) {
-        var imagesBytesList = imagesService.getSailorBoatImages(token, sailorId);
+        var imagesBytesList = imagesService.getSailorBoatImages(sailorId);
 
         if (imagesBytesList == null)
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
