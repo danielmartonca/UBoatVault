@@ -14,7 +14,9 @@ public class LoggingUtils {
 
     private static String colorsBasedData(String suffix, HttpMethod requestMethod, String api, String body) {
         if (body == null || body.isEmpty()) body = " no body";
-        if (body.startsWith("�PNG")) body = "[ bytes... ]";
+        else if (body.startsWith("�PNG")) body = "\n[ bytes... ]";
+        else
+            body = '\n' + body;
 
         final String str = '[' + requestMethod.toString() + "]      " + api + suffix + body;
         return switch (requestMethod) {
@@ -27,12 +29,12 @@ public class LoggingUtils {
     }
 
     public static void logRequest(HttpMethod requestMethod, String api, String body) {
-        String suffix = "       REQUEST:\n";
+        String suffix = "       REQUEST:";
         log.info(colorsBasedData(suffix, requestMethod, api, body));
     }
 
     public static void logResponse(HttpMethod requestMethod, String api, String body) {
-        String suffix = "       RESPONSE:\n";
+        String suffix = "       RESPONSE:";
         log.info(colorsBasedData(suffix, requestMethod, api, body));
     }
 

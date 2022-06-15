@@ -7,6 +7,7 @@ import com.example.uboatvault.api.model.persistence.account.info.RegistrationDat
 import com.example.uboatvault.api.model.persistence.account.info.SimCard;
 import com.example.uboatvault.api.model.persistence.sailing.sailor.ActiveSailor;
 import com.example.uboatvault.api.repositories.*;
+import com.example.uboatvault.api.utilities.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +36,9 @@ public class EntityService {
     public Account findAccountByUsername(String username) {
         var foundAccount = accountsRepository.findFirstByUsername(username);
         if (foundAccount == null)
-            log.warn("Couldn't find any account by username '" + username + "'.");
+            log.warn(LoggingUtils.colorString("Couldn't find any account by username '" + username + "'.", LoggingUtils.TextColor.RED));
         else
-            log.info("Found account by username '" + username + "'.");
+            log.info(LoggingUtils.colorString("[Filter] Found account by username '" + username + "'.", LoggingUtils.TextColor.GREEN));
         return foundAccount;
     }
 
