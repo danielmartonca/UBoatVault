@@ -17,7 +17,7 @@ public class LoggingUtils {
         else if (body.startsWith("�PNG")) body = "\n[ bytes... ]";
         else
             body = '\n' + body;
-
+        if (body.contains("bytes")) body = body.replaceAll("(\"bytes\":\".*\")", "\"bytes:\"[ bytes... ]");
         final String str = '[' + requestMethod.toString() + "]      " + api + suffix + body;
         return switch (requestMethod) {
             case GET -> colorString(str, TextColor.BLUE);

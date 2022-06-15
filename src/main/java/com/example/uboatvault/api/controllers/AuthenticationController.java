@@ -2,9 +2,9 @@ package com.example.uboatvault.api.controllers;
 
 import com.example.uboatvault.api.model.persistence.account.Account;
 import com.example.uboatvault.api.model.persistence.account.info.RegistrationData;
-import com.example.uboatvault.api.services.*;
+import com.example.uboatvault.api.services.AuthenticationService;
+import com.example.uboatvault.api.services.EntityService;
 import com.example.uboatvault.api.services.JwtService;
-import com.example.uboatvault.api.utilities.HttpUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,7 +41,7 @@ public class AuthenticationController {
         if (split.length != 2)
             return ResponseEntity.badRequest().body(null);
 
-        var jwt = HttpUtils.decodeHeader(split[1]);
+        var jwt = split[1];
         var isValid = jwtService.validateJsonWebToken(jwt);
         return ResponseEntity.ok(isValid);
     }
@@ -63,7 +63,7 @@ public class AuthenticationController {
         if (split.length != 2)
             return ResponseEntity.badRequest().body(null);
 
-        var registrationToken = HttpUtils.decodeHeader(split[1]);
+        var registrationToken = split[1];
         var jsonWebToken = authenticationService.register(account, registrationToken);
         return ResponseEntity.ok(jsonWebToken);
     }
