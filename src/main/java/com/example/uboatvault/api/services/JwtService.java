@@ -46,13 +46,15 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractUsername(String jsonWebToken) {
+    public String extractUsernameAndPhoneNumber(String jsonWebToken) {
         try {
             final String subject = extractClaim(jsonWebToken, Claims::getSubject);
             final String[] parts = subject.split("\t");
-            return parts[1];
+            if (parts[0].isEmpty()) parts[0] = "null";
+            if (parts[1].isEmpty()) parts[1] = "null";
+            return parts[0] + "\t" + parts[1];
         } catch (Exception e) {
-            log.error("Failed to extract username from JWT: " + jsonWebToken);
+            log.warn("Failed to extract username from JWT: " + jsonWebToken);
             return null;
         }
     }

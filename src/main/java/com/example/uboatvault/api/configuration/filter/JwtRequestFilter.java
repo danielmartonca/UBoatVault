@@ -34,7 +34,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         final String requestTokenHeader = request.getHeader("Authorization");
 
         String jwtToken = null;
-        String username = null;
+        String usernameAndPhoneNumber = null;
         if (requestTokenHeader == null) {
             if (!List.of("/api/isVaultActive",
                     "/api/checkUsername",
@@ -56,12 +56,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 logger.info(LoggingUtils.colorString("Authorization Bearer header found.", LoggingUtils.TextColor.PURPLE));
 
             jwtToken = requestTokenHeader.substring(7);
-            username = jwtService.extractUsername(jwtToken);
-            logger.info(LoggingUtils.colorString("Username '" + username + "' has token: " + jwtToken, LoggingUtils.TextColor.GREEN));
+            usernameAndPhoneNumber = jwtService.extractUsernameAndPhoneNumber(jwtToken);
+            logger.info(LoggingUtils.colorString("Credentials '" + usernameAndPhoneNumber.replaceAll("null", "").replace("\t", "") + "' with token: " + jwtToken, LoggingUtils.TextColor.GREEN));
         }
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            var userDetails = jwtUserDetailsService.loadUserByUsername(username);
+        if (usernameAndPhoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            var userDetails = jwtUserDetailsService.loadUserByUsername(usernameAndPhoneNumber);
             if (jwtService.validateJsonWebToken(jwtToken)) {
                 var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
