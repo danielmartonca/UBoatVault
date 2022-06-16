@@ -31,18 +31,12 @@ public class AccountsController {
     @GetMapping(value = "/api/checkUsername")
     public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
         var isUsed = authenticationService.checkUsername(username);
-        if (isUsed == null)
-            return ResponseEntity.badRequest().body(null);
-
         return ResponseEntity.ok(isUsed);
     }
 
     @GetMapping(value = "/api/checkPhoneNumber")
     public ResponseEntity<Boolean> checkPhoneNumber(@RequestParam String phoneNumber, @RequestParam String dialCode, @RequestParam String isoCode) {
         var isUsed = authenticationService.checkPhoneNumber(phoneNumber, dialCode, isoCode);
-        if (isUsed == null)
-            return ResponseEntity.badRequest().body(null);
-
         return ResponseEntity.ok(isUsed);
     }
 

@@ -47,17 +47,16 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 logger.warn(LoggingUtils.colorString("Authorization header is empty.", LoggingUtils.TextColor.RED));
             else
                 logger.info(LoggingUtils.colorString("Api does not require authorization.", LoggingUtils.TextColor.GREEN));
-        } else if (!requestTokenHeader.startsWith("Bearer "))
-            logger.warn(LoggingUtils.colorString("JWT Token does not begin with Bearer String", LoggingUtils.TextColor.RED));
-        else {
-            if (requestTokenHeader.startsWith("RToken "))
-                logger.info(LoggingUtils.colorString("Authorization RToken header found.", LoggingUtils.TextColor.PURPLE));
+        } else {
+            if (requestTokenHeader.startsWith("Bearer ")) {
+                logger.info(LoggingUtils.colorString("Authorization Bearer header found.", LoggingUtils.TextColor.GREEN));
+                jwtToken = requestTokenHeader.substring(7);
+                usernameAndPhoneNumber = jwtService.extractUsernameAndPhoneNumber(jwtToken);
+                logger.info(LoggingUtils.colorString("Credentials '" + usernameAndPhoneNumber.replaceAll("null", "").replace("\t", "") + "' with token: " + jwtToken, LoggingUtils.TextColor.GREEN));
+            } else if (requestTokenHeader.startsWith("RToken "))
+                logger.info(LoggingUtils.colorString("Authorization RToken header found.", LoggingUtils.TextColor.GREEN));
             else
-                logger.info(LoggingUtils.colorString("Authorization Bearer header found.", LoggingUtils.TextColor.PURPLE));
-
-            jwtToken = requestTokenHeader.substring(7);
-            usernameAndPhoneNumber = jwtService.extractUsernameAndPhoneNumber(jwtToken);
-            logger.info(LoggingUtils.colorString("Credentials '" + usernameAndPhoneNumber.replaceAll("null", "").replace("\t", "") + "' with token: " + jwtToken, LoggingUtils.TextColor.GREEN));
+                logger.warn(LoggingUtils.colorString("JWT Token does not begin with Bearer String", LoggingUtils.TextColor.RED));
         }
 
         if (usernameAndPhoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {

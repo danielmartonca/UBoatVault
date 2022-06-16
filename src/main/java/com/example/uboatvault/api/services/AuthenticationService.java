@@ -188,7 +188,7 @@ public class AuthenticationService {
         try {
             PendingToken pendingToken = pendingTokenRepository.findFirstByTokenValue(registrationToken);
             if (pendingToken == null) {
-                log.warn("There is no matching pending registrationToken to the provided registrationToken.");
+                log.warn("There is no matching pending registrationToken to the provided registrationToken: " + registrationToken);
                 return null;
             }
 
@@ -230,7 +230,7 @@ public class AuthenticationService {
             if (foundRegistrationData != null)
                 log.warn("Registration info deviceInfo duplicate in database! User has created new account using the same phone.");
 
-            log.info("Registration successful. Returning registrationToken '" + registrationToken + "'.");
+            log.info("Registration successful. Returning JWT '" + jsonWebToken + "'.");
             return jsonWebToken;
         } catch (Exception e) {
             log.error("Exception occurred while registering.", e);

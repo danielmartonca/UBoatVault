@@ -62,8 +62,11 @@ public class AuthenticationController {
         var split = authorizationHeader.split(" ");
         if (split.length != 2)
             return ResponseEntity.badRequest().body(null);
-
         var registrationToken = split[1];
+
+        if (registrationToken.isEmpty())
+            return ResponseEntity.badRequest().body(null);
+
         var jsonWebToken = authenticationService.register(account, registrationToken);
         return ResponseEntity.ok(jsonWebToken);
     }
