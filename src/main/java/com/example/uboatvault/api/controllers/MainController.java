@@ -10,7 +10,7 @@ public class MainController {
     private final Logger log = LoggerFactory.getLogger(MainController.class);
 
     @GetMapping(value = "/api/isVaultActive")
-    public String test() {
+    public String isVaultActive() {
         return "Running...";
     }
 }
