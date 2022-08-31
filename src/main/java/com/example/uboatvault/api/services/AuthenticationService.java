@@ -34,7 +34,7 @@ public class AuthenticationService {
     private final ActiveSailorsRepository activeSailorsRepository;
 
     private final Pattern phoneNumberPattern = Pattern.compile("^\\s*(?:\\+?(\\d{1,3}))?[-. (]*(\\d{3})[-. )]*(\\d{3})[-. ]*(\\d{4})(?: *x(\\d+))?\\s*$");
-    private final Pattern usernamePattern = Pattern.compile("^[a-zA-z][a-zA-z0-9]*$");
+    private final Pattern usernamePattern = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_.-]*$");
 //    private final Pattern passwordPattern = Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$");
 
     @Autowired
