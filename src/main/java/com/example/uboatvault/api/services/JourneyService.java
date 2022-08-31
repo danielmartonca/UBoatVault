@@ -4,22 +4,21 @@ import com.example.uboatvault.api.model.enums.UserType;
 import com.example.uboatvault.api.model.other.LatLng;
 import com.example.uboatvault.api.model.other.SailorDetails;
 import com.example.uboatvault.api.model.persistence.account.Account;
-import com.example.uboatvault.api.model.persistence.sailing.Stage;
-import com.example.uboatvault.api.model.persistence.sailing.sailor.ActiveSailor;
 import com.example.uboatvault.api.model.persistence.sailing.Journey;
 import com.example.uboatvault.api.model.persistence.sailing.LocationData;
+import com.example.uboatvault.api.model.persistence.sailing.Stage;
+import com.example.uboatvault.api.model.persistence.sailing.sailor.ActiveSailor;
 import com.example.uboatvault.api.model.requests.JourneyRequest;
 import com.example.uboatvault.api.model.requests.MostRecentRidesRequest;
 import com.example.uboatvault.api.model.requests.PulseRequest;
 import com.example.uboatvault.api.model.requests.SailorConnectionRequest;
-import com.example.uboatvault.api.model.response.JourneyResponse;
 import com.example.uboatvault.api.model.response.JourneyConnectionResponse;
+import com.example.uboatvault.api.model.response.JourneyResponse;
 import com.example.uboatvault.api.repositories.AccountsRepository;
 import com.example.uboatvault.api.repositories.ActiveSailorsRepository;
 import com.example.uboatvault.api.repositories.JourneyRepository;
 import com.example.uboatvault.api.repositories.LocationDataRepository;
 import com.example.uboatvault.api.utilities.GeoUtils;
-import com.example.uboatvault.api.utilities.ListUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -175,9 +174,11 @@ public class JourneyService {
                     searchList = list1;
                 }
                 Long sailorAccountId = pair.getFirst().getAccountId();
-                var foundPair = ListUtilities.findPairByActiveSailorAccountId(sailorAccountId, searchList, i + 1);
-                if (foundPair != null)
-                    totalDistanceList.add(Pair.of(pair.getFirst(), pair.getSecond() + foundPair.getSecond()));
+
+                searchList.stream()
+                        .filter(activeSailorPair -> sailorAccountId.equals(activeSailorPair.getFirst().getAccountId()))
+                        .findFirst()
+                        .ifPresent(activeSailorDoublePair -> totalDistanceList.add(Pair.of(pair.getFirst(), pair.getSecond() + activeSailorDoublePair.getSecond())));
             }
         }
 
