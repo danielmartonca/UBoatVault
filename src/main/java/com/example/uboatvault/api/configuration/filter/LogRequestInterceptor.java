@@ -18,7 +18,7 @@ public class LogRequestInterceptor implements HandlerInterceptor {
         ContentCachingRequestWrapper req = new ContentCachingRequestWrapper(request);
         req.getParameterMap();
         byte[] requestBody = req.getContentAsByteArray();
-        LoggingUtils.logRequest(HttpMethod.valueOf(request.getMethod()), request.getRequestURI(), new String(requestBody, StandardCharsets.UTF_8));
+        LoggingUtils.logRequest(HttpMethod.valueOf(request.getMethod()), request.getRequestURI(), request.getQueryString(), new String(requestBody, StandardCharsets.UTF_8));
         return true;
     }
 }

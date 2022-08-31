@@ -12,12 +12,15 @@ public class LoggingUtils {
         return color.getColorCode() + string + TextColor.RESET.getColorCode();
     }
 
-    private static String colorsBasedData(String suffix, HttpMethod requestMethod, String api, String body) {
+    private static String colorsBasedData(String suffix, HttpMethod requestMethod, String api, String queryParams, String body) {
         if (body == null || body.isEmpty()) body = " no body";
         else if (body.startsWith("�PNG")) body = "\n[ bytes... ]";
         else
             body = '\n' + body;
         if (body.contains("bytes")) body = body.replaceAll("(\"bytes\":\".*\")", "\"bytes:\"[ bytes... ]");
+
+        if (queryParams != null && !queryParams.isBlank()) api = api + "?" + queryParams;
+
         final String str = '[' + requestMethod.toString() + "]      " + api + suffix + body;
         return switch (requestMethod) {
             case GET -> colorString(str, TextColor.BLUE);
@@ -28,14 +31,14 @@ public class LoggingUtils {
         };
     }
 
-    public static void logRequest(HttpMethod requestMethod, String api, String body) {
+    public static void logRequest(HttpMethod requestMethod, String api, String queryParams, String body) {
         String suffix = "       REQUEST:";
-        log.info(colorsBasedData(suffix, requestMethod, api, body));
+        log.info(colorsBasedData(suffix, requestMethod, api, queryParams, body));
     }
 
-    public static void logResponse(HttpMethod requestMethod, String api, String body) {
+    public static void logResponse(HttpMethod requestMethod, String api, String queryParams, String body) {
         String suffix = "       RESPONSE:";
-        log.info(colorsBasedData(suffix, requestMethod, api, body));
+        log.info(colorsBasedData(suffix, requestMethod, api, queryParams, body));
     }
 
     public enum TextColor {
