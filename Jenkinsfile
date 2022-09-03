@@ -12,7 +12,7 @@ pipeline {
         }
         stage('Build') {
             steps {
-                bat "mvn -Dmaven.test.failure.ignore=true clean install"
+                bat "mvn -Dmaven.test.failure.ignore=true clean package"
                 echo "Successfully built UBoat Vault with maven."
             }
         }
@@ -22,5 +22,15 @@ pipeline {
                 echo "Successfully ran the tests of UBoat Vault."
             }
         }
+        stage('Quality Gate') {
+            steps {
+                withSonarQubeEnv(credentialsId: 'jenkins-sonar', installationName: 'SonarQube Server') {
+                    bat "mvn sonar:sonar"
+                    echo "Successfully ran code Quality Check on SonarQube "
+                }
+
+            }
+        }
+
     }
 }
