@@ -11,8 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 class AccountsControllerTest extends ControllerTest {
@@ -55,7 +54,6 @@ class AccountsControllerTest extends ControllerTest {
         assertEquals(Boolean.TRUE, response.getBody(), "Expected body of response to be true if the username is already used.");
     }
 
-
     @ParameterizedTest
     @CsvSource({"+40720000000,123,12"})
     void checkPhoneNumberIfNotExisting(String phoneNumber, String dialCode, String isoCode) {
@@ -73,5 +71,64 @@ class AccountsControllerTest extends ControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode(), "Invalid status code returned.");
         assertEquals(Boolean.FALSE, response.getBody(), "Expected body to be false if no phone number exists with the given data.");
+    }
+
+    @ParameterizedTest
+    @CsvSource({"testAccount,testPassword,+40720000000,123,12"})
+    void getMissingAccountInformation(String username, String password, String phoneNumber, String dialCode, String isoCode) {
+        var account = Account.builder()
+                .username(username)
+                .password(password)
+                .phoneNumber(PhoneNumber.builder()
+                        .phoneNumber(phoneNumber)
+                        .dialCode(dialCode)
+                        .isoCode(isoCode)
+                        .build())
+                .build();
+
+        when(accountsRepository.findFirstByUsernameAndPassword(username, password)).thenReturn(account);
+        when(accountsRepository.findFirstByPhoneNumber_PhoneNumberAndPassword(phoneNumber, password)).thenReturn(account);
+
+        var testAccount = Account.builder()
+                .username(username)
+                .password(password + "_invalid")
+                .phoneNumber(PhoneNumber.builder()
+                        .phoneNumber(phoneNumber + "_invalid")
+                        .dialCode(dialCode)
+                        .isoCode(isoCode)
+                        .build())
+                .build();
+
+        var response = controller.getMissingAccountInformation(testAccount);
+        assertEquals(HttpStatus.OK, response.getStatusCode(), "Invalid status code returned.");
+        assertNull(response.getBody(), "Expected body to be null if credentials are invalid.");
+
+        testAccount = Account.builder()
+                .username(username)
+                .password(password)
+                .phoneNumber(PhoneNumber.builder()
+                        .phoneNumber(phoneNumber + "_invalid")
+                        .dialCode(dialCode)
+                        .isoCode(isoCode)
+                        .build())
+                .build();
+
+        response = controller.getMissingAccountInformation(testAccount);
+        assertEquals(HttpStatus.OK, response.getStatusCode(), "Invalid status code returned.");
+        assertEquals(account, response.getBody(), "Expected account to be found if username and password match but phone number does not.");
+
+        testAccount = Account.builder()
+                .username(username + "_invalid")
+                .password(password)
+                .phoneNumber(PhoneNumber.builder()
+                        .phoneNumber(phoneNumber)
+                        .dialCode(dialCode)
+                        .isoCode(isoCode)
+                        .build())
+                .build();
+
+        response = controller.getMissingAccountInformation(testAccount);
+        assertEquals(HttpStatus.OK, response.getStatusCode(), "Invalid status code returned.");
+        assertEquals(account, response.getBody(), "Expected account to be found if phone number and password match but username does not.");
     }
 }
