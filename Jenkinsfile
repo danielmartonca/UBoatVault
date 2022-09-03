@@ -24,7 +24,7 @@ pipeline {
         }
         stage('Quality Gate') {
             steps {
-                withSonarQubeEnv(credentialsId: 'jenkins-sonar', installationName: 'SonarQube Server') {
+                withSonarQubeEnv(credentialsId: 'jenkins-sonar', installationName: 'UBoat-SonarQube') {
                     bat "mvn sonar:sonar"
                     echo "Successfully ran code Quality Check on SonarQube "
                 }
