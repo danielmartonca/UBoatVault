@@ -1,8 +1,11 @@
 package com.example.uboatvault.api.controllers;
 
 import com.example.uboatvault.api.model.persistence.account.Account;
+import com.example.uboatvault.api.model.persistence.account.info.PhoneNumber;
 import com.example.uboatvault.api.repositories.AccountsRepository;
+import com.example.uboatvault.api.repositories.PhoneNumbersRepository;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -18,6 +21,8 @@ class AccountsControllerTest extends ControllerTest {
 
     @MockBean
     private AccountsRepository accountsRepository;
+    @MockBean
+    private PhoneNumbersRepository phoneNumbersRepository;
 
     @ParameterizedTest
     @ValueSource(strings = {" !\"#$%&'()*+,/:;<=>?@[]\\^`{|}~"})
@@ -48,5 +53,25 @@ class AccountsControllerTest extends ControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode(), "Invalid status code returned.");
         assertEquals(Boolean.TRUE, response.getBody(), "Expected body of response to be true if the username is already used.");
+    }
+
+
+    @ParameterizedTest
+    @CsvSource({"+40720000000,123,12"})
+    void checkPhoneNumberIfNotExisting(String phoneNumber, String dialCode, String isoCode) {
+        var response = controller.checkPhoneNumber(phoneNumber, dialCode, isoCode);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode(), "Invalid status code returned.");
+        assertEquals(Boolean.FALSE, response.getBody(), "Expected body to be false if no phone number exists with the given data.");
+    }
+
+    @ParameterizedTest
+    @CsvSource({"+40720000000,123,12"})
+    void checkPhoneNumberIfExisting(String phoneNumber, String dialCode, String isoCode) {
+        when(phoneNumbersRepository.findFirstByPhoneNumberAndDialCodeAndIsoCode(phoneNumber, dialCode, isoCode)).thenReturn(new PhoneNumber());
+        var response = controller.checkPhoneNumber(phoneNumber, dialCode, isoCode);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode(), "Invalid status code returned.");
+        assertEquals(Boolean.FALSE, response.getBody(), "Expected body to be false if no phone number exists with the given data.");
     }
 }
