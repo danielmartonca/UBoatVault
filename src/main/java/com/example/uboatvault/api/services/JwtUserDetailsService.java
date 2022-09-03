@@ -59,7 +59,7 @@ public class JwtUserDetailsService implements UserDetailsService {
         if (foundAccount != null) {
             return new User(foundAccount.getUsername(), foundAccount.getPassword(), new ArrayList<>());
         } else {
-            throw new UsernameNotFoundException("User not found with credentials: '" + usernameAndPhoneNumber.replaceAll("null", "").replace("\t", "") + "'");
+            throw new UsernameNotFoundException("User not found with credentials: '" + usernameAndPhoneNumber.replace("null", "").replace("\t", "") + "'");
         }
     }
 }

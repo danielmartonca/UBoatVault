@@ -43,9 +43,12 @@ public class LocationData {
     @JoinColumn(name = "journey_id")
     private Journey journey;
 
+    @Transient
+    private static Random rnd = new Random();
+
     public static LocationData createRandomLocationData() {
         LocationData locationData = new LocationData();
-        locationData.latitude = String.valueOf(new Random().nextInt() * 100);
+        locationData.latitude = String.valueOf(rnd.nextInt() * 100);
         locationData.longitude = "1";
         locationData.accuracy = "1";
         locationData.altitude = "1";

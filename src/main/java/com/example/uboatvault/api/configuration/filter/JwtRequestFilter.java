@@ -52,7 +52,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 logger.info(LoggingUtils.colorString("Authorization Bearer header found.", LoggingUtils.TextColor.GREEN));
                 jwtToken = requestTokenHeader.substring(7);
                 usernameAndPhoneNumber = jwtService.extractUsernameAndPhoneNumber(jwtToken);
-                logger.info(LoggingUtils.colorString("Credentials '" + usernameAndPhoneNumber.replaceAll("null", "").replace("\t", "") + "' with token: " + jwtToken, LoggingUtils.TextColor.GREEN));
+                logger.info(LoggingUtils.colorString("Credentials '" + usernameAndPhoneNumber.replace("null", "").replace("\t", "") + "' with token: " + jwtToken, LoggingUtils.TextColor.GREEN));
             } else if (requestTokenHeader.startsWith("RToken "))
                 logger.info(LoggingUtils.colorString("Authorization RToken header found.", LoggingUtils.TextColor.GREEN));
             else

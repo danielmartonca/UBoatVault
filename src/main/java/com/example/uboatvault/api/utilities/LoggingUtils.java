@@ -17,7 +17,7 @@ public class LoggingUtils {
         else if (body.startsWith("�PNG")) body = "\n[ bytes... ]";
         else
             body = '\n' + body;
-        if (body.contains("bytes")) body = body.replaceAll("(\"bytes\":\".*\")", "\"bytes:\"[ bytes... ]");
+        if (body.contains("bytes")) body = body.replace("(\"bytes\":\".*\")", "\"bytes:\"[ bytes... ]");
 
         if (queryParams != null && !queryParams.isBlank()) api = api + "?" + queryParams;
 
