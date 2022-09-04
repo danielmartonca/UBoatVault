@@ -13,7 +13,7 @@ pipeline {
         stage('Quality Check') {
             steps {
                 withSonarQubeEnv(credentialsId: 'sonarqube-token', installationName: 'UBoat-SonarQube') {
-                    bat 'mvn sonar:sonar'
+                    sh 'mvn sonar:sonar'
                 }
                 timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
@@ -23,13 +23,13 @@ pipeline {
         }
         stage('Build') {
             steps {
-                bat 'mvn -Dmaven.test.failure.ignore=true clean package'
+                sh 'mvn -Dmaven.test.failure.ignore=true clean package'
                 echo 'Successfully built UBoat Vault with maven.'
             }
         }
         stage('Test') {
             steps {
-                bat 'mvn test'
+                sh 'mvn test'
                 echo 'Successfully ran the tests of UBoat Vault.'
             }
         }
