@@ -33,14 +33,5 @@ pipeline {
                 echo 'Successfully ran the tests of UBoat Vault.'
             }
         }
-        stage('Build Docker Image')
-        {
-            steps {
-                script {
-                    def version = sh script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout', returnStdout: true
-                    bat "docker build --build-arg jarName='UBoatVault-0.0.1-development' --tag uboat/vault ."
-                }
-            }
-        }
     }
 }
