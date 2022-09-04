@@ -14,7 +14,7 @@ $runningContainers = (docker ps) -join " "
 Write-Output "Checking if Jenkins Container is running."
 if (!$runningContainers.Contains($jenkinsContainerName)) {
     Write-Output "Jenkins is not running. Starting container..."
-    docker container run -d -p $jenkinsPort`:$jenkinsPort -v jenkins-data:/var/jenkins_home --name jenkins-container jenkins/jenkins:lts
+    docker container run -d -p $jenkinsPort`:$jenkinsPort -v jenkins-data:/var/jenkins_home --name jenkins-container jenkins/jenkins:jdk17
     Start-Sleep -Seconds 5
     if (!$runningContainers.Contains($jenkinsContainerName)) {
         Write-Output "Failed to start Jenkins Container...";

@@ -10,6 +10,18 @@ pipeline {
                 echo 'Successfully cloned repository of UBoat Vault.'
             }
         }
+        stage('Build') {
+            steps {
+                sh 'mvn clean package -DskipTests --batch-mode'
+                echo 'Successfully built UBoat Vault with maven.'
+            }
+        }
+//        stage('Test') {
+//            steps {
+//                sh 'mvn test'
+//                echo 'Successfully ran the tests of UBoat Vault.'
+//            }
+//        }
         stage('Quality Check') {
             steps {
                 withSonarQubeEnv(credentialsId: 'sonarqube-token', installationName: 'UBoat-SonarQube') {
@@ -19,18 +31,6 @@ pipeline {
                     waitForQualityGate abortPipeline: true
                     echo 'Successfully ran code Quality Check on SonarQube '
                 }
-            }
-        }
-        stage('Build') {
-            steps {
-                sh 'mvn -Dmaven.test.failure.ignore=true clean package'
-                echo 'Successfully built UBoat Vault with maven.'
-            }
-        }
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-                echo 'Successfully ran the tests of UBoat Vault.'
             }
         }
     }
