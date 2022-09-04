@@ -1,6 +1,6 @@
 pipeline {
     agent any
-    tools{
+    tools {
         maven 'maven-3-8.6'
     }
     stages {
@@ -8,6 +8,17 @@ pipeline {
             steps {
                 git credentialsId: 'github-token', url: 'https://github.com/danielmartonca/UBoatVault.git'
                 echo "Successfully cloned repository of UBoat Vault."
+            }
+        }
+        stage('Quality Check') {
+            steps {
+                withSonarQubeEnv(credentialsId: 'jenkins-sonar', installationName: 'UBoat-SonarQube') {
+                    bat "mvn sonar:sonar"
+                }
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                    echo "Successfully ran code Quality Check on SonarQube "
+                }
             }
         }
         stage('Build') {
@@ -22,15 +33,5 @@ pipeline {
                 echo "Successfully ran the tests of UBoat Vault."
             }
         }
-        stage('Quality Gate') {
-            steps {
-                withSonarQubeEnv(credentialsId: 'jenkins-sonar', installationName: 'UBoat-SonarQube') {
-                    bat "mvn sonar:sonar"
-                    echo "Successfully ran code Quality Check on SonarQube "
-                }
-
-            }
-        }
-
     }
 }
