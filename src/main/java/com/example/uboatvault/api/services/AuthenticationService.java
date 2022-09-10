@@ -122,7 +122,7 @@ public class AuthenticationService {
     }
 
     @Transactional
-    String generateRegistrationToken() {
+    public String generateRegistrationToken() {
         String token;
         do {
             UUID uuid = UUID.randomUUID();

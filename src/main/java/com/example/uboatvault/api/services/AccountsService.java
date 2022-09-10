@@ -1,7 +1,9 @@
 package com.example.uboatvault.api.services;
 
 import com.example.uboatvault.api.model.persistence.account.Account;
-import com.example.uboatvault.api.model.persistence.account.info.*;
+import com.example.uboatvault.api.model.persistence.account.info.AccountDetails;
+import com.example.uboatvault.api.model.persistence.account.info.CreditCard;
+import com.example.uboatvault.api.model.persistence.account.info.Image;
 import com.example.uboatvault.api.model.persistence.sailing.sailor.Boat;
 import com.example.uboatvault.api.model.persistence.sailing.sailor.BoatImage;
 import com.example.uboatvault.api.repositories.*;
@@ -57,7 +59,7 @@ public class AccountsService {
     }
 
     @Transactional
-    void updateDatabaseAccountDetails(AccountDetails foundAccountDetails, AccountDetails requestAccountDetails) {
+    public void updateDatabaseAccountDetails(AccountDetails foundAccountDetails, AccountDetails requestAccountDetails) {
         boolean hasChanged = false;
 
         if (foundAccountDetails.getFullName() == null && requestAccountDetails.getFullName() != null) {
@@ -104,7 +106,7 @@ public class AccountsService {
     }
 
     @Transactional
-    void updateDatabaseBoat(Boat foundBoat, Boat requestBoat) {
+    public void updateDatabaseBoat(Boat foundBoat, Boat requestBoat) {
         boolean hasChanged = false;
 
         if (foundBoat.getType() == null && requestBoat.getType() != null) {
