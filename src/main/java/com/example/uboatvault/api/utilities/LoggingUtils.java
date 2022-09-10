@@ -1,5 +1,7 @@
 package com.example.uboatvault.api.utilities;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -63,4 +65,15 @@ public class LoggingUtils {
         }
     }
 
+    public static String toStringFormatted(Object object) {
+        try {
+            var ow = new ObjectMapper()
+                    .writer()
+                    .withDefaultPrettyPrinter();
+            return ow.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to print object of type {}.", object.getClass().getSimpleName(), e);
+            return object.toString();
+        }
+    }
 }

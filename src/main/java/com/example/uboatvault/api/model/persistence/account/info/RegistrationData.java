@@ -1,11 +1,12 @@
 package com.example.uboatvault.api.model.persistence.account.info;
 
 import com.example.uboatvault.api.model.persistence.account.Account;
+import com.example.uboatvault.api.utilities.LoggingUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.List;
@@ -37,7 +38,7 @@ public class RegistrationData {
     @JsonIgnore
     @Getter
     @Setter
-    @OneToMany(mappedBy = "registrationData", cascade = CascadeType.ALL,orphanRemoval = true)
+    @OneToMany(mappedBy = "registrationData", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Account> accounts;
 
     @Override
@@ -53,17 +54,8 @@ public class RegistrationData {
         return Objects.hash(mobileNumbersInfoList, deviceInfo);
     }
 
-    /*
-        Used by jackson to print requests body
-         */
     @Override
     public String toString() {
-        try {
-            ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-            return ow.writeValueAsString(this);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return null;
-        }
+        return LoggingUtils.toStringFormatted(this);
     }
 }

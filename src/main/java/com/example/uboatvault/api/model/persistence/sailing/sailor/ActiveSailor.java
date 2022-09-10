@@ -1,9 +1,7 @@
 package com.example.uboatvault.api.model.persistence.sailing.sailor;
 
 import com.example.uboatvault.api.model.persistence.sailing.LocationData;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.example.uboatvault.api.utilities.LoggingUtils;
 import lombok.*;
 
 import javax.persistence.*;
@@ -17,8 +15,6 @@ import java.util.Set;
 @Entity
 @Table(name = "ActiveSailors")
 public class ActiveSailor {
-    private static final ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-
     @Id
     @Getter
     @Setter
@@ -38,7 +34,7 @@ public class ActiveSailor {
 
     @Getter
     @Setter
-    private boolean lookingForClients=false;
+    private boolean lookingForClients = false;
 
     @Getter
     @Setter
@@ -64,10 +60,6 @@ public class ActiveSailor {
 
     @Override
     public String toString() {
-        try {
-            return ow.writeValueAsString(this);
-        } catch (JsonProcessingException ignored) {
-            return "ActiveSailor{" + "id=" + id + ", accountId=" + accountId + ", lastUpdate=" + lastUpdate + ", locationData=" + locationData + '}';
-        }
+        return LoggingUtils.toStringFormatted(this);
     }
 }
