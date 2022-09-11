@@ -7,19 +7,14 @@ server:
       enabled: false
 
 spring:
-  profiles:
-    active: @spring.profiles.active@
-  security:
-    user:
-      name: UBoat
-      password: cae85770-9aa3-46c3-a492-9406c930d00c
   datasource:
-    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-    url: jdbc:sqlserver://localhost;encrypt=true;trustServerCertificate=true;database=UBoatDB;
-    username: sa
-    password: LCy!@e^jr#G{<9<B
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/uboat_vault
+    username: uboat
+    password: uboat
+
   jpa:
-    database-platform: org.hibernate.dialect.SQLServerDialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false
     hibernate:
       ddl-auto: update

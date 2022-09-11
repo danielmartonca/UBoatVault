@@ -1,4 +1,5 @@
 server:
+  port: ${PORT}
   error:
     include-message: always
     whitelabel:
@@ -7,21 +8,21 @@ server:
 spring:
   profiles:
     active: @spring.profiles.active@
+
   security:
     user:
       name: UBoat
       password: cae85770-9aa3-46c3-a492-9406c930d00c
-#  TODO - test automatic integration of heroku and spring
-#  datasource:
-#    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-#    url: jdbc:sqlserver://localhost;encrypt=true;trustServerCertificate=true;database=UBoatDB;
-#    username: sa
-#    password: LCy!@e^jr#G{<9<B
+
+  datasource:
+    url: jdbc:${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
+    show-sql: ${SHOW_SQL}
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${DDL_AUTO}
 
 uboat:
   max-active-seconds: 300

@@ -10,7 +10,6 @@ pipeline {
         gitUrl = 'https://github.com/danielmartonca/UBoatVault.git'
         VERSION = readMavenPom().getVersion()
         imageTag = "danielmartonca/uboat-vault:$VERSION"
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
     }
 
     stages {
@@ -57,22 +56,30 @@ pipeline {
 
         stage('Push Image to Dockerhub') {
             steps {
-                sh 'docker logout > /dev/null 2>&1'
-                sh "docker login -u $DOCKERHUB_CREDENTIALS_USR -p $DOCKERHUB_CREDENTIALS_PSW"
-                sh "docker push $imageTag"
-                echo "Pushed the docker image $imageTag to Docker Hub"
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'password', usernameVariable: 'username')]) {
+                    sh 'docker logout > /dev/null 2>&1'
+                    sh "docker login -u $username -p $password"
+                    sh "docker push $imageTag"
+                    echo "Pushed the docker image $imageTag to Docker Hub"
+                }
             }
         }
 
-//        stage('Deploy') {
-//            steps {
-//                sh 'heroku container:login'
-//                sh 'heroku git:remote -a uboat-vault'
-//                sh 'heroku container:push web'
-//                sh 'heroku container:release web'
-//                echo 'This stage should deploy the docker image to Heroku'
-//            }
-//        }
+        stage('Deploy') {
+            steps {
+                withCredentials([string(credentialsId: 'heroku-token', variable: 'authToken')]) {
+                    sh 'heroku container:login'
+                    sh 'heroku git:remote -a uboat-vault'
+                    sh 'heroku container:push web'
+                    sh 'heroku container:release web'
+                    echo 'Deployed Docker container on Heroku successfully. Testing if app is running...'
+                    //TODO: sh 'curl'
+                    //      echo 'UBoat-Vault is up and running!'
+                }
+            }
+        }
+
+
     }
 
     post {

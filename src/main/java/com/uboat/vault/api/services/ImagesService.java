@@ -67,10 +67,7 @@ public class ImagesService {
             return null;
 
         var boat = foundActiveSailor.getBoat();
-        if (boat == null) {
-            log.warn("Boat is null. Sailor does not have a boat set yet. Returning empty list.");
-            return new LinkedList<>();
-        }
+
         var images = boat.getBoatImages();
         if (images == null) {
             log.info("Images of boat are null. Sailor does not have a boat images set yet. Returning empty list.");
