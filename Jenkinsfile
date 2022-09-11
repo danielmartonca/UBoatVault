@@ -24,7 +24,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo "Building UBoat-Vault-${VERSION}."
-                sh 'mvn clean package -p production -DskipTests --batch-mode'
+                sh 'mvn clean package -p heroku -DskipTests --batch-mode'
                 echo 'Successfully built UBoat Vault with maven.'
             }
         }
@@ -64,22 +64,22 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                sh 'heroku container:login'
-                sh 'heroku git:remote -a uboat-vault'
-                sh 'heroku container:push web'
-                sh 'heroku container:release web'
-                echo 'This stage should deploy the docker image to Heroku'
-            }
-        }
+//        stage('Deploy') {
+//            steps {
+//                sh 'heroku container:login'
+//                sh 'heroku git:remote -a uboat-vault'
+//                sh 'heroku container:push web'
+//                sh 'heroku container:release web'
+//                echo 'This stage should deploy the docker image to Heroku'
+//            }
+//        }
     }
 
     post {
         always
-        {
-            sh "docker rmi $imageTag"
-            sh 'docker logout'
-        }
+                {
+                    sh "docker rmi $imageTag"
+                    sh 'docker logout'
+                }
     }
 }
