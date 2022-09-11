@@ -6,9 +6,6 @@ server:
       enabled: false
 
 spring:
-  profiles:
-    active: @spring.profiles.active@
-
   security:
     user:
       name: UBoat

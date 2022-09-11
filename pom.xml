@@ -151,14 +151,24 @@
             <id>development</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>spring.profiles.active</name>
+                    <value>development</value>
+                </property>
             </activation>
             <properties>
-                <spring.profiles.active>dev</spring.profiles.active>
+                <spring.profiles.active>development</spring.profiles.active>
             </properties>
         </profile>
 
         <profile>
             <id>heroku</id>
+            <activation>
+                <property>
+                    <name>spring.profiles.active</name>
+                    <value>heroku</value>
+                </property>
+            </activation>
             <properties>
                 <spring.profiles.active>heroku</spring.profiles.active>
             </properties>
