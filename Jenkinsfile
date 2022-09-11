@@ -24,7 +24,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo "Building UBoat-Vault-${VERSION}."
-                sh 'mvn clean package -p heroku -DskipTests --batch-mode'
+                sh 'mvn clean package -P heroku -DskipTests --batch-mode'
                 echo 'Successfully built UBoat Vault with maven.'
             }
         }
