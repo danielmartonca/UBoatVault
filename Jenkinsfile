@@ -8,6 +8,7 @@ pipeline {
 
     environment {
         gitUrl = 'https://github.com/danielmartonca/UBoatVault.git'
+        uboatUrl = 'https://uboat-vault.herokuapp.com/'
         VERSION = readMavenPom().getVersion()
         imageTag = "danielmartonca/uboat-vault:$VERSION"
     }
@@ -28,12 +29,12 @@ pipeline {
             }
         }
 
-        //        stage('Test') {
-        //            steps {
-        //                sh 'mvn test'
-        //                echo 'Successfully ran the tests of UBoat Vault.'
-        //            }
-        //        }
+        stage('Test') {
+            steps {
+                sh 'mvn test -P junit -Dspring.profiles.active=junit'
+                echo 'Successfully ran the tests of UBoat Vault.'
+            }
+        }
 
         stage('Quality Check') {
             steps {
@@ -73,13 +74,22 @@ pipeline {
                     sh 'heroku container:push web'
                     sh 'heroku container:release web'
                     echo 'Deployed Docker container on Heroku successfully. Testing if app is running...'
-                    //TODO: sh 'curl'
-                    //      echo 'UBoat-Vault is up and running!'
                 }
             }
         }
 
+        stage('Test if Vault is running') {
+            steps {
+                script {
+                    final String response = sh(script: "curl -s $url", returnStdout: true).trim()
+                    echo response
 
+                    if (response != "Running") {
+                        error("Failed to verify that UBoat-Vault is running. Check Heroku logs...")
+                    }
+                }
+            }
+        }
     }
 
     post {
