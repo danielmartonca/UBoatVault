@@ -8,11 +8,11 @@ server:
 spring:
   security:
     user:
-      name: UBoat
-      password: cae85770-9aa3-46c3-a492-9406c930d00c
+      name: ${SPRING_SECURITY_USER}
+      password: ${SPRING_SECURITY_PASSWORD}
 
   datasource:
-    url: jdbc:${DATABASE_URL}
+    url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DB}?user=${DATABASE_USERNAME}&password=${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -22,6 +22,6 @@ spring:
       ddl-auto: ${DDL_AUTO}
 
 uboat:
-  max-active-seconds: 300
-  max-active-sailors: 5
-  hs256_key: key1234
+  max-active-seconds: ${MAX_ACTIVE_SECONDS}
+  max-active-sailors: ${MAX_ACTIVE_SAILORS}
+  hs256_key: ${HS256_KEY}

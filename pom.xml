@@ -104,13 +104,6 @@
     </dependencies>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -151,10 +144,6 @@
             <id>development</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
-                <property>
-                    <name>spring.profiles.active</name>
-                    <value>development</value>
-                </property>
             </activation>
             <properties>
                 <spring.profiles.active>development</spring.profiles.active>
@@ -163,12 +152,6 @@
 
         <profile>
             <id>heroku</id>
-            <activation>
-                <property>
-                    <name>spring.profiles.active</name>
-                    <value>heroku</value>
-                </property>
-            </activation>
             <properties>
                 <spring.profiles.active>heroku</spring.profiles.active>
             </properties>
