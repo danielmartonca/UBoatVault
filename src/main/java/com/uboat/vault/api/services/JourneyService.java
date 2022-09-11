@@ -33,9 +33,9 @@ import java.util.*;
 public class JourneyService {
     private final Logger log = LoggerFactory.getLogger(JourneyService.class);
 
-    @Value("${uboat.MAX_ACTIVE_SECONDS}")
+    @Value("${uboat.max-active-seconds}")
     private int MAX_ACTIVE_SECONDS;
-    @Value("${uboat.MAX_ACTIVE_SAILORS}")
+    @Value("${uboat.max-active-sailors}")
     private int MAX_ACTIVE_SAILORS;
 
     private final EntityService entityService;

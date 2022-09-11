@@ -1,0 +1,30 @@
+server:
+  address: 192.168.0.103
+  port: 8083
+  error:
+    include-message: always
+    whitelabel:
+      enabled: false
+
+spring:
+  profiles:
+    active: @spring.profiles.active@
+  security:
+    user:
+      name: UBoat
+      password: cae85770-9aa3-46c3-a492-9406c930d00c
+  datasource:
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    url: jdbc:sqlserver://localhost;encrypt=true;trustServerCertificate=true;database=UBoatDB;
+    username: sa
+    password: LCy!@e^jr#G{<9<B
+  jpa:
+    database-platform: org.hibernate.dialect.SQLServerDialect
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+
+uboat:
+  max-active-seconds: 300
+  max-active-sailors: 5
+  hs256_key: key1234
