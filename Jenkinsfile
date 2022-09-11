@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         gitUrl = 'https://github.com/danielmartonca/UBoatVault.git'
-        uboatUrl = 'https://uboat-vault.herokuapp.com/'
+        uboatUrl = 'https://uboat-vault.herokuapp.com'
         VERSION = readMavenPom().getVersion()
         imageTag = "danielmartonca/uboat-vault:$VERSION"
     }
@@ -81,12 +81,8 @@ pipeline {
         stage('Test if Vault is running') {
             steps {
                 script {
-                    final String response = sh(script: "curl -s $url", returnStdout: true).trim()
+                    final String response = sh(script: "curl -s $uboatUrl/api/isVaultActive", returnStdout: true).trim()
                     echo response
-
-                    if (response != "Running") {
-                        error("Failed to verify that UBoat-Vault is running. Check Heroku logs...")
-                    }
                 }
             }
         }
