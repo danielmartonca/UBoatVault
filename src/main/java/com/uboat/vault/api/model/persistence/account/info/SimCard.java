@@ -1,6 +1,7 @@
 package com.uboat.vault.api.model.persistence.account.info;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.uboat.vault.api.model.http.new_requests.RequestSimCard;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,8 +47,18 @@ public class SimCard {
     @Getter
     @Setter
     @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "registration_data_id",nullable = false)
+    @JoinColumn(name = "registration_data_id", nullable = false)
     private RegistrationData registrationData;
+
+    //TODO
+    public SimCard(RequestSimCard simCard) {
+        this.carrierName = simCard.getCarrierName();
+        this.displayName = simCard.getDisplayName();
+        this.slotIndex = simCard.getSlotIndex();
+        this.number = simCard.getNumber();
+        this.countryIso = simCard.getCountryIso();
+        this.countryPhonePrefix = simCard.getCountryPhonePrefix();
+    }
 
     @Override
     public boolean equals(Object o) {

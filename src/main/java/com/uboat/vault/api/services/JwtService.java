@@ -1,6 +1,5 @@
 package com.uboat.vault.api.services;
 
-import com.uboat.vault.api.model.persistence.account.Account;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -59,9 +58,9 @@ public class JwtService {
         }
     }
 
-    public String generateJwt(Account account) {
+    public String generateJwt(String phoneNumber, String username, String password) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, account.getPhoneNumber().getPhoneNumber() + '\t' + account.getUsername() + '\t' + account.getPassword());
+        return createToken(claims, phoneNumber + '\t' + username + '\t' + password);
     }
 
     public boolean validateJsonWebToken(String jsonWebToken) {

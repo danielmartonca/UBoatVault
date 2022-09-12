@@ -3,11 +3,11 @@ package com.uboat.vault.api.model.persistence.account;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.uboat.vault.api.model.enums.UserType;
+import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.persistence.account.info.AccountDetails;
 import com.uboat.vault.api.model.persistence.account.info.CreditCard;
 import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;
 import com.uboat.vault.api.model.persistence.account.info.RegistrationData;
-import com.uboat.vault.api.model.persistence.account.pending.PendingAccount;
 import lombok.*;
 
 import javax.persistence.*;
@@ -70,8 +70,8 @@ public class Account {
     @OneToMany(mappedBy = "account", cascade = {CascadeType.REMOVE, CascadeType.MERGE})
     private Set<CreditCard> creditCards;
 
-    public boolean equalsPendingAccount(PendingAccount pendingAccount) {
-        return this.username.equals(pendingAccount.getUsername()) &&
-                this.password.equals(pendingAccount.getPassword());
+    public Account(RequestAccount requestAccount) {
+        this.username=requestAccount.getUsername();
+        this.password=requestAccount.getPassword();
     }
 }

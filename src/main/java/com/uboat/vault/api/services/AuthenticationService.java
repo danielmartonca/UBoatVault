@@ -189,58 +189,49 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public String register(Account requestAccount, String registrationToken) {
+    public UBoatResponse register(RequestAccount requestAccount, String registrationToken) {
         try {
-            PendingToken pendingToken = pendingTokenRepository.findFirstByTokenValue(registrationToken);
+            var pendingToken = pendingTokenRepository.findFirstByTokenValue(registrationToken);
             if (pendingToken == null) {
                 log.warn("There is no matching pending registrationToken to the provided registrationToken: " + registrationToken);
-                return null;
+                return new UBoatResponse(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE, null);
             }
 
-            if (!registrationToken.equals(pendingToken.getTokenValue())) {
-                log.warn("Tokens don't match.");
-                return null;
-            }
-
-            PendingAccount pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(requestAccount.getUsername(), requestAccount.getPassword());
+            var pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(requestAccount.getUsername(), requestAccount.getPassword());
             if (pendingAccount == null || !requestAccount.equalsPendingAccount(pendingAccount)) {
                 log.warn("Token found but credentials don't match.");
-                return null;
+                return new UBoatResponse(UBoatStatus.RTOKEN_AND_ACCOUNT_NOT_MATCHING, null);
             }
 
             if (requestAccount.getRegistrationData() == null || requestAccount.getPhoneNumber() == null) {
                 log.warn("Account request is missing registrationData or phoneNumber");
-                return null;
+                return new UBoatResponse(UBoatStatus.MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER, null);
             }
 
-            RegistrationData registrationData = registrationDataRepository.findFirstByDeviceInfo(requestAccount.getRegistrationData().getDeviceInfo());
-            if (registrationData != null) {
+            var account = new Account(requestAccount);
+
+            var registrationData = registrationDataRepository.findFirstByDeviceInfo(requestAccount.getRegistrationData().getDeviceInfo());
+
+            if (registrationData == null)
+                registrationData = new RegistrationData(requestAccount.getRegistrationData());
+            else
                 log.warn("Registration data is already used by another account. There will be two accounts bound to this device.");
-                requestAccount.setRegistrationData(registrationData);
-            } else {
-                registrationData = requestAccount.getRegistrationData();
-                //update sim card references to parent in order to retain id
-                for (var simCard : registrationData.getMobileNumbersInfoList())
-                    simCard.setRegistrationData(registrationData);
-            }
 
-            String jsonWebToken = jwtService.generateJwt(requestAccount);
-            var account = accountsRepository.save(requestAccount);
+            account.setRegistrationData(registrationData);
+
+            var jsonWebToken = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
+            account = accountsRepository.save(account);
             pendingAccountsRepository.delete(pendingAccount);
 
             if (account.getType() == UserType.SAILOR)
                 createActiveSailorAccount(account);
 
-            RegistrationData foundRegistrationData = registrationDataRepository.findFirstByDeviceInfo(registrationData.getDeviceInfo());
-            if (foundRegistrationData != null)
-                log.warn("Registration info deviceInfo duplicate in database! User has created new account using the same phone.");
-
             log.info("Registration successful. Returning JWT '" + jsonWebToken + "'.");
-            return jsonWebToken;
+            return new UBoatResponse(UBoatStatus.REGISTRATION_SUCCESSFUL, jsonWebToken);
         } catch (Exception e) {
             log.error("Exception occurred while registering.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, null);
         }
-        return null;
     }
 
     @Transactional
@@ -254,7 +245,7 @@ public class AuthenticationService {
         for (var foundAccount : foundAccountsList) {
             if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
                 log.info("Credentials matched. Found account.");
-                return jwtService.generateJwt(account);
+                return jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
             } else
                 log.warn("An account with given password found but neither username or phone number match.");
         }

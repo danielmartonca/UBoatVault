@@ -32,7 +32,15 @@ public enum UBoatStatus {
     // /api/requestRegistration
     ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED(1, "A new registration token was created.", "Registration requested successfully"),
     ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS(2, "The account cannot be registered because the credentials already exist in the database.", "Credentials already used"),
-    ACCOUNT_ALREADY_PENDING_REGISTRATION(0, "The given credentials have already requested a registration. Pending registration token returned.", "Already requested registration");
+    ACCOUNT_ALREADY_PENDING_REGISTRATION(0, "The given credentials have already requested a registration. Pending registration token returned.", "Already requested registration"),
+
+    // /api/register
+    MISSING_RTOKEN(2, "The request contains 'Authorization' header but is missing the 'RToken' value.", "An unexpected issue occurred. Please try again"),
+    INVALID_RTOKEN_FORMAT(3, "The request contains the 'RToken' header but the format is invalid.", "An unexpected issue occurred. Please try again"),
+    RTOKEN_NOT_FOUND_IN_DATABASE(4, "The RToken values extracted from the authorization header does not exist in the database", "An unexpected issue occurred. Please try again"),
+    RTOKEN_AND_ACCOUNT_NOT_MATCHING(5, "The RToken values extracted from the authorization header does not match with the account in the request", "An unexpected issue occurred. Please try again"),
+    MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER(6, "The account given in the request is missing registration data or phone number information", "An unexpected issue occurred. Please try again"),
+    REGISTRATION_SUCCESSFUL(1, "Registration for the account was successful. JWT is present in the response body.", "Registration successful");
 
     private final int code;
     private final String serverMessage;

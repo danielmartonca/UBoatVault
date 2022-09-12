@@ -72,7 +72,10 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(UBoatStatus.JWT_VALID, true));
     }
 
-    @Operation(summary = "Check if the device from the request is already used or not. The API will search if any of the deviceInfo or the sim cards details present in the request are already present in the database.")
+    @Operation(summary = "Request a registration token for the account given in the request body. " +
+            "It will query the database if the credentials are already used and return a conflict message if so," +
+            "or if an registration token was already generated for the credentials (in which case it will return that token)" +
+            "or create a new registration token and return it.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "A registration token will be returned in the request custom body. The account may have already requested a registration for the current device before. Check response body custom header for more details.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "409", description = "The credentials are already used by an existing account.", content = @Content(mediaType = "application/json")),
@@ -85,30 +88,42 @@ public class AuthenticationController {
         return switch (uBoatResponse.getHeader()) {
             case ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS ->
                     ResponseEntity.status(HttpStatus.CONFLICT).body(uBoatResponse);
-
-            case VAULT_INTERNAL_SERVER_ERROR ->
-                    ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
-
-            default -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };
     }
 
+    @Operation(summary = "Register the account specified in the request body by looking for an existing 'RToken' values in the Authorization header and matching account to token from database. " +
+            "This token is generated with the /api/requestRegistration API and is set in the Authorization header. " +
+            "After the registration is done successfully, a new JWT is generated and sent in the response body. ")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The registration has been successful and a new JWT is sent in the response body.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "There are problems with the Authorization header or RToken values. Check response custom header for more details.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "406", description = "Token does not match to the account or the request is missing data. Check response custom header for more details.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "An exception occurred during the registration workflow.", content = @Content(mediaType = "application/json"))
+    })
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public ResponseEntity<String> register(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody Account account) {
+    public ResponseEntity<UBoatResponse> register(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody RequestAccount account) {
         if (!authorizationHeader.contains("RToken "))
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatResponse(UBoatStatus.MISSING_RTOKEN, false));
 
         var split = authorizationHeader.split(" ");
         if (split.length != 2)
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatResponse(UBoatStatus.INVALID_RTOKEN_FORMAT, false));
+
         var registrationToken = split[1];
 
         if (registrationToken.isEmpty())
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatResponse(UBoatStatus.INVALID_RTOKEN_FORMAT, false));
 
-        var jsonWebToken = authenticationService.register(account, registrationToken);
-        return ResponseEntity.ok(jsonWebToken);
+        var uBoatResponse = authenticationService.register(account, registrationToken);
+        return switch (uBoatResponse.getHeader()) {
+            case RTOKEN_NOT_FOUND_IN_DATABASE -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(uBoatResponse);
+            case RTOKEN_AND_ACCOUNT_NOT_MATCHING, MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER ->
+                    ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(uBoatResponse);
+            case REGISTRATION_SUCCESSFUL -> ResponseEntity.status(HttpStatus.CREATED).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+        };
     }
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
