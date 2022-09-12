@@ -62,7 +62,8 @@ public class AuthenticationController {
 
         return switch (uBoatResponse.getHeader()) {
             case ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS -> ResponseEntity.status(HttpStatus.CONFLICT).body(uBoatResponse);
-            case ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED,ACCOUNT_ALREADY_PENDING_REGISTRATION
+                    -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };
     }
