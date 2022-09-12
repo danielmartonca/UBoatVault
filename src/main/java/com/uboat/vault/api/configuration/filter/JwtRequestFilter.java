@@ -4,6 +4,7 @@ import com.uboat.vault.api.services.JwtService;
 import com.uboat.vault.api.services.JwtUserDetailsService;
 import com.uboat.vault.api.utilities.LoggingUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,10 +17,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
+import java.util.Arrays;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
+    @Value("${whitelisted-urls}")
+    private String[] whiteListUrls;
 
     private final JwtService jwtService;
     private final JwtUserDetailsService jwtUserDetailsService;
@@ -31,20 +34,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,@NonNull FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain chain) throws ServletException, IOException {
         final String requestTokenHeader = request.getHeader("Authorization");
 
         String jwtToken = null;
         String usernameAndPhoneNumber = null;
         if (requestTokenHeader == null) {
-            if (!List.of("/api/isVaultActive",
-                    "/api/checkUsername",
-                    "/api/checkPhoneNumber",
-                    "/api/checkDeviceRegistration",
-                    "/api/verifyJsonWebToken",
-                    "/api/requestRegistration",
-                    "/api/register",
-                    "/api/login").contains(request.getRequestURI()))
+            if (!Arrays.stream(whiteListUrls).toList().contains(request.getRequestURI()))
                 logger.warn(LoggingUtils.colorString("Authorization header is empty.", LoggingUtils.TextColor.RED));
             else
                 logger.info(LoggingUtils.colorString("Api does not require authorization.", LoggingUtils.TextColor.GREEN));

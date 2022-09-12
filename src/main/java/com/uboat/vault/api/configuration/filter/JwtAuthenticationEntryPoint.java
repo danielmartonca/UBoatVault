@@ -1,6 +1,5 @@
 package com.uboat.vault.api.configuration.filter;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -14,6 +13,6 @@ import java.io.Serializable;
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint, Serializable {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
-        response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized");
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
     }
 }

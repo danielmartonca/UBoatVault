@@ -1,0 +1,9 @@
+whitelisted-urls:
+  /api/isVaultActive,
+  /api/checkUsername,
+  /api/checkPhoneNumber,
+  /api/checkDeviceRegistration,
+  /api/verifyJsonWebToken,
+  /api/requestRegistration,
+  /api/register,
+  /api/login
