@@ -143,7 +143,7 @@ public class AuthenticationService {
         try {
             if (isAccountAlreadyExisting(account)) {
                 log.warn("Account already exists with the given credentials.");
-                return new UBoatResponse(UBoatStatus.ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS, null);
+                return new UBoatResponse(UBoatStatus.ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS);
             }
 
             if (isPendingAccountAlreadyExisting(account)) {
@@ -167,7 +167,7 @@ public class AuthenticationService {
             return new UBoatResponse(UBoatStatus.ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED, registrationToken);
         } catch (Exception e) {
             log.error("Error while requesting new registration.", e);
-            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, null);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -194,18 +194,18 @@ public class AuthenticationService {
             var pendingToken = pendingTokenRepository.findFirstByTokenValue(registrationToken);
             if (pendingToken == null) {
                 log.warn("There is no matching pending registrationToken to the provided registrationToken: " + registrationToken);
-                return new UBoatResponse(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE, null);
+                return new UBoatResponse(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE);
             }
 
             var pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(requestAccount.getUsername(), requestAccount.getPassword());
             if (pendingAccount == null || !requestAccount.equalsPendingAccount(pendingAccount)) {
                 log.warn("Token found but credentials don't match.");
-                return new UBoatResponse(UBoatStatus.RTOKEN_AND_ACCOUNT_NOT_MATCHING, null);
+                return new UBoatResponse(UBoatStatus.RTOKEN_AND_ACCOUNT_NOT_MATCHING);
             }
 
             if (requestAccount.getRegistrationData() == null || requestAccount.getPhoneNumber() == null) {
                 log.warn("Account request is missing registrationData or phoneNumber");
-                return new UBoatResponse(UBoatStatus.MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER, null);
+                return new UBoatResponse(UBoatStatus.MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER);
             }
 
             var account = new Account(requestAccount);
@@ -230,26 +230,27 @@ public class AuthenticationService {
             return new UBoatResponse(UBoatStatus.REGISTRATION_SUCCESSFUL, jsonWebToken);
         } catch (Exception e) {
             log.error("Exception occurred while registering.", e);
-            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, null);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
 
     @Transactional
-    public String login(Account account) {
+    public UBoatResponse login(RequestAccount account) {
         var foundAccountsList = accountsRepository.findAllByPassword(account.getPassword());
         if (foundAccountsList == null) {
             log.warn("No account was found with the given username/phone number and password.");
-            return null;
+            return new UBoatResponse(UBoatStatus.CREDENTIALS_NOT_FOUND);
         }
 
         for (var foundAccount : foundAccountsList) {
             if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
                 log.info("Credentials matched. Found account.");
-                return jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
+                var jwt = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
+                return new UBoatResponse(UBoatStatus.LOGIN_SUCCESSFUL, jwt);
             } else
                 log.warn("An account with given password found but neither username or phone number match.");
         }
         log.warn("Invalid credentials. Login failed");
-        return null;
+        return new UBoatResponse(UBoatStatus.INVALID_CREDENTIALS);
     }
 }

@@ -40,7 +40,12 @@ public enum UBoatStatus {
     RTOKEN_NOT_FOUND_IN_DATABASE(4, "The RToken values extracted from the authorization header does not exist in the database", "An unexpected issue occurred. Please try again"),
     RTOKEN_AND_ACCOUNT_NOT_MATCHING(5, "The RToken values extracted from the authorization header does not match with the account in the request", "An unexpected issue occurred. Please try again"),
     MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER(6, "The account given in the request is missing registration data or phone number information", "An unexpected issue occurred. Please try again"),
-    REGISTRATION_SUCCESSFUL(1, "Registration for the account was successful. JWT is present in the response body.", "Registration successful");
+    REGISTRATION_SUCCESSFUL(1, "Registration for the account was successful. JWT is present in the response body.", "Registration successful"),
+
+    // /api/login
+    CREDENTIALS_NOT_FOUND(2, "The password is not used by any account.", "Invalid credentials. Please try again"),
+    INVALID_CREDENTIALS(0, "The username or phone number don't match with the given password", "Invalid credentials. Please try again"),
+    LOGIN_SUCCESSFUL(1, "The credentials match. Login was successful", "Logged in successfully");
 
     private final int code;
     private final String serverMessage;

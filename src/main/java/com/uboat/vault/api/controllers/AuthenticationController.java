@@ -4,7 +4,6 @@ import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.http.new_requests.RequestRegistrationData;
-import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.services.AuthenticationService;
 import com.uboat.vault.api.services.EntityService;
 import com.uboat.vault.api.services.JwtService;
@@ -48,30 +47,6 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(status, false));
     }
 
-    @Operation(summary = "Checks if the Json Web Token in the request header is valid. The 'Authorization' header must contains a valid JWT URL encoded as string proceeded by the 'Bearer ' value.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "The JWT was extracted and validated. The account exists and the JWT is not expired.", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "400", description = "Either the Authorization header does not contain 'Bearer ' or it contains it but the format is not valid. Check response body custom header for more details.", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "401", description = "The JWT has been extracted successfully but it's not valid anymore. Either it can't be decrypted, credentials are missing or it has expired.", content = @Content(mediaType = "application/json"))
-    })
-    @PostMapping(value = "/verifyJwt", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UBoatResponse> verifyJwt(@RequestHeader(value = "Authorization") String authorizationHeader) {
-        if (!authorizationHeader.contains("Bearer "))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatResponse(UBoatStatus.MISSING_BEARER, false));
-
-        var split = authorizationHeader.split(" ");
-        if (split.length != 2)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatResponse(UBoatStatus.INVALID_BEARER_FORMAT, false));
-
-        var jwt = split[1];
-        var isValid = jwtService.validateJsonWebToken(jwt);
-
-        if (!isValid)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new UBoatResponse(UBoatStatus.JWT_INVALID, false));
-
-        return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(UBoatStatus.JWT_VALID, true));
-    }
-
     @Operation(summary = "Request a registration token for the account given in the request body. " +
             "It will query the database if the credentials are already used and return a conflict message if so," +
             "or if an registration token was already generated for the credentials (in which case it will return that token)" +
@@ -86,8 +61,7 @@ public class AuthenticationController {
         var uBoatResponse = authenticationService.requestRegistration(account);
 
         return switch (uBoatResponse.getHeader()) {
-            case ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS ->
-                    ResponseEntity.status(HttpStatus.CONFLICT).body(uBoatResponse);
+            case ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS -> ResponseEntity.status(HttpStatus.CONFLICT).body(uBoatResponse);
             case ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };
@@ -119,19 +93,53 @@ public class AuthenticationController {
         var uBoatResponse = authenticationService.register(account, registrationToken);
         return switch (uBoatResponse.getHeader()) {
             case RTOKEN_NOT_FOUND_IN_DATABASE -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(uBoatResponse);
-            case RTOKEN_AND_ACCOUNT_NOT_MATCHING, MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER ->
-                    ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(uBoatResponse);
+            case RTOKEN_AND_ACCOUNT_NOT_MATCHING, MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER -> ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(uBoatResponse);
             case REGISTRATION_SUCCESSFUL -> ResponseEntity.status(HttpStatus.CREATED).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };
     }
 
+    @Operation(summary = "Checks if the Json Web Token in the request header is valid. The 'Authorization' header must contains a valid JWT URL encoded as string proceeded by the 'Bearer ' value.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The JWT was extracted and validated. The account exists and the JWT is not expired.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "Either the Authorization header does not contain 'Bearer ' or it contains it but the format is not valid. Check response body custom header for more details.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "401", description = "The JWT has been extracted successfully but it's not valid anymore. Either it can't be decrypted, credentials are missing or it has expired.", content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping(value = "/verifyJwt", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UBoatResponse> verifyJwt(@RequestHeader(value = "Authorization") String authorizationHeader) {
+        if (!authorizationHeader.contains("Bearer "))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatResponse(UBoatStatus.MISSING_BEARER, false));
+
+        var split = authorizationHeader.split(" ");
+        if (split.length != 2)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatResponse(UBoatStatus.INVALID_BEARER_FORMAT, false));
+
+        var jwt = split[1];
+        var isValid = jwtService.validateJsonWebToken(jwt);
+
+        if (!isValid)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new UBoatResponse(UBoatStatus.JWT_INVALID, false));
+
+        return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(UBoatStatus.JWT_VALID, true));
+    }
+
+    @Operation(summary = "Login into UBoat with the given credentials and generate a new JWT. " +
+            "In order to login, the password must match with either the username or phone number. ")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The credentials match a new JWT is generated in the response body.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "401", description = "The username/phone number and password don't match.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "No account exists with the given credentials.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "An exception occurred during the login workflow.", content = @Content(mediaType = "application/json"))
+    })
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public ResponseEntity<String> login(@RequestBody Account account) {
-        String jsonWebToken = authenticationService.login(account);
-        if (jsonWebToken == null)
-            return ResponseEntity.ok().body(null);
-        return ResponseEntity.ok().body(jsonWebToken);
+    public ResponseEntity<UBoatResponse> login(@RequestBody RequestAccount account) {
+        var uBoatResponse = authenticationService.login(account);
+
+        return switch (uBoatResponse.getHeader()) {
+            case LOGIN_SUCCESSFUL -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case CREDENTIALS_NOT_FOUND ->ResponseEntity.status(HttpStatus.NOT_FOUND).body(uBoatResponse);
+            case INVALID_CREDENTIALS -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+        };
     }
 }
