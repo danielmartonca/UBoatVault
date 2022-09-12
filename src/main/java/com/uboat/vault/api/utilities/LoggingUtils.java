@@ -29,16 +29,23 @@ public class LoggingUtils {
             case POST -> colorString(str, TextColor.PURPLE);
             case PUT -> colorString(str, TextColor.YELLOW);
             case DELETE -> colorString(str, TextColor.CYAN);
-            default -> colorString('[' + requestMethod.toString() + "]      " + api + suffix + body + "\n      HTTP METHOD NOT SUPPORTED BY REST API", TextColor.RED);
+            default ->
+                    colorString('[' + requestMethod.toString() + "]      " + api + suffix + body + "\n      HTTP METHOD NOT SUPPORTED BY REST API", TextColor.RED);
         };
     }
 
     public static void logRequest(HttpMethod requestMethod, String api, String queryParams, String body) {
+        if (api.contains("swagger") || api.contains("api-docs"))
+            body = "";
+
         String suffix = "       REQUEST:";
         log.info(colorsBasedData(suffix, requestMethod, api, queryParams, body));
     }
 
     public static void logResponse(HttpMethod requestMethod, String api, String queryParams, String body) {
+        if (api.contains("swagger") || api.contains("api-docs"))
+            body = "";
+
         String suffix = "       RESPONSE:";
         log.info(colorsBasedData(suffix, requestMethod, api, queryParams, body));
     }

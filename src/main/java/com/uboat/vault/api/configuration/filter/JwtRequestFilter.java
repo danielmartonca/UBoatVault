@@ -40,7 +40,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String jwtToken = null;
         String usernameAndPhoneNumber = null;
         if (requestTokenHeader == null) {
-            if (!Arrays.stream(whiteListUrls).toList().contains(request.getRequestURI()))
+            if (Arrays.stream(whiteListUrls).noneMatch(url -> request.getRequestURI().contains(url)))
                 logger.warn(LoggingUtils.colorString("Authorization header is empty.", LoggingUtils.TextColor.RED));
             else
                 logger.info(LoggingUtils.colorString("Api does not require authorization.", LoggingUtils.TextColor.GREEN));

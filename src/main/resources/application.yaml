@@ -1,4 +1,10 @@
 whitelisted-urls:
+  /v3/api-docs/**,
+  /v3/api-docs.yaml,
+  /v3/api-docs,
+  /swagger-ui/**,
+  /swagger-ui,
+  /favicon.ico,
   /api/isVaultActive,
   /api/checkUsername,
   /api/checkPhoneNumber,
@@ -7,3 +13,8 @@ whitelisted-urls:
   /api/requestRegistration,
   /api/register,
   /api/login
+
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher

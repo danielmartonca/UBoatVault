@@ -1,5 +1,6 @@
 package com.uboat.vault.api.controllers;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -8,6 +9,7 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Objects;
 
+@Hidden
 @RestController
 public class AppErrorController implements ErrorController {
     @RequestMapping(value = "/error")
