@@ -46,19 +46,28 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(status, false));
     }
 
-    @PostMapping(value = "/api/verifyJsonWebToken", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public ResponseEntity<Boolean> verifyJsonWebToken(@RequestHeader(value = "Authorization") String authorizationHeader) {
+    @Operation(summary = "Checks if the Json Web Token in the request header is valid. The 'Authorization' header must contains a valid JWT URL encoded as string proceeded by the 'Bearer ' value.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The JWT was extracted and validated. The account exists and the JWT is not expired.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "Either the Authorization header does not contain 'Bearer ' or it contains it but the format is not valid. Check response body custom header for more details.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "401", description = "The JWT has been extracted successfully but it's not valid anymore. Either it can't be decrypted, credentials are missing or it has expired.", content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping(value = "/api/verifyJwt", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UBoatResponse> verifyJwt(@RequestHeader(value = "Authorization") String authorizationHeader) {
         if (!authorizationHeader.contains("Bearer "))
-            return ResponseEntity.badRequest().body(false);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatResponse(UBoatStatus.MISSING_BEARER, false));
 
         var split = authorizationHeader.split(" ");
         if (split.length != 2)
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatResponse(UBoatStatus.INVALID_BEARER_FORMAT, false));
 
         var jwt = split[1];
         var isValid = jwtService.validateJsonWebToken(jwt);
-        return ResponseEntity.ok(isValid);
+
+        if (!isValid)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new UBoatResponse(UBoatStatus.JWT_INVALID, false));
+
+        return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(UBoatStatus.JWT_VALID, true));
     }
 
     @PostMapping(value = "/api/requestRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

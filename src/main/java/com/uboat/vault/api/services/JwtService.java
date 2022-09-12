@@ -66,17 +66,17 @@ public class JwtService {
 
     public boolean validateJsonWebToken(String jsonWebToken) {
         try {
-            final String subject = extractClaim(jsonWebToken, Claims::getSubject);
-            final String[] parts = subject.split("\t");
-            final String phoneNumber = parts[0];
-            final String username = parts[1];
-            final String password = parts[2];
+            final var subject = extractClaim(jsonWebToken, Claims::getSubject);
+            final var parts = subject.split("\t");
+            final var phoneNumber = parts[0];
+            final var username = parts[1];
+            final var password = parts[2];
 
             var account = entityService.findAccountByCredentials(phoneNumber, username, password);
             if (account == null)
                 return false;
 
-            final Date expirationDate = extractClaim(jsonWebToken, Claims::getExpiration);
+            final var expirationDate = extractClaim(jsonWebToken, Claims::getExpiration);
             if (expirationDate.before(new Date())) {
                 log.warn("Token is expired.");
                 return false;

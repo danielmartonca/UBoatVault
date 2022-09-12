@@ -19,10 +19,16 @@ public enum UBoatStatus {
     // /api/checkDeviceRegistration
     DEVICE_NOT_REGISTERED(1, "Device unique identifier and sim cards not found in the database.", "Current device is not used."),
     DEVICE_INFO_ALREADY_USED(2, "Device info unique identifier code already present in the database.", "Your phone is already used by another account."),
-    SIM_ALREADY_USED(3, "Sim card already found in the database.", "Your sim card is already used.");
+    SIM_ALREADY_USED(3, "Sim card already found in the database.", "Your sim card is already used."),
 
+    // /api/verifyJwt
+
+    JWT_VALID(1, "The jwt token extracted from the header of the request is valid.", "You are authenticated"),
+    JWT_INVALID(0, "The jwt token extracted from the header of the request is not valid.", "You are not authenticated"),
+    MISSING_BEARER(2, "The request contains 'Authorization' header but is missing the 'Bearer' value.", "An unexpected issue occurred. Please try again"),
+    INVALID_BEARER_FORMAT(3, "The request contains the 'Bearer' header but the format is invalid.", "An unexpected issue occurred. Please try again");
 
     private final int code;
     private final String serverMessage;
     private final String clientMessage;
-}
+    }
