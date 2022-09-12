@@ -2,7 +2,7 @@ package com.uboat.vault.api.model.persistence.account.pending;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.enums.UserType;
-import com.uboat.vault.api.model.persistence.account.Account;
+import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -43,7 +43,7 @@ public class PendingAccount {
     @JoinColumn(name = "pending_token_id")
     private PendingToken pendingToken;
 
-    public PendingAccount(Account account) {
+    public PendingAccount(RequestAccount account) {
         this.type = account.getType();
         this.username = account.getUsername();
         this.password = account.getPassword();

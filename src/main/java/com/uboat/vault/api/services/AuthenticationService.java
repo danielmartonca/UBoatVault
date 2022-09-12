@@ -1,6 +1,9 @@
 package com.uboat.vault.api.services;
 
+import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
+import com.uboat.vault.api.model.http.UBoatResponse;
+import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;
 import com.uboat.vault.api.model.persistence.account.info.RegistrationData;
@@ -82,7 +85,7 @@ public class AuthenticationService {
         return isAlreadyUsed;
     }
 
-    private boolean isAccountAlreadyExisting(Account account) {
+    private boolean isAccountAlreadyExisting(RequestAccount account) {
         Account foundAccount;
         foundAccount = accountsRepository.findFirstByUsername(account.getUsername());
         if (foundAccount != null) {
@@ -106,7 +109,7 @@ public class AuthenticationService {
         return false;
     }
 
-    private boolean isPendingAccountAlreadyExisting(Account account) {
+    private boolean isPendingAccountAlreadyExisting(RequestAccount account) {
         try {
             PendingAccount foundAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
             return foundAccount != null;
@@ -115,7 +118,7 @@ public class AuthenticationService {
         }
     }
 
-    private String getPendingAccountToken(Account account) {
+    private String getPendingAccountToken(RequestAccount account) {
         var pendingToken = pendingTokenRepository.findFirstByAccount_UsernameAndAccount_Password(account.getUsername(), account.getPassword());
         if (pendingToken == null) return null;
         return pendingToken.getTokenValue();
@@ -136,33 +139,35 @@ public class AuthenticationService {
      * This method returns a new token if registrationData is not found in database, or its token if it is found.
      */
     @Transactional
-    public String requestRegistration(Account account) {
+    public UBoatResponse requestRegistration(RequestAccount account) {
         try {
             if (isAccountAlreadyExisting(account)) {
                 log.warn("Account already exists with the given credentials.");
-                return null;
+                return new UBoatResponse(UBoatStatus.ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS, null);
             }
 
             if (isPendingAccountAlreadyExisting(account)) {
                 log.warn("Pending account already exists returning the registrationToken.");
-                return getPendingAccountToken(account);
+                var pendingRegistrationToken = getPendingAccountToken(account);
+                return new UBoatResponse(UBoatStatus.ACCOUNT_ALREADY_PENDING_REGISTRATION, pendingRegistrationToken);
             }
 
             log.info("New pendingAccount and pendingToken will be generated.");
 
-            //creating new pendingAccount and it's pendingToken
-            String registrationToken = generateRegistrationToken();
+            //creating new pendingAccount and its pendingToken
+            var registrationToken = generateRegistrationToken();
+
             var newPendingAccount = new PendingAccount(account);
-            PendingToken newPendingToken = new PendingToken(registrationToken);
+            var newPendingToken = new PendingToken(registrationToken);
             newPendingAccount.setPendingToken(newPendingToken);
             newPendingToken.setAccount(newPendingAccount);
 
             pendingAccountsRepository.save(newPendingAccount);
             log.info("Created new pending registration account and registrationToken. Returning registrationToken '" + registrationToken + "'.");
-            return registrationToken;
+            return new UBoatResponse(UBoatStatus.ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED, registrationToken);
         } catch (Exception e) {
             log.error("Error while requesting new registration.", e);
-            return null;
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, null);
         }
     }
 

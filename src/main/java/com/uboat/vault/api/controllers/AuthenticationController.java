@@ -2,6 +2,7 @@ package com.uboat.vault.api.controllers;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.http.UBoatResponse;
+import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.http.new_requests.RequestRegistrationData;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.services.AuthenticationService;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
+@RequestMapping("api")
 public class AuthenticationController {
     private final EntityService entityService;
     private final AuthenticationService authenticationService;
@@ -36,7 +38,7 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "200", description = "Neither device info nor any sim card are present in the database.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "409", description = "Either the sim card or device info is already used. Check response body custom header for more details.", content = @Content(mediaType = "application/json"))
     })
-    @PostMapping(value = "/api/checkDeviceRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/checkDeviceRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UBoatResponse> checkDeviceRegistration(@RequestBody RequestRegistrationData registrationData) {
         var status = entityService.checkDeviceRegistration(registrationData);
 
@@ -52,7 +54,7 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "400", description = "Either the Authorization header does not contain 'Bearer ' or it contains it but the format is not valid. Check response body custom header for more details.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "401", description = "The JWT has been extracted successfully but it's not valid anymore. Either it can't be decrypted, credentials are missing or it has expired.", content = @Content(mediaType = "application/json"))
     })
-    @PostMapping(value = "/api/verifyJwt", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/verifyJwt", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UBoatResponse> verifyJwt(@RequestHeader(value = "Authorization") String authorizationHeader) {
         if (!authorizationHeader.contains("Bearer "))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatResponse(UBoatStatus.MISSING_BEARER, false));
@@ -70,14 +72,28 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(UBoatStatus.JWT_VALID, true));
     }
 
-    @PostMapping(value = "/api/requestRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public ResponseEntity<String> requestRegistration(@RequestBody Account account) {
-        var registrationToken = authenticationService.requestRegistration(account);
-        return ResponseEntity.ok(registrationToken);
+    @Operation(summary = "Check if the device from the request is already used or not. The API will search if any of the deviceInfo or the sim cards details present in the request are already present in the database.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "A registration token will be returned in the request custom body. The account may have already requested a registration for the current device before. Check response body custom header for more details.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "409", description = "The credentials are already used by an existing account.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "An exception occurred during the request registration workflow.", content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping(value = "/requestRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UBoatResponse> requestRegistration(@RequestBody RequestAccount account) {
+        var uBoatResponse = authenticationService.requestRegistration(account);
+
+        return switch (uBoatResponse.getHeader()) {
+            case ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS ->
+                    ResponseEntity.status(HttpStatus.CONFLICT).body(uBoatResponse);
+
+            case VAULT_INTERNAL_SERVER_ERROR ->
+                    ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+
+            default -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+        };
     }
 
-    @PostMapping(value = "/api/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<String> register(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody Account account) {
         if (!authorizationHeader.contains("RToken "))
@@ -95,7 +111,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(jsonWebToken);
     }
 
-    @PostMapping(value = "/api/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<String> login(@RequestBody Account account) {
         String jsonWebToken = authenticationService.login(account);

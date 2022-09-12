@@ -1,8 +1,6 @@
 package com.uboat.vault.api.model.http.new_requests;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.uboat.vault.api.model.persistence.account.info.AccountDetails;
+import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
-import java.util.Set;
 
 
 @Data
@@ -18,22 +15,17 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RequestAccount {
+    private UserType type;
+
     @NotNull
     private String username;
-
     @NotNull
     private String password;
-
     @NotNull
     private PhoneNumber phoneNumber;
 
     @NotNull
     private RequestRegistrationData registrationData;
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private AccountDetails accountDetails;
-
-    @JsonIgnore
-    private Set<RequestSimCard> creditCards;
 
 }
