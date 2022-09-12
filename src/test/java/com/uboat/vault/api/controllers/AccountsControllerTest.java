@@ -2,14 +2,8 @@ package com.uboat.vault.api.controllers;
 
 import com.uboat.vault.api.repositories.AccountsRepository;
 import com.uboat.vault.api.repositories.PhoneNumbersRepository;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class AccountsControllerTest extends ControllerTest {
     @Autowired
@@ -20,16 +14,16 @@ class AccountsControllerTest extends ControllerTest {
     @MockBean
     private PhoneNumbersRepository phoneNumbersRepository;
 
-    @ParameterizedTest
-    @ValueSource(strings = {" !\"#$%&'()*+,/:;<=>?@[]\\^`{|}~"})
-    void checkUsernameInvalidCharacters(String specialCharactersNotAllowed) {
-        for (var ch : specialCharactersNotAllowed.toCharArray()) {
-            var response = controller.checkUsername("test" + ch + "test");
-
-            assertEquals(HttpStatus.OK, response.getStatusCode(), "Invalid status code returned.");
-            assertFalse(response.hasBody(), "Expected body to be null if username does not match pattern. Character tested is :'" + ch + "'");
-        }
-    }
+//    @ParameterizedTest
+//    @ValueSource(strings = {" !\"#$%&'()*+,/:;<=>?@[]\\^`{|}~"})
+//    void checkUsernameInvalidCharacters(String specialCharactersNotAllowed) {
+//        for (var ch : specialCharactersNotAllowed.toCharArray()) {
+//            var response = controller.checkUsername("test" + ch + "test");
+//
+//            assertEquals(HttpStatus.OK, response.getStatusCode(), "Invalid status code returned.");
+//            assertFalse(response.hasBody(), "Expected body to be null if username does not match pattern. Character tested is :'" + ch + "'");
+//        }
+//    }
 //
 //    @ParameterizedTest
 //    @ValueSource(strings = {"testusername"})
