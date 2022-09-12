@@ -1,7 +1,6 @@
 package com.uboat.vault.api.model.http.new_requests;
 
 import com.uboat.vault.api.model.enums.UserType;
-import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;
 import com.uboat.vault.api.model.persistence.account.pending.PendingAccount;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,13 +15,14 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RequestAccount {
+    @NotNull
     private UserType type;
     @NotNull
     private String username;
     @NotNull
     private String password;
     @NotNull
-    private PhoneNumber phoneNumber;
+    private RequestPhoneNumber phoneNumber;
 
     @NotNull
     private RequestRegistrationData registrationData;

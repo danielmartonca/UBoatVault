@@ -1,6 +1,7 @@
 package com.uboat.vault.api.model.persistence.account.info;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.uboat.vault.api.model.http.new_requests.RequestPhoneNumber;
 import com.uboat.vault.api.model.persistence.account.Account;
 import lombok.*;
 
@@ -41,12 +42,24 @@ public class PhoneNumber {
     @OneToOne(mappedBy = "phoneNumber", cascade = CascadeType.MERGE)
     private Account account;
 
+    public PhoneNumber(RequestPhoneNumber phoneNumber) {
+        this.phoneNumber = phoneNumber.getPhoneNumber();
+        this.dialCode = phoneNumber.getDialCode();
+        this.isoCode = phoneNumber.getIsoCode();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PhoneNumber that = (PhoneNumber) o;
         return phoneNumber.equals(that.phoneNumber) && dialCode.equals(that.dialCode) && isoCode.equals(that.isoCode);
+    }
+
+    public boolean equals(RequestPhoneNumber phoneNumber) {
+        return this.phoneNumber.equals(phoneNumber.getPhoneNumber())
+                && this.dialCode.equals(phoneNumber.getDialCode())
+                && this.isoCode.equals(phoneNumber.getIsoCode());
     }
 
     @Override

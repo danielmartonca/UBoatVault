@@ -27,7 +27,7 @@ public class Account {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
-
+    @NotNull
     @Getter
     @Setter
     @Enumerated(EnumType.STRING)
@@ -71,7 +71,15 @@ public class Account {
     private Set<CreditCard> creditCards;
 
     public Account(RequestAccount requestAccount) {
-        this.username=requestAccount.getUsername();
-        this.password=requestAccount.getPassword();
+        this.type = requestAccount.getType();
+
+        this.username = requestAccount.getUsername();
+        this.password = requestAccount.getPassword();
+
+        //create a new phone number object based on request data
+        this.phoneNumber = new PhoneNumber(requestAccount.getPhoneNumber());
+
+        //bind it to the newly created account
+        this.phoneNumber.setAccount(this);
     }
 }

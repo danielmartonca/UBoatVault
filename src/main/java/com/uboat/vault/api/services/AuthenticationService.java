@@ -5,7 +5,6 @@ import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.persistence.account.Account;
-import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;
 import com.uboat.vault.api.model.persistence.account.info.RegistrationData;
 import com.uboat.vault.api.model.persistence.account.pending.PendingAccount;
 import com.uboat.vault.api.model.persistence.account.pending.PendingToken;
@@ -99,8 +98,8 @@ public class AuthenticationService {
             return true;
         }
 
-        PhoneNumber phoneNumber = account.getPhoneNumber();
-        PhoneNumber foundPhoneNumber = phoneNumbersRepository.findFirstByPhoneNumberAndDialCodeAndIsoCode(phoneNumber.getPhoneNumber(), phoneNumber.getDialCode(), phoneNumber.getIsoCode());
+        var phoneNumber = account.getPhoneNumber();
+        var foundPhoneNumber = phoneNumbersRepository.findFirstByPhoneNumberAndDialCodeAndIsoCode(phoneNumber.getPhoneNumber(), phoneNumber.getDialCode(), phoneNumber.getIsoCode());
         if (foundPhoneNumber != null) {
             log.warn("Account with the given phone number already exists.");
             return true;
@@ -216,10 +215,10 @@ public class AuthenticationService {
                 registrationData = new RegistrationData(requestAccount.getRegistrationData());
             else
                 log.warn("Registration data is already used by another account. There will be two accounts bound to this device.");
-
             account.setRegistrationData(registrationData);
 
             var jsonWebToken = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
+
             account = accountsRepository.save(account);
             pendingAccountsRepository.delete(pendingAccount);
 
@@ -243,7 +242,8 @@ public class AuthenticationService {
         }
 
         for (var foundAccount : foundAccountsList) {
-            if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
+            if (foundAccount.getUsername().equals(account.getUsername()) ||
+                foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
                 log.info("Credentials matched. Found account.");
                 var jwt = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
                 return new UBoatResponse(UBoatStatus.LOGIN_SUCCESSFUL, jwt);
