@@ -77,7 +77,7 @@ class AccountsControllerTest extends ControllerTest {
 
     @ParameterizedTest
     @CsvSource({"testAccount,testPassword,+40720000000,123,12"})
-    void getMissingAccountInformation(String username, String password, String phoneNumber, String dialCode, String isoCode) {
+    void getMissingAccountInformationTestAllCredentialCombinations(String username, String password, String phoneNumber, String dialCode, String isoCode) {
         var account = Account.builder()
                 .username(username)
                 .password(password)

@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.requests;
+package com.uboat.vault.api.model.http.requests;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.persistence.account.info.RegistrationData;

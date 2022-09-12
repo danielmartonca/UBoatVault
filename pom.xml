@@ -11,7 +11,7 @@
 
     <groupId>com.uboat</groupId>
     <artifactId>uboat-vault</artifactId>
-    <version>0.0.1-development</version>
+    <version>0.0.2-development</version>
     <name>UBoatVault</name>
     <description>UBoatVault</description>
 

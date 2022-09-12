@@ -1,6 +1,12 @@
 package com.uboat.vault.api.services;
 
 import com.uboat.vault.api.model.enums.UserType;
+import com.uboat.vault.api.model.http.requests.JourneyRequest;
+import com.uboat.vault.api.model.http.requests.MostRecentRidesRequest;
+import com.uboat.vault.api.model.http.requests.PulseRequest;
+import com.uboat.vault.api.model.http.requests.SailorConnectionRequest;
+import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
+import com.uboat.vault.api.model.http.response.JourneyResponse;
 import com.uboat.vault.api.model.other.LatLng;
 import com.uboat.vault.api.model.other.SailorDetails;
 import com.uboat.vault.api.model.persistence.account.Account;
@@ -8,12 +14,6 @@ import com.uboat.vault.api.model.persistence.sailing.Journey;
 import com.uboat.vault.api.model.persistence.sailing.LocationData;
 import com.uboat.vault.api.model.persistence.sailing.Stage;
 import com.uboat.vault.api.model.persistence.sailing.sailor.ActiveSailor;
-import com.uboat.vault.api.model.requests.JourneyRequest;
-import com.uboat.vault.api.model.requests.MostRecentRidesRequest;
-import com.uboat.vault.api.model.requests.PulseRequest;
-import com.uboat.vault.api.model.requests.SailorConnectionRequest;
-import com.uboat.vault.api.model.response.JourneyConnectionResponse;
-import com.uboat.vault.api.model.response.JourneyResponse;
 import com.uboat.vault.api.repositories.AccountsRepository;
 import com.uboat.vault.api.repositories.ActiveSailorsRepository;
 import com.uboat.vault.api.repositories.JourneyRepository;

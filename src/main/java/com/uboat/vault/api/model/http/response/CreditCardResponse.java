@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.response;
+package com.uboat.vault.api.model.http.response;
 
 import com.uboat.vault.api.model.persistence.account.info.CreditCard;
 import lombok.Getter;

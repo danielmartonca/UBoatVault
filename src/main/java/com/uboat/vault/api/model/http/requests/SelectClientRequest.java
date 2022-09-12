@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.requests;
+package com.uboat.vault.api.model.http.requests;
 
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.sailing.Journey;

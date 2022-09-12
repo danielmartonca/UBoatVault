@@ -1,11 +1,11 @@
-package com.uboat.vault.api.model.response;
+package com.uboat.vault.api.model.http.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class TokenResponse {
-    private Boolean isAccountRegistered;
+public class LoginResponse {
+    private Boolean hasSucceeded;
     private String token;
 }

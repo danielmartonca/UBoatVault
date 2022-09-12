@@ -1,12 +1,12 @@
 package com.uboat.vault.api.controllers;
 
+import com.uboat.vault.api.model.http.requests.JourneyRequest;
+import com.uboat.vault.api.model.http.requests.MostRecentRidesRequest;
+import com.uboat.vault.api.model.http.requests.SailorConnectionRequest;
+import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
+import com.uboat.vault.api.model.http.response.JourneyResponse;
+import com.uboat.vault.api.model.http.response.MostRecentRidesResponse;
 import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
-import com.uboat.vault.api.model.requests.JourneyRequest;
-import com.uboat.vault.api.model.requests.MostRecentRidesRequest;
-import com.uboat.vault.api.model.requests.SailorConnectionRequest;
-import com.uboat.vault.api.model.response.JourneyConnectionResponse;
-import com.uboat.vault.api.model.response.JourneyResponse;
-import com.uboat.vault.api.model.response.MostRecentRidesResponse;
 import com.uboat.vault.api.services.AccountsService;
 import com.uboat.vault.api.services.JourneyService;
 import org.slf4j.Logger;

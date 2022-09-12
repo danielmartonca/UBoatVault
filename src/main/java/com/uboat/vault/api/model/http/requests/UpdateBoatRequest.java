@@ -1,15 +1,15 @@
-package com.uboat.vault.api.model.requests;
+package com.uboat.vault.api.model.http.requests;
 
 import com.uboat.vault.api.model.persistence.account.Account;
-import com.uboat.vault.api.model.persistence.account.info.CreditCard;
+import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
 import lombok.Getter;
 import lombok.Setter;
 
-public class CreditCardRequest {
+public class UpdateBoatRequest {
     @Getter
     @Setter
     private Account account;
     @Getter
     @Setter
-    private CreditCard card;
+    private Boat boat;
 }

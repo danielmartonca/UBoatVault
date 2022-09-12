@@ -1,10 +1,10 @@
 package com.uboat.vault.api.controllers;
 
+import com.uboat.vault.api.model.http.requests.PulseRequest;
+import com.uboat.vault.api.model.http.requests.SelectClientRequest;
+import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.sailing.Journey;
-import com.uboat.vault.api.model.requests.PulseRequest;
-import com.uboat.vault.api.model.requests.SelectClientRequest;
-import com.uboat.vault.api.model.response.JourneyConnectionResponse;
 import com.uboat.vault.api.services.JourneyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
