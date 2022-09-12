@@ -3,9 +3,7 @@ package com.uboat.vault.api.model.http.new_requests;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.uboat.vault.api.model.persistence.account.info.AccountDetails;
-import com.uboat.vault.api.model.persistence.account.info.CreditCard;
 import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;
-import com.uboat.vault.api.model.persistence.account.info.RegistrationData;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,12 +28,12 @@ public class RequestAccount {
     private PhoneNumber phoneNumber;
 
     @NotNull
-    private RegistrationData registrationData;
+    private RequestRegistrationData registrationData;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private AccountDetails accountDetails;
 
     @JsonIgnore
-    private Set<CreditCard> creditCards;
+    private Set<RequestSimCard> creditCards;
 
 }

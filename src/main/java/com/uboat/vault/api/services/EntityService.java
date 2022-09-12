@@ -1,9 +1,10 @@
 package com.uboat.vault.api.services;
 
+import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
+import com.uboat.vault.api.model.http.new_requests.RequestRegistrationData;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;
-import com.uboat.vault.api.model.persistence.account.info.RegistrationData;
 import com.uboat.vault.api.model.persistence.account.info.SimCard;
 import com.uboat.vault.api.model.persistence.sailing.sailor.ActiveSailor;
 import com.uboat.vault.api.repositories.*;
@@ -153,7 +154,7 @@ public class EntityService {
      * This method searches if any part of the registrationData exists in the database and returns true if any are found
      */
     @Transactional
-    public boolean checkDeviceRegistration(RegistrationData registrationData) {
+    public UBoatStatus checkDeviceRegistration(RequestRegistrationData registrationData) {
         var foundRegistrationData = registrationDataRepository.findFirstByDeviceInfo(registrationData.getDeviceInfo());
         if (foundRegistrationData != null) {
             log.info("Found registration data by device info.");
@@ -161,7 +162,7 @@ public class EntityService {
                 log.info("There is only one account bound to this registration data.");
             else
                 log.info("There are more than one account bound to this registration data.");
-            return true;
+            return UBoatStatus.DEVICE_INFO_ALREADY_USED;
         }
 
         for (var simCard : registrationData.getMobileNumbersInfoList()) {
@@ -173,10 +174,10 @@ public class EntityService {
                     log.info("There is only one account bound to this registration data.");
                 else
                     log.info("There are more than one account bound to this registration data.");
-                return true;
+                return UBoatStatus.SIM_ALREADY_USED;
             }
         }
         log.info("Couldn't find any device by the given registration data.");
-        return false;
+        return UBoatStatus.DEVICE_NOT_REGISTERED;
     }
 }
