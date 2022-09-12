@@ -53,7 +53,7 @@ public class JwtService {
             if (parts[1].isEmpty()) parts[1] = "null";
             return parts[0] + "\t" + parts[1];
         } catch (Exception e) {
-            log.warn("Failed to extract username from JWT: " + jsonWebToken);
+            log.warn("Failed to extract username from JWT: {}. Reason: {}", jsonWebToken, e.getMessage());
             return null;
         }
     }
