@@ -263,6 +263,9 @@ public class AccountsService {
     public UBoatResponse getSailorDetails(String sailorId) {
         try {
             var sailorAccount = entityService.findSailorAccountById(sailorId);
+            if (sailorAccount == null)
+                return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
+
             var sailorDetails = RequestSailorDetails.builder().fullName(sailorAccount.getAccountDetails().getFullName()).phoneNumber(sailorAccount.getPhoneNumber().getPhoneNumber()).build();
 
             log.info("Retrieved sailor details successfully.");

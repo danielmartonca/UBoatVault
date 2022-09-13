@@ -125,10 +125,7 @@ public class AccountsController {
     }
 
     @Operation(summary = "Deletes credit card from the account of the JWT by Owner Name and Number if the card is bounded to the account.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "The credit card was deleted from the account.", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "404", description = "The account does not have the given credit card.", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The credit card was deleted from the account.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "404", description = "The account does not have the given credit card.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
     @DeleteMapping(value = "/deleteCreditCard")
     public ResponseEntity<UBoatResponse> deleteCreditCard(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody RequestCreditCard creditCardRequest) {
         var responseBody = accountsService.deleteCreditCard(authorizationHeader, creditCardRequest);
@@ -143,12 +140,7 @@ public class AccountsController {
     }
 
     @Operation(summary = "Gets the boat details for the sailor account extracted from the JWT.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "The boat was retrieved successfully", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " +
-                    "the authorization header is missing 'Bearer', " +
-                    "has a malformed format " +
-                    "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The boat was retrieved successfully", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " + "the authorization header is missing 'Bearer', " + "has a malformed format " + "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
     @GetMapping(value = "/getMyBoat")
     public ResponseEntity<UBoatResponse> getMyBoat(@RequestHeader(value = "Authorization") String authorizationHeader) {
         var responseBody = accountsService.getMyBoat(authorizationHeader);
@@ -162,12 +154,7 @@ public class AccountsController {
     }
 
     @Operation(summary = "Updates boat details for the sailor account extracted from the JWT.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "The boat was updated successfully", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " +
-                    "the authorization header is missing 'Bearer', " +
-                    "has a malformed format " +
-                    "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The boat was updated successfully", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " + "the authorization header is missing 'Bearer', " + "has a malformed format " + "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
     @PostMapping(value = "/updateMyBoat")
     public ResponseEntity<UBoatResponse> updateMyBoat(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody RequestBoat boat) {
         var responseBody = accountsService.updateMyBoat(authorizationHeader, boat);
@@ -181,17 +168,13 @@ public class AccountsController {
     }
 
     @Operation(summary = "Retrieves information regarding the sailor.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "The boat was updated successfully", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " +
-                    "the authorization header is missing 'Bearer', " +
-                    "has a malformed format " +
-                    "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The boat was updated successfully", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " + "the authorization header is missing 'Bearer', " + "has a malformed format " + "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
     @GetMapping(value = "/getSailorDetails")
     public ResponseEntity<UBoatResponse> getSailorDetails(@RequestParam String sailorId) {
         var responseBody = accountsService.getSailorDetails(sailorId);
 
         return switch (responseBody.getHeader()) {
+            case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
             case SAILOR_DETAILS_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
             case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
                     ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
