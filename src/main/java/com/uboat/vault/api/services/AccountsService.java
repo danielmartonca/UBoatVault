@@ -181,7 +181,7 @@ public class AccountsService {
             var creditCards = account.getCreditCards();
 
             for (var card : creditCards)
-                if (card.equals(creditCard)) {
+                if (card.equalsRequestCard(creditCard)) {
                     creditCards.remove(card);
                     accountsRepository.save(account);
 
@@ -287,10 +287,10 @@ public class AccountsService {
 
         if (foundActiveSailor == null) return null;
 
-        if (foundActiveSailor.getBoat() == null) {
-            log.warn("Sailor does not have any boat set. Creating empty boat now.");
-            return null;
-        }
+//        if (foundActiveSailor.getBoat() == null) {
+//            log.warn("Sailor does not have any boat set. Creating empty boat now.");
+//            return null;
+//        }
 
         log.info("Found boat details for sailor with id " + foundActiveSailor.getAccountId());
         return foundActiveSailor.getBoat();

@@ -66,7 +66,7 @@ public class CreditCard {
         this.account = account;
     }
 
-    public boolean equals(RequestCreditCard requestCreditCard) {
+    public boolean equalsRequestCard(RequestCreditCard requestCreditCard) {
         return this.number.equals(requestCreditCard.getNumber()) && this.ownerFullName.equals(requestCreditCard.getOwnerFullName());
     }
 
