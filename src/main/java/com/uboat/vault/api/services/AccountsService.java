@@ -20,7 +20,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -150,42 +149,41 @@ public class AccountsService {
     }
 
     @Transactional
-    public Boolean addCreditCard(Account requestAccount, CreditCard creditCard) {
-        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(requestAccount));
-        if (foundAccount == null) {
-            log.info("Request account or token are invalid.");
-            return null;
-        }
-
+    public UBoatResponse addCreditCard(String authorizationHeader, RequestCreditCard newCreditCard) {
         try {
-            if (creditCard.isExpired()) {
-                log.info("Token and account match but credit card is expired.");
-                return false;
-            }
-        } catch (ParseException e) {
-            log.info("Invalid format for credit card expiration date: '" + creditCard.getExpirationDate() + "'", e);
-            return false;
-        }
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
 
-        CreditCard card = creditCardsRepository.findFirstByNumberAndCvc(creditCard.getNumber(), creditCard.getCvc());
-        if (card != null) {
-            log.warn("Credit card already exists in the database.");
-            return true;
-        }
-        log.info("Token and account credentials match. Adding new credit card to account.");
+            var validationStatus = CreditCard.validate(newCreditCard);
+            return switch (validationStatus) {
+                case EXPIRED -> new UBoatResponse(UBoatStatus.CREDIT_CARD_EXPIRED, false);
 
-        creditCard.setAccount(foundAccount);
-        Set<CreditCard> userCreditCards = foundAccount.getCreditCards();
-        if (userCreditCards == null) {
-            log.info("User did not have any credit cards setup.");
-            userCreditCards = new HashSet<>();
-            foundAccount.setCreditCards(userCreditCards);
-        }
-        userCreditCards.add(creditCard);
+                case VALID -> {
+                    var accountCards = account.getCreditCards();
 
-        accountsRepository.save(foundAccount);
-        log.info("Saved new credit card in the database.");
-        return true;
+                    //if there is already a card with the given owner full name and number
+                    if (accountCards.stream().anyMatch(creditCard -> newCreditCard.getNumber().equals(creditCard.getNumber())
+                            && newCreditCard.getOwnerFullName().equals(creditCard.getOwnerFullName()))) {
+                        log.warn("There is already an credit card with number '{}' and Owner Name '{}' for the account.", newCreditCard.getNumber(), newCreditCard.getNumber());
+                        yield new UBoatResponse(UBoatStatus.CREDIT_CARD_DUPLICATE, true);
+                    }
+
+                    var newAccountCreditCard = new CreditCard(account, newCreditCard);
+                    accountCards.add(newAccountCreditCard);
+
+                    accountsRepository.save(account);
+                    log.info("Added new credit card to the account");
+                    yield new UBoatResponse(UBoatStatus.CREDIT_CARD_ADDED, true);
+                }
+            };
+        } catch (UBoatJwtException e) {
+            log.error("Exception occurred during Authorization Header/JWT processing.", e);
+            return new UBoatResponse(e.getStatus(), false);
+        } catch (Exception e) {
+            log.error("An exception occurred while retrieving credit cards.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
+        }
     }
 
     @Transactional

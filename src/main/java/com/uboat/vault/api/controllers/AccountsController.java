@@ -4,6 +4,7 @@ import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.http.new_requests.RequestAccountDetails;
+import com.uboat.vault.api.model.http.new_requests.RequestCreditCard;
 import com.uboat.vault.api.model.http.requests.CreditCardRequest;
 import com.uboat.vault.api.model.http.requests.UpdateBoatRequest;
 import com.uboat.vault.api.model.persistence.account.Account;
@@ -134,23 +135,24 @@ public class AccountsController {
         };
     }
 
+    @Operation(summary = "Adds a new credit card to the account from the JWT if the card is valid and it is not already existing by number and full owner name to the given account.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "The credit card is bound to the account.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "406", description = "The credit card is not valid. For more details check the output of the response body custom header.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),
+    })
     @PutMapping(value = "/addCreditCard")
-    public ResponseEntity<Boolean> addCreditCard(@RequestBody CreditCardRequest creditCardRequest) {
-        Boolean wasAdded = accountsService.addCreditCard(creditCardRequest.getAccount(), creditCardRequest.getCard());
+    public ResponseEntity<UBoatResponse> addCreditCard(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody RequestCreditCard creditCard) {
+        var responseBody = accountsService.addCreditCard(authorizationHeader, creditCard);
 
-        if (wasAdded == null) {
-            log.warn("Token and account are not matching. Returning null.");
-            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
-        }
-
-        if (wasAdded) {
-            log.info("Request credit card is linked to the account. Returning true.");
-            return new ResponseEntity<>(true, HttpStatus.CREATED);
-        } else {
-            log.warn("Request credit card was NOT added to the account. Returning false.");
-            return new ResponseEntity<>(false, HttpStatus.OK);
-        }
-
+        return switch (responseBody.getHeader()) {
+            case CREDIT_CARD_ADDED, CREDIT_CARD_DUPLICATE ->
+                    ResponseEntity.status(HttpStatus.CREATED).body(responseBody);
+            case CREDIT_CARD_EXPIRED -> ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(responseBody);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
     }
 
     @DeleteMapping(value = "/deleteCreditCard")

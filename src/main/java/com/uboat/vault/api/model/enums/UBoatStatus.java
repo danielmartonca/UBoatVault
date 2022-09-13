@@ -32,6 +32,12 @@ public enum UBoatStatus {
     // /api/getCreditCards
     CREDIT_CARDS_RETRIEVED(1, "Credit cards were extracted successfully using JWT data.", CommonStatus.SUCCESS),
 
+    // /api/addCreditCard
+
+    CREDIT_CARD_EXPIRED(2, "Credit card has an expiration date in the past.", "Credit card is expired."),
+    CREDIT_CARD_DUPLICATE(0, "Credit card has an expiration date in the past.", "Credit card is already set to your account"),
+    CREDIT_CARD_ADDED(1, "Credit card has an expiration date in the past.", "Credit card added successfully"),
+
     // /api/checkDeviceRegistration
     DEVICE_NOT_REGISTERED(1, "Device unique identifier and sim cards not found in the database.", "Current device is not used."),
     DEVICE_INFO_ALREADY_USED(2, "Device info unique identifier code already present in the database.", "Your phone is already used by another account."),
