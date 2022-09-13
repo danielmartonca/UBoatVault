@@ -39,8 +39,8 @@ public enum UBoatStatus {
     // /api/addCreditCard
 
     CREDIT_CARD_EXPIRED(2, "Credit card has an expiration date in the past.", "Credit card is expired."),
-    CREDIT_CARD_DUPLICATE(0, "Credit card has an expiration date in the past.", "Credit card is already set to your account"),
-    CREDIT_CARD_ADDED(1, "Credit card has an expiration date in the past.", "Credit card added successfully"),
+    CREDIT_CARD_DUPLICATE(0, "Credit card already exists for the account.", "Credit card is already set to your account"),
+    CREDIT_CARD_ADDED(1, "Credit card was added to the account.", "Credit card added successfully"),
 
     // /api/deleteCreditCard
 
