@@ -1,6 +1,5 @@
 package com.uboat.vault.api.controllers;
 
-import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.http.new_requests.RequestAccountDetails;
@@ -33,22 +32,27 @@ public class AccountsController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The username provided is not used.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "409", description = "The username provided is already used.", content = @Content(mediaType = "application/json"))})
     @GetMapping(value = "/checkUsername")
     public ResponseEntity<UBoatResponse> checkUsername(@RequestParam String username) {
-        var isUsed = authenticationService.checkUsername(username);
-        if (isUsed)
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new UBoatResponse(UBoatStatus.USERNAME_ALREADY_USED, false));
-        return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(UBoatStatus.USERNAME_ACCEPTED, true));
+        var responseBody = authenticationService.checkUsername(username);
+
+        return switch (responseBody.getHeader()) {
+            case USERNAME_ACCEPTED, USERNAME_ALREADY_USED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            case USERNAME_INVALID_FORMAT -> ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
     }
 
     @Operation(summary = "Check if the phone number composed of actual phone number dial code and iso code given as query parameter is already used.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The phone number provided is not used.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "409", description = "The phone number provided is already used.", content = @Content(mediaType = "application/json"))})
     @GetMapping(value = "/checkPhoneNumber")
     public ResponseEntity<UBoatResponse> checkPhoneNumber(@RequestParam String phoneNumber, @RequestParam String dialCode, @RequestParam String isoCode) {
-        var isUsed = authenticationService.checkPhoneNumber(phoneNumber, dialCode, isoCode);
+        var responseBody = authenticationService.checkPhoneNumber(phoneNumber, dialCode, isoCode);
 
-        if (isUsed)
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new UBoatResponse(UBoatStatus.PHONE_NUMBER_ALREADY_USED, false));
-
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(new UBoatResponse(UBoatStatus.PHONE_NUMBER_ACCEPTED, true));
+        return switch (responseBody.getHeader()) {
+            case PHONE_NUMBER_ACCEPTED, PHONE_NUMBER_ALREADY_USED ->
+                    ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            case PHONE_NUMBER_INVALID_FORMAT -> ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
     }
 
     @Operation(summary = "Returns the missing username or phone number for the account. If the user has logged in, he can call this API with the JWT and the credentials he used to login.")

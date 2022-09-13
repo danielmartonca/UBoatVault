@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
@@ -51,25 +50,27 @@ public class AuthenticationService {
         this.sailorsRepository = sailorsRepository;
     }
 
-    public Boolean checkUsername(String username) {
-        Matcher m = usernamePattern.matcher(username);
-        if (!m.matches()) {
+    public UBoatResponse checkUsername(String username) {
+        var matcher = usernamePattern.matcher(username);
+        if (!matcher.matches()) {
             log.info("Username doesn't match pattern.");
-            return null;
+            return new UBoatResponse(UBoatStatus.USERNAME_INVALID_FORMAT, null);
         }
         var isAlreadyUsed = entityService.isUsernameUsed(username);
-        if (isAlreadyUsed)
+        if (isAlreadyUsed) {
             log.info("Username '" + username + "' is already used.");
-        else
-            log.info("Username '" + username + "' is not used.");
-        return isAlreadyUsed;
+            return new UBoatResponse(UBoatStatus.USERNAME_ALREADY_USED, true);
+        }
+
+        log.info("Username '" + username + "' is not used.");
+        return new UBoatResponse(UBoatStatus.USERNAME_ACCEPTED, false);
     }
 
-    public Boolean checkPhoneNumber(String phoneNumber, String dialCode, String isoCode) {
-        Matcher m = phoneNumberPattern.matcher(phoneNumber);
-        if (!m.matches()) {
+    public UBoatResponse checkPhoneNumber(String phoneNumber, String dialCode, String isoCode) {
+        var matcher = phoneNumberPattern.matcher(phoneNumber);
+        if (!matcher.matches()) {
             log.warn("Phone number doesn't match pattern.");
-            return null;
+            return new UBoatResponse(UBoatStatus.PHONE_NUMBER_INVALID_FORMAT, null);
         }
         if (dialCode.length() > 5 || isoCode.length() >= 3) {
             log.warn("Dial code or iso code too long.");
@@ -77,11 +78,13 @@ public class AuthenticationService {
         }
 
         var isAlreadyUsed = entityService.isPhoneNumberUsed(phoneNumber, dialCode, isoCode);
-        if (isAlreadyUsed)
+        if (isAlreadyUsed) {
             log.info("Phone number '" + phoneNumber + "' is already used.");
-        else
-            log.info("Phone number '" + phoneNumber + "' is not used.");
-        return isAlreadyUsed;
+            return new UBoatResponse(UBoatStatus.PHONE_NUMBER_ALREADY_USED, true);
+        }
+
+        log.info("Phone number '" + phoneNumber + "' is not used.");
+        return new UBoatResponse(UBoatStatus.PHONE_NUMBER_ACCEPTED, false);
     }
 
     private boolean isAccountAlreadyExisting(RequestAccount account) {
