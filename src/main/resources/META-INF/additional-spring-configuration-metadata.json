@@ -13,12 +13,22 @@
     {
       "name": "uboat.hs256_key",
       "type": "java.lang.String",
-      "description": "Description for uboat.hs256_key."
+      "description": "Private key used in the creation of JWT."
     },
     {
-      "name": "whitelisted-urls",
+      "name": "whitelist",
       "type": "java.util.Arrays",
-      "description": "List of urls that don't require authorization header."
+      "description": "List of ant patterns that don't require authorization header."
+    },
+    {
+      "name": "client-blacklist",
+      "type": "java.util.Arrays",
+      "description": "List of ant patterns for which the UBoat Client does not have access."
+    },
+    {
+      "name": "sailor-blacklist",
+      "type": "java.util.Arrays",
+      "description": "List of ant patterns for which the UBoat Sailor does not have access."
     }
   ]
 }

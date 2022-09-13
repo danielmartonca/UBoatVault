@@ -6,13 +6,14 @@ import com.uboat.vault.api.utilities.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class JwtUserDetailsService implements UserDetailsService {
@@ -48,17 +49,20 @@ public class JwtUserDetailsService implements UserDetailsService {
         final String username = split[0];
         final String phoneNumber = split[1];
 
-        Account foundAccount = null;
+        Account account = null;
 
         if (!phoneNumber.equals("null"))
-            foundAccount = findAccountByPhoneNumber(phoneNumber);
+            account = findAccountByPhoneNumber(phoneNumber);
 
-        if (foundAccount == null && !username.equals("null"))
-            foundAccount = findAccountByUsername(username);
+        if (account == null && !username.equals("null"))
+            account = findAccountByUsername(username);
 
-        if (foundAccount != null)
-            return new User(foundAccount.getUsername(), foundAccount.getPassword(), new ArrayList<>());
+        if (account == null)
+            throw new UsernameNotFoundException("User not found.");
 
-        throw new UsernameNotFoundException("User not found.");
+        var accountType = account.getType().getType();
+        var authorities = List.of(new SimpleGrantedAuthority(accountType));
+
+        return new User(account.getUsername(), account.getPassword(), authorities);
     }
 }

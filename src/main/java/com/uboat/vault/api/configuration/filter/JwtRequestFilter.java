@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
-    @Value("${whitelisted-urls}")
+    @Value("${whitelist}")
     private String[] whiteListUrls;
 
     private final JwtService jwtService;

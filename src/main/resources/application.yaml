@@ -1,4 +1,4 @@
-whitelisted-urls:
+whitelist:
   /v3/api-docs/**,
   /v3/api-docs.yaml,
   /v3/api-docs,
@@ -13,6 +13,13 @@ whitelisted-urls:
   /api/requestRegistration,
   /api/register,
   /api/login
+
+client-blacklist:
+  /api/getMyBoat,
+  /api/updateMyBoat
+
+sailor-blacklist:
+  /api/getSailorDetails
 
 spring:
   mvc:

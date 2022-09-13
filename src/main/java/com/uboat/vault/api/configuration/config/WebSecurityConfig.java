@@ -30,8 +30,12 @@ import java.util.stream.Collectors;
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private static final Logger log = LoggerFactory.getLogger(WebSecurityConfig.class);
 
-    @Value("${whitelisted-urls}")
-    private String[] whiteListUrls;
+    @Value("${whitelist}")
+    private String[] whitelist;
+    @Value("${client-blacklist}")
+    private String[] clientBlacklist;
+    @Value("${sailor-blacklist}")
+    private String[] sailorBlacklist;
 
     private final UserDetailsService jwtUserDetailsService;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
@@ -46,11 +50,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        log.warn("The fallowing urls are whitelisted for UBoat: {}", Arrays.stream(whiteListUrls).map(Objects::toString).collect(Collectors.joining(", ")));
+        log.warn("The fallowing urls are whitelisted for UBoat: {}", Arrays.stream(whitelist).map(Objects::toString).collect(Collectors.joining(", ")));
         http.csrf().disable()
                 .authorizeRequests()
-                .antMatchers(whiteListUrls)
-                .permitAll()
+                .antMatchers(whitelist).permitAll()
+                .antMatchers(clientBlacklist).hasAuthority("SAILOR") //only SAILOR role can access apis in client blacklist
+                .antMatchers(sailorBlacklist).hasAuthority("CLIENT") //only CLIENT role can access apis in sailor blacklist
                 .anyRequest().authenticated().and()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
