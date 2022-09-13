@@ -2,6 +2,7 @@ package com.uboat.vault.api.controllers;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.http.UBoatResponse;
+import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.http.requests.CreditCardRequest;
 import com.uboat.vault.api.model.http.requests.UpdateBoatRequest;
 import com.uboat.vault.api.model.http.response.CreditCardResponse;
@@ -63,10 +64,24 @@ public class AccountsController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(new UBoatResponse(UBoatStatus.PHONE_NUMBER_ACCEPTED, true));
     }
 
+    @Operation(summary = "Returns the missing username or phone number for the account. If the user has logged in, he can call this API with the JWT and the credentials he used to login.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Account username and password retrieved.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "The authorization header has a malformed format or is missing 'Bearer'.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "401", description = "The credentials in the request don't match with the JWT from the header.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "The credentials in the request don't match to any account from the database.", content = @Content(mediaType = "application/json"))
+    })
     @PostMapping(value = "/getMissingAccountInformation")
-    public ResponseEntity<Account> getMissingAccountInformation(@RequestBody Account requestAccount) {
-        Account account = accountsService.getMissingAccountInformation(requestAccount);
-        return ResponseEntity.ok(account);
+    public ResponseEntity<UBoatResponse> getMissingAccountInformation(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody RequestAccount requestAccount) {
+        var responseBody = accountsService.getMissingAccountInformation(requestAccount, authorizationHeader);
+
+        return switch (responseBody.getHeader()) {
+            case MISSING_ACCOUNT_INFORMATION_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            case ACCOUNT_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
+            case INVALID_AUTHORIZATION_HEADER -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
+            case CREDENTIALS_NOT_MATCHING_JWT -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
     }
 
     @PostMapping(value = "/getAccountDetails")

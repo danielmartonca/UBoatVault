@@ -3,6 +3,7 @@ package com.uboat.vault.api.model.persistence.account.info;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.http.new_requests.RequestPhoneNumber;
 import com.uboat.vault.api.model.persistence.account.Account;
+import com.uboat.vault.api.utilities.LoggingUtils;
 import lombok.*;
 
 import javax.persistence.*;
@@ -69,10 +70,6 @@ public class PhoneNumber {
 
     @Override
     public String toString() {
-        return "PhoneNumber{" +
-                "phoneNumber='" + phoneNumber + '\'' +
-                ", dialCode='" + dialCode + '\'' +
-                ", isoCode='" + isoCode + '\'' +
-                '}';
+        return LoggingUtils.toStringFormatted(this);
     }
 }

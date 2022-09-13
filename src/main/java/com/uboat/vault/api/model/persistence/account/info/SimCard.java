@@ -2,6 +2,7 @@ package com.uboat.vault.api.model.persistence.account.info;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.http.new_requests.RequestSimCard;
+import com.uboat.vault.api.utilities.LoggingUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -50,7 +51,6 @@ public class SimCard {
     @JoinColumn(name = "registration_data_id", nullable = false)
     private RegistrationData registrationData;
 
-    //TODO
     public SimCard(RequestSimCard simCard) {
         this.carrierName = simCard.getCarrierName();
         this.displayName = simCard.getDisplayName();
@@ -71,5 +71,10 @@ public class SimCard {
     @Override
     public int hashCode() {
         return Objects.hash(carrierName, displayName, slotIndex, number, countryIso, countryPhonePrefix);
+    }
+
+    @Override
+    public String toString() {
+        return LoggingUtils.toStringFormatted(this);
     }
 }

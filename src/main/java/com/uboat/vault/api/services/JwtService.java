@@ -87,4 +87,15 @@ public class JwtService {
             return false;
         }
     }
+
+    public String extractFromHeader(String authorizationHeader) {
+        if (!authorizationHeader.contains("Bearer "))
+            return null;
+
+        var split = authorizationHeader.split(" ");
+        if (split.length != 2)
+            return null;
+
+        return split[1];
+    }
 }

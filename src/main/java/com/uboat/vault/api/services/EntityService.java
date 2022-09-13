@@ -3,6 +3,7 @@ package com.uboat.vault.api.services;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.http.new_requests.RequestRegistrationData;
+import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;
 import com.uboat.vault.api.model.persistence.account.info.SimCard;
@@ -33,46 +34,53 @@ public class EntityService {
         this.phoneNumbersRepository = phoneNumbersRepository;
     }
 
+    public Account findAccountByCredentials(Credentials credentials) {
+        return findAccountByCredentials(credentials.getPhoneNumber(), credentials.getUsername(), credentials.getPassword());
+    }
+
+
     /**
      * This method searches for an account in the database that matches the username OR phone number AND the password given as parameter
      *
      * @return the account if found,null otherwise
      */
-    public Account findAccountByCredentials(Account requestAccount) {
-        Account foundAccount;
-        foundAccount = accountsRepository.findFirstByUsernameAndPassword(requestAccount.getUsername(), requestAccount.getPassword());
+    public Account findAccountByCredentials(String phoneNumber, String username, String password) {
+        Account foundAccount = null;
+        if ((username == null || username.isBlank()) && (phoneNumber == null || phoneNumber.isBlank()))
+            throw new RuntimeException("Both phone number and username are null/empty while retrieving account by credentials.");
+
+        if (username != null && !username.isBlank())
+            foundAccount = accountsRepository.findFirstByUsernameAndPassword(username, password);
+
         if (foundAccount == null) {
             log.warn("Couldn't find account by username and password. Searching by phone number and password.");
-            foundAccount = accountsRepository.findFirstByPhoneNumber_PhoneNumberAndPassword(requestAccount.getPhoneNumber().getPhoneNumber(), requestAccount.getPassword());
-            if (foundAccount == null) {
-                log.warn("Couldn't find account by phone number and password.");
-                return null;
+            if (phoneNumber != null && !phoneNumber.isBlank()) {
+                foundAccount = accountsRepository.findFirstByPhoneNumber_PhoneNumberAndPassword(phoneNumber, password);
+                if (foundAccount == null) {
+                    log.warn("Couldn't find account by phone number and password.");
+                    return null;
+                }
+                log.info("Found account by phone number and password.");
             }
-            log.info("Found account by phone number and password.");
+
         }
+
         log.info("Credentials are ok. Account retrieved from database.");
         return foundAccount;
     }
 
     /**
-     * Calls the other method with the same name but build the object first.
-     */
-    public Account findAccountByCredentials(String phoneNumber, String username, String password) {
-        return findAccountByCredentials(Account.builder().username(username).password(password).phoneNumber(PhoneNumber.builder().phoneNumber(phoneNumber).build()).build());
-    }
-
-    /**
      * This method searches for the active sailor entity based on the data given as parameter
      */
-    public ActiveSailor findActiveSailorByCredentials(Account requestAccount) {
-        var foundAccount = findAccountByCredentials(requestAccount);
+    public ActiveSailor findActiveSailorByCredentials(Account account) {
+        var foundAccount = findAccountByCredentials(Credentials.fromAccount(account));
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
             return null;
         }
 
         if (foundAccount.getType() != UserType.SAILOR) {
-            log.warn("Account found is not matching a sailor account. Aborting.");
+            log.warn("Account found but is not matching a sailor account.");
             return null;
         }
 
@@ -81,6 +89,7 @@ public class EntityService {
             log.warn("Sailor account is null. User hasn't setup any account details.");
             return null;
         }
+
         log.info("Active sailor account found.");
         return foundSailorAccount;
     }

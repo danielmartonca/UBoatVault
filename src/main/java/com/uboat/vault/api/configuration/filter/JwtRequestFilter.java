@@ -51,9 +51,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 jwtToken = requestTokenHeader.substring(7);
                 usernameAndPhoneNumber = jwtService.extractUsernameAndPhoneNumber(jwtToken);
                 if (usernameAndPhoneNumber != null)
-                    logger.info(LoggingUtils.colorString("Credentials '" + usernameAndPhoneNumber.replace("null", "").replace("\t", "") + "' with token: " + jwtToken, LoggingUtils.TextColor.GREEN));
+                    logger.info(LoggingUtils.colorString("JWT is valid", LoggingUtils.TextColor.GREEN));
                 else
-                    logger.warn("JWT is invalid.");
+                    logger.warn(LoggingUtils.colorString("JWT is invalid.", LoggingUtils.TextColor.RED));
 
             } else if (requestTokenHeader.startsWith("RToken "))
                 logger.info(LoggingUtils.colorString("Authorization RToken header found.", LoggingUtils.TextColor.GREEN));

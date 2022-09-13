@@ -16,7 +16,6 @@ public class Image {
     @JsonIgnore
     @Id
     @Getter
-    @Setter
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
@@ -36,5 +35,10 @@ public class Image {
 
     public Image(byte[] bytes) {
         this.bytes = bytes;
+    }
+
+    @Override
+    public String toString() {
+        return "{" + "bytes:" + '"' + bytes.length + " bytes\"" + '}';
     }
 }

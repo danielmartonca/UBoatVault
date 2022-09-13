@@ -11,11 +11,13 @@ import javax.validation.constraints.NotNull;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RequestPhoneNumber {
+public class RequestCreditCard {
     @NotNull
-    private String phoneNumber;
+    private String number;
     @NotNull
-    private String dialCode;
+    private String ownerFullName;
     @NotNull
-    private String isoCode;
+    private String cvc;
+    @NotNull
+    private String expirationDate;
 }

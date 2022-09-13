@@ -1,5 +1,10 @@
 package com.uboat.vault.api.services;
 
+import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.model.http.UBoatResponse;
+import com.uboat.vault.api.model.http.new_requests.RequestAccount;
+import com.uboat.vault.api.model.http.new_response.MissingAccountInformation;
+import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.AccountDetails;
 import com.uboat.vault.api.model.persistence.account.info.CreditCard;
@@ -25,7 +30,7 @@ public class AccountsService {
 
     private final ImagesService imagesService;
     private final EntityService entityService;
-
+    private final JwtService jwtService;
 
     private final AccountsRepository accountsRepository;
     private final AccountDetailsRepository accountDetailsRepository;
@@ -36,9 +41,10 @@ public class AccountsService {
     private final BoatImagesRepository boatImagesRepository;
 
     @Autowired
-    public AccountsService(@Lazy ImagesService imagesService, EntityService entityService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository, BoatsRepository boatsRepository) {
+    public AccountsService(@Lazy ImagesService imagesService, EntityService entityService, JwtService jwtService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository, BoatsRepository boatsRepository) {
         this.imagesService = imagesService;
         this.entityService = entityService;
+        this.jwtService = jwtService;
         this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
         this.imagesRepository = imagesRepository;
@@ -49,13 +55,31 @@ public class AccountsService {
     }
 
     /**
-     * This method returns full account information for the account in the request that is missing phone number/username
+     * This method returns full account information for the account in the request that is missing phone number/username.
+     * If the account doesn't exist or the JWT is invalid/not matching the account information, a client error message is returned.
      */
-    public Account getMissingAccountInformation(Account requestAccount) {
-        var foundAccount = entityService.findAccountByCredentials(requestAccount);
-        if (foundAccount == null)
+    public UBoatResponse getMissingAccountInformation(RequestAccount requestAccount, String authorizationHeader) {
+        var foundAccount = entityService.findAccountByCredentials(Credentials.fromRequest(requestAccount));
+
+        if (foundAccount == null) {
             log.warn("Failed to find any account matching request account.");
-        return foundAccount;
+            return new UBoatResponse(UBoatStatus.ACCOUNT_NOT_FOUND);
+        }
+
+        //cant be null because the operation is already done in the filter before
+        var jwt = jwtService.extractFromHeader(authorizationHeader);
+
+        var usernameAndPhoneNumber = jwtService.extractUsernameAndPhoneNumber(jwt);
+        if (usernameAndPhoneNumber == null)
+            return new UBoatResponse(UBoatStatus.INVALID_AUTHORIZATION_HEADER);
+
+        var phoneNumber = usernameAndPhoneNumber.split("\t")[0];
+        var username = usernameAndPhoneNumber.split("\t")[1];
+
+        if (foundAccount.getUsername().equals(username) || foundAccount.getPhoneNumber().getPhoneNumber().equals(phoneNumber))
+            return new UBoatResponse(UBoatStatus.MISSING_ACCOUNT_INFORMATION_RETRIEVED, new MissingAccountInformation(foundAccount));
+
+        return new UBoatResponse(UBoatStatus.CREDENTIALS_NOT_MATCHING_JWT);
     }
 
     @Transactional
@@ -200,7 +224,7 @@ public class AccountsService {
 
     @Transactional
     public AccountDetails getAccountDetails(Account requestAccount) {
-        var foundAccount = entityService.findAccountByCredentials(requestAccount);
+        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(requestAccount));
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
             return null;
@@ -237,7 +261,7 @@ public class AccountsService {
             return null;
         }
 
-        var foundAccount = entityService.findAccountByCredentials(requestAccount);
+        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(requestAccount));
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
             return null;
@@ -263,7 +287,7 @@ public class AccountsService {
     }
 
     public Set<CreditCard> getCreditCards(Account requestAccount) {
-        var foundAccount = entityService.findAccountByCredentials(requestAccount);
+        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(requestAccount));
         if (foundAccount == null)
             return null;
 
@@ -278,7 +302,7 @@ public class AccountsService {
 
     @Transactional
     public Boolean addCreditCard(Account requestAccount, CreditCard creditCard) {
-        var foundAccount = entityService.findAccountByCredentials(requestAccount);
+        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(requestAccount));
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
             return null;
@@ -317,7 +341,7 @@ public class AccountsService {
 
     @Transactional
     public Boolean deleteCreditCard(Account requestAccount, CreditCard creditCard) {
-        var foundAccount = entityService.findAccountByCredentials(requestAccount);
+        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(requestAccount));
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
             return null;

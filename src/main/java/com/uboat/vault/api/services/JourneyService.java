@@ -7,6 +7,7 @@ import com.uboat.vault.api.model.http.requests.PulseRequest;
 import com.uboat.vault.api.model.http.requests.SailorConnectionRequest;
 import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
 import com.uboat.vault.api.model.http.response.JourneyResponse;
+import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.other.LatLng;
 import com.uboat.vault.api.model.other.SailorDetails;
 import com.uboat.vault.api.model.persistence.account.Account;
@@ -64,7 +65,7 @@ public class JourneyService {
         }
 
 
-        var foundAccount = entityService.findAccountByCredentials(mostRecentRidesRequest.getAccount());
+        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(mostRecentRidesRequest.getAccount()));
         if (foundAccount == null) {
             log.warn("Credentials are invalid. User is not authorized to receive recent rides data.");
             return null;
@@ -270,7 +271,7 @@ public class JourneyService {
      * This method returns to the client all the available sailors that will be rendered on his map after clicking find sailor
      */
     public JourneyResponse requestJourney(JourneyRequest request) {
-        var foundAccount = entityService.findAccountByCredentials(request.getClientAccount());
+        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(request.getClientAccount()));
         if (foundAccount == null) {
             log.warn("Token not found or token not matching the request account.");
             return null;
@@ -317,7 +318,7 @@ public class JourneyService {
      * - if the active sailor was found, a new journey with status ESTABLISHING_CONNECTION will be created with the given data by the client
      */
     public JourneyConnectionResponse.PossibleResponse connectToSailor(SailorConnectionRequest request) {
-        var clientAccount = entityService.findAccountByCredentials(request.getJourneyRequest().getClientAccount());
+        var clientAccount = entityService.findAccountByCredentials(Credentials.fromAccount(request.getJourneyRequest().getClientAccount()));
         if (clientAccount == null)
             return JourneyConnectionResponse.PossibleResponse.ERROR;
 
@@ -391,7 +392,7 @@ public class JourneyService {
         var lookingForClients = request.isLookingForClients();
         try {
 
-            var foundAccount = entityService.findAccountByCredentials(account);
+            var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(account));
             if (foundAccount == null) {
                 log.info("Request account or token are invalid.");
                 return null;
@@ -436,7 +437,7 @@ public class JourneyService {
      */
     public List<Journey> findClients(Account account) {
         try {
-            var foundAccount = entityService.findAccountByCredentials(account);
+            var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(account));
             if (foundAccount == null) {
                 log.info("Request account or token are invalid.");
                 return null;
@@ -477,7 +478,7 @@ public class JourneyService {
 
     public JourneyConnectionResponse.PossibleResponse selectClient(Account account, Journey journey) {
         try {
-            var foundAccount = entityService.findAccountByCredentials(account);
+            var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(account));
             if (foundAccount == null) {
                 log.info("Request account or token are invalid.");
                 return JourneyConnectionResponse.PossibleResponse.ERROR;

@@ -17,14 +17,13 @@ import javax.validation.constraints.NotNull;
 public class RequestAccount {
     @NotNull
     private UserType type;
-    @NotNull
+
     private String username;
     @NotNull
     private String password;
-    @NotNull
+
     private RequestPhoneNumber phoneNumber;
 
-    @NotNull
     private RequestRegistrationData registrationData;
 
     public boolean equalsPendingAccount(PendingAccount pendingAccount) {

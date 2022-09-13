@@ -1,7 +1,6 @@
 package com.uboat.vault.api.model.persistence.account;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.persistence.account.info.AccountDetails;
@@ -57,14 +56,12 @@ public class Account {
     @JoinColumn(name = "registration_data_id", nullable = false)
     private RegistrationData registrationData;
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Getter
     @Setter
     @OneToOne(cascade = {CascadeType.ALL})
     @JoinColumn(name = "account_details_id")
     private AccountDetails accountDetails;
 
-    @JsonIgnore
     @Getter
     @Setter
     @OneToMany(mappedBy = "account", cascade = {CascadeType.REMOVE, CascadeType.MERGE})
