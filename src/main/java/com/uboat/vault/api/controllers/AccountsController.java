@@ -4,17 +4,14 @@ import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.http.new_requests.RequestAccountDetails;
+import com.uboat.vault.api.model.http.new_requests.RequestBoat;
 import com.uboat.vault.api.model.http.new_requests.RequestCreditCard;
-import com.uboat.vault.api.model.http.requests.UpdateBoatRequest;
-import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
 import com.uboat.vault.api.services.AccountsService;
 import com.uboat.vault.api.services.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +20,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("api")
 public class AccountsController {
-    private final Logger log = LoggerFactory.getLogger(AccountsController.class);
-
     private final AuthenticationService authenticationService;
     private final AccountsService accountsService;
 
@@ -166,21 +161,41 @@ public class AccountsController {
         };
     }
 
-    @PostMapping(value = "/updateBoat")
-    public ResponseEntity<Boat> updateBoat(@RequestBody UpdateBoatRequest request) {
-        var boat = accountsService.updateBoat(request.getAccount(), request.getBoat());
+    @Operation(summary = "Updates boat details for the sailor account extracted from the JWT.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The boat was updated successfully", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " +
+                    "the authorization header is missing 'Bearer', " +
+                    "has a malformed format " +
+                    "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
+    @PostMapping(value = "/updateMyBoat")
+    public ResponseEntity<UBoatResponse> updateMyBoat(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody RequestBoat boat) {
+        var responseBody = accountsService.updateMyBoat(authorizationHeader, boat);
 
-        if (boat != null) {
-            log.info("Updated boat and sending it back to the user without the images.");
-            return ResponseEntity.ok(request.getBoat());
-        }
-
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return switch (responseBody.getHeader()) {
+            case BOAT_UPDATED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
     }
 
-    @GetMapping(value = "/getSailorName")
-    public ResponseEntity<String> getSailorName(@RequestParam String sailorId) {
-        var sailorName = accountsService.getSailorName(sailorId);
-        return ResponseEntity.ok(sailorName);
+    @Operation(summary = "Retrieves information regarding the sailor.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The boat was updated successfully", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " +
+                    "the authorization header is missing 'Bearer', " +
+                    "has a malformed format " +
+                    "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
+    @GetMapping(value = "/getSailorDetails")
+    public ResponseEntity<UBoatResponse> getSailorDetails(@RequestParam String sailorId) {
+        var responseBody = accountsService.getSailorDetails(sailorId);
+
+        return switch (responseBody.getHeader()) {
+            case SAILOR_DETAILS_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
     }
 }

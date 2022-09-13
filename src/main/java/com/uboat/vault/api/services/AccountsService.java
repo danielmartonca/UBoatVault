@@ -3,25 +3,19 @@ package com.uboat.vault.api.services;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import com.uboat.vault.api.model.http.UBoatResponse;
-import com.uboat.vault.api.model.http.new_requests.RequestAccount;
-import com.uboat.vault.api.model.http.new_requests.RequestAccountDetails;
-import com.uboat.vault.api.model.http.new_requests.RequestCreditCard;
-import com.uboat.vault.api.model.http.new_requests.RequestMissingAccountInformation;
+import com.uboat.vault.api.model.http.new_requests.*;
 import com.uboat.vault.api.model.other.Credentials;
-import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.CreditCard;
 import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
-import com.uboat.vault.api.model.persistence.sailing.sailor.BoatImage;
-import com.uboat.vault.api.repositories.*;
+import com.uboat.vault.api.repositories.AccountDetailsRepository;
+import com.uboat.vault.api.repositories.AccountsRepository;
+import com.uboat.vault.api.repositories.SailorsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -34,18 +28,14 @@ public class AccountsService {
     private final AccountsRepository accountsRepository;
     private final AccountDetailsRepository accountDetailsRepository;
     private final SailorsRepository sailorsRepository;
-    private final BoatsRepository boatsRepository;
-    private final BoatImagesRepository boatImagesRepository;
 
     @Autowired
-    public AccountsService(EntityService entityService, JwtService jwtService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, SailorsRepository sailorsRepository, BoatsRepository boatsRepository) {
+    public AccountsService(EntityService entityService, JwtService jwtService, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, SailorsRepository sailorsRepository) {
         this.entityService = entityService;
         this.jwtService = jwtService;
         this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
         this.sailorsRepository = sailorsRepository;
-        this.boatsRepository = boatsRepository;
-        this.boatImagesRepository = boatImagesRepository;
     }
 
 
@@ -179,7 +169,7 @@ public class AccountsService {
             log.error("Exception occurred during Authorization Header/JWT processing.", e);
             return new UBoatResponse(e.getStatus(), false);
         } catch (Exception e) {
-            log.error("An exception occurred while retrieving credit cards.", e);
+            log.error("An exception occurred while adding new credit card.", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
     }
@@ -213,10 +203,11 @@ public class AccountsService {
             log.error("Exception occurred during Authorization Header/JWT processing.", e);
             return new UBoatResponse(e.getStatus(), false);
         } catch (Exception e) {
-            log.error("An exception occurred while retrieving credit cards.", e);
+            log.error("An exception occurred while deleting credit card.", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
     }
+
 
     /**
      * Used by sailors to get and retrieve their boat account
@@ -240,116 +231,54 @@ public class AccountsService {
             log.error("Exception occurred during Authorization Header/JWT processing.", e);
             return new UBoatResponse(e.getStatus(), false);
         } catch (Exception e) {
-            log.error("An exception occurred while retrieving credit cards.", e);
+            log.error("An exception occurred while retrieving my boat", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
     }
 
+    //TODO - allow this api only to sailors using roles
     @Transactional
-    public Boat updateBoat(Account requestAccount, Boat boat) {
-        var foundActiveSailor = entityService.findActiveSailorByCredentials(requestAccount);
+    public UBoatResponse updateMyBoat(String authorizationHeader, RequestBoat newBoatDetails) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
 
-        if (foundActiveSailor == null) {
-            log.warn("No active sailor was retrieved. Aborting");
-            return null;
+            //cant be null because the API is accessible only to sailors which create the sailor upon registration
+            var sailor = sailorsRepository.findFirstByAccountId(account.getId());
+
+            //cant be null because the boat is created during sailor registration
+            var boat = sailor.getBoat();
+
+            boat.update(newBoatDetails);
+
+            log.info("Updated the boat of the sailor.");
+            return new UBoatResponse(UBoatStatus.BOAT_UPDATED, boat);
+        } catch (UBoatJwtException e) {
+            log.error("Exception occurred during Authorization Header/JWT processing.", e);
+            return new UBoatResponse(e.getStatus(), false);
+        } catch (Exception e) {
+            log.error("An exception occurred while updating my boat", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
-
-        updateDatabaseBoat(foundActiveSailor.getBoat(), boat);
-
-        return foundActiveSailor.getBoat();
     }
 
-    @Transactional
-    public void updateDatabaseBoat(Boat foundBoat, Boat requestBoat) {
-        boolean hasChanged = false;
 
-        if (foundBoat.getType() == null && requestBoat.getType() != null) {
-            foundBoat.setType(requestBoat.getType());
-            hasChanged = true;
-        } else if (foundBoat.getType() != null && !requestBoat.getType().isEmpty())
-            if (!foundBoat.getType().equals(requestBoat.getType())) {
-                log.info("Boat type was '" + requestBoat.getType() + "'. Updated it to '" + foundBoat.getType() + "'.");
-                foundBoat.setType(requestBoat.getType());
-                hasChanged = true;
-            }
+    //TODO - allow this api only to clients using roles
+    public UBoatResponse getSailorDetails(String sailorId) {
+        try {
+            var sailorAccount = entityService.findSailorAccountById(sailorId);
+            var sailorDetails = RequestSailorDetails.builder()
+                    .fullName(sailorAccount.getAccountDetails().getFullName())
+                    .phoneNumber(sailorAccount.getPhoneNumber().getPhoneNumber())
+                    .build();
 
-        if (foundBoat.getModel() == null && requestBoat.getModel() != null) {
-            foundBoat.setModel(requestBoat.getModel());
-            hasChanged = true;
-        } else if (foundBoat.getModel() != null && !requestBoat.getModel().isEmpty())
-            if (!foundBoat.getModel().equals(requestBoat.getModel())) {
-                log.info("Boat model was '" + requestBoat.getModel() + "'. Updated it to '" + foundBoat.getModel() + "'.");
-                foundBoat.setModel(requestBoat.getModel());
-                hasChanged = true;
-            }
-
-        if (foundBoat.getLicenseNumber() == null && requestBoat.getLicenseNumber() != null) {
-            foundBoat.setLicenseNumber(requestBoat.getLicenseNumber());
-            hasChanged = true;
-        } else if (foundBoat.getLicenseNumber() != null && !requestBoat.getLicenseNumber().isEmpty())
-            if (!foundBoat.getLicenseNumber().equals(requestBoat.getLicenseNumber())) {
-                log.info("Boat license number was '" + requestBoat.getLicenseNumber() + "'. Updated it to '" + foundBoat.getLicenseNumber() + "'.");
-                foundBoat.setLicenseNumber(requestBoat.getLicenseNumber());
-                hasChanged = true;
-            }
-
-        if (foundBoat.getColor() == null && requestBoat.getColor() != null) {
-            foundBoat.setColor(requestBoat.getColor());
-            hasChanged = true;
-        } else if (foundBoat.getColor() != null && !requestBoat.getColor().isEmpty())
-            if (!foundBoat.getColor().equals(requestBoat.getColor())) {
-                log.info("Boat color was '" + requestBoat.getColor() + "'. Updated it to '" + foundBoat.getColor() + "'.");
-                foundBoat.setColor(requestBoat.getColor());
-                hasChanged = true;
-            }
-
-        if (foundBoat.getAverageSpeedMeasureUnit() == null && requestBoat.getAverageSpeedMeasureUnit() != null) {
-            foundBoat.setAverageSpeedMeasureUnit(requestBoat.getAverageSpeedMeasureUnit());
-            hasChanged = true;
-        } else if (foundBoat.getAverageSpeedMeasureUnit() != null && !requestBoat.getAverageSpeedMeasureUnit().isEmpty())
-            if (!foundBoat.getAverageSpeedMeasureUnit().equals(requestBoat.getAverageSpeedMeasureUnit())) {
-                log.info("Boat AverageSpeedMeasureUnit was '" + requestBoat.getAverageSpeedMeasureUnit() + "'. Updated it to '" + foundBoat.getAverageSpeedMeasureUnit() + "'.");
-                foundBoat.setAverageSpeedMeasureUnit(requestBoat.getAverageSpeedMeasureUnit());
-                hasChanged = true;
-            }
-
-        if (foundBoat.getAverageSpeed() == 0 && requestBoat.getAverageSpeed() != 0) {
-            foundBoat.setAverageSpeed(requestBoat.getAverageSpeed());
-            hasChanged = true;
-        } else if (foundBoat.getAverageSpeed() != 0 && requestBoat.getAverageSpeed() != 0)
-            if (!(foundBoat.getAverageSpeed() == requestBoat.getAverageSpeed())) {
-                log.info("Boat average speed was '" + requestBoat.getAverageSpeed() + "'. Updated it to '" + foundBoat.getAverageSpeed() + "'.");
-                foundBoat.setAverageSpeed(requestBoat.getAverageSpeed());
-                hasChanged = true;
-            }
-
-        if ((foundBoat.getBoatImages() == null || foundBoat.getBoatImages().isEmpty()) &&
-                (requestBoat.getBoatImages() != null && !requestBoat.getBoatImages().isEmpty())) {
-            Set<BoatImage> boatImages = new HashSet<>();
-            for (var boatImage : requestBoat.getBoatImages())
-                boatImages.add(new BoatImage(boatImage.getBytes(), foundBoat));
-            foundBoat.setBoatImages(boatImages);
-            boatImagesRepository.saveAll(boatImages);
-            log.info("Boat had no images. Added all images from the request to the boat.");
-        } else if (foundBoat.getBoatImages() != null && requestBoat.getBoatImages() != null)
-            if (requestBoat.getBoatImages().size() != 0) {
-
-                Set<BoatImage> newBoatImages = new HashSet<>();
-                for (var requestBoatImage : requestBoat.getBoatImages())
-                    for (var boatImage : foundBoat.getBoatImages())
-                        if (!boatImage.equals(requestBoatImage))
-                            newBoatImages.add(new BoatImage(requestBoatImage.getBytes(), foundBoat));
-                if (!newBoatImages.isEmpty()) {
-                    log.info("Found new boat images. Updating boat images.");
-                    foundBoat.getBoatImages().addAll(newBoatImages);
-                    boatImagesRepository.saveAll(newBoatImages);
-                    hasChanged = true;
-                }
-            }
-        if (hasChanged) {
-            boatsRepository.save(foundBoat);
-            log.info("Updated boat.");
-        } else log.info("Boat is identical.");
+            log.info("Retrieved sailor details successfully.");
+            return new UBoatResponse(UBoatStatus.SAILOR_DETAILS_RETRIEVED, sailorDetails);
+        } catch (Exception e) {
+            log.error("An exception occurred while retrieving details about the sailor.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
+        }
     }
 
     /**
@@ -370,20 +299,6 @@ public class AccountsService {
 
         log.info("Found boat details for sailor with id " + foundActiveSailor.getAccountId());
         return foundActiveSailor.getBoat();
-    }
-
-    public String getSailorName(String sailorId) {
-        var foundAccount = entityService.findSailorAccountById(sailorId);
-        if (foundAccount == null) return null;
-
-        var accountDetails = foundAccount.getAccountDetails();
-        if (accountDetails == null || accountDetails.getFullName() == null || accountDetails.getFullName().isEmpty()) {
-            log.warn("Account details is null. Sailor does not have a username set yet. Returning username from Account.");
-            return foundAccount.getUsername();
-        }
-
-        log.info("Found username for sailor id " + sailorId + ": " + accountDetails.getFullName());
-        return accountDetails.getFullName();
     }
 }
 

@@ -46,6 +46,12 @@ public enum UBoatStatus {
     // /api/getMyBoat
     BOAT_RETRIEVED(1, "The boat has been returned by the sailor", CommonStatus.SUCCESS),
 
+    // /api/updateMyBoat
+    BOAT_UPDATED(1, "The boat details have been updated", "Updated your boat details"),
+
+    // /api/getSailorName
+    SAILOR_DETAILS_RETRIEVED(1, "The sailor name has been retrieved", CommonStatus.SUCCESS),
+
 
     // /api/checkDeviceRegistration
     DEVICE_NOT_REGISTERED(1, "Device unique identifier and sim cards not found in the database.", "Current device is not used."),
