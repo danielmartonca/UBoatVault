@@ -5,6 +5,7 @@ import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.http.new_requests.RequestAccountDetails;
+import com.uboat.vault.api.model.http.new_requests.RequestCreditCard;
 import com.uboat.vault.api.model.http.new_requests.RequestMissingAccountInformation;
 import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.persistence.account.Account;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -122,24 +124,29 @@ public class AccountsService {
             log.error("Exception occurred during Authorization Header/JWT processing.", e);
             return new UBoatResponse(e.getStatus(), false);
         } catch (Exception e) {
-            log.error("An exception occurred while retrieving extra account details.", e);
+            log.error("An exception occurred while updating account details.", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
     }
 
+    public UBoatResponse getCreditCards(String authorizationHeader) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
 
-    public Set<CreditCard> getCreditCards(Account requestAccount) {
-        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(requestAccount));
-        if (foundAccount == null)
-            return null;
+            //cards can't be null due to its initialization during registration
+            var creditCards = account.getCreditCards().stream().map(RequestCreditCard::new).collect(Collectors.toSet());
 
-        var creditCards = foundAccount.getCreditCards();
-        if (creditCards == null) {
-            log.warn("User does not have any credit cards set. Returning empty set.");
-            creditCards = new HashSet<>();
+            log.info("Returning " + creditCards.size() + " credit cards.");
+            return new UBoatResponse(UBoatStatus.CREDIT_CARDS_RETRIEVED, creditCards);
+        } catch (UBoatJwtException e) {
+            log.error("Exception occurred during Authorization Header/JWT processing.", e);
+            return new UBoatResponse(e.getStatus(), false);
+        } catch (Exception e) {
+            log.error("An exception occurred while retrieving credit cards.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
-        log.info("Returning " + creditCards.size() + " credit cards.");
-        return creditCards;
     }
 
     @Transactional

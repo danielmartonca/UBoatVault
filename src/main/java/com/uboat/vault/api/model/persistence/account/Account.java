@@ -11,6 +11,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.HashSet;
 import java.util.Set;
 
 @Builder
@@ -36,7 +37,6 @@ public class Account {
     @Setter
     @NotNull
     private String username;
-
     @Getter
     @NotNull
     @Setter
@@ -73,12 +73,13 @@ public class Account {
         this.username = requestAccount.getUsername();
         this.password = requestAccount.getPassword();
 
-        this.accountDetails = new AccountDetails(this);
-
         //create a new phone number object based on request data
         this.phoneNumber = new PhoneNumber(requestAccount.getPhoneNumber());
-
         //bind it to the newly created account
         this.phoneNumber.setAccount(this);
+
+        this.accountDetails = new AccountDetails(this);
+
+        this.creditCards = new HashSet<>();
     }
 }

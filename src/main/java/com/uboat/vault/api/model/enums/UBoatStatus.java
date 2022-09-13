@@ -29,6 +29,9 @@ public enum UBoatStatus {
     // /api/updateAccountDetails
     ACCOUNT_DETAILS_UPDATED(1, "Updated account details with information that was not empty in the request.", "Updated successfully"),
 
+    // /api/getCreditCards
+    CREDIT_CARDS_RETRIEVED(1, "Credit cards were extracted successfully using JWT data.", CommonStatus.SUCCESS),
+
     // /api/checkDeviceRegistration
     DEVICE_NOT_REGISTERED(1, "Device unique identifier and sim cards not found in the database.", "Current device is not used."),
     DEVICE_INFO_ALREADY_USED(2, "Device info unique identifier code already present in the database.", "Your phone is already used by another account."),

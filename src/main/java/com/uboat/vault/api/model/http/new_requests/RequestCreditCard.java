@@ -1,5 +1,6 @@
 package com.uboat.vault.api.model.http.new_requests;
 
+import com.uboat.vault.api.model.persistence.account.info.CreditCard;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,4 +21,12 @@ public class RequestCreditCard {
     private String cvc;
     @NotNull
     private String expirationDate;
+
+    public RequestCreditCard(CreditCard creditCard) {
+        this.number = creditCard.getNumber();
+        this.ownerFullName = creditCard.getOwnerFullName();
+        this.expirationDate = creditCard.getExpirationDate();
+
+        this.cvc = "***";
+    }
 }

@@ -6,7 +6,6 @@ import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.http.new_requests.RequestAccountDetails;
 import com.uboat.vault.api.model.http.requests.CreditCardRequest;
 import com.uboat.vault.api.model.http.requests.UpdateBoatRequest;
-import com.uboat.vault.api.model.http.response.CreditCardResponse;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
 import com.uboat.vault.api.services.AccountsService;
@@ -118,15 +117,21 @@ public class AccountsController {
         };
     }
 
-    @PostMapping(value = "/getCreditCards")
-    public ResponseEntity<CreditCardResponse> getCreditCards(@RequestBody Account account) {
-        var creditCards = accountsService.getCreditCards(account);
-        if (creditCards == null) {
-            log.warn("User is not authorized. Account is invalid.");
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
+    @Operation(summary = "Gets the credit cards details (without CVC) of the user in the JWT.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The response body will contain custom body of credit cards information.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),
+    })
+    @GetMapping(value = "/getCreditCards")
+    public ResponseEntity<UBoatResponse> getCreditCards(@RequestHeader(value = "Authorization") String authorizationHeader) {
+        var responseBody = accountsService.getCreditCards(authorizationHeader);
 
-        return ResponseEntity.ok(new CreditCardResponse(creditCards));
+        return switch (responseBody.getHeader()) {
+            case CREDIT_CARDS_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
     }
 
     @PutMapping(value = "/addCreditCard")
@@ -168,12 +173,6 @@ public class AccountsController {
 
     }
 
-    @GetMapping(value = "/getSailorName")
-    public ResponseEntity<String> getSailorName(@RequestParam String sailorId) {
-        var sailorName = accountsService.getSailorName(sailorId);
-        return ResponseEntity.ok(sailorName);
-    }
-
     @PostMapping(value = "/getBoat")
     public ResponseEntity<Boat> getBoat(@RequestBody Account requestAccount) {
         var boat = accountsService.getBoat(requestAccount);
@@ -190,5 +189,11 @@ public class AccountsController {
         }
 
         return new ResponseEntity<>(null, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/getSailorName")
+    public ResponseEntity<String> getSailorName(@RequestParam String sailorId) {
+        var sailorName = accountsService.getSailorName(sailorId);
+        return ResponseEntity.ok(sailorName);
     }
 }
