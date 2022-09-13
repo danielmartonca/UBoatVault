@@ -33,17 +33,17 @@ public class AccountsService {
     private final JwtService jwtService;
     private final AccountsRepository accountsRepository;
     private final AccountDetailsRepository accountDetailsRepository;
-    private final ActiveSailorsRepository activeSailorsRepository;
+    private final SailorsRepository sailorsRepository;
     private final BoatsRepository boatsRepository;
     private final BoatImagesRepository boatImagesRepository;
 
     @Autowired
-    public AccountsService(EntityService entityService, JwtService jwtService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, ActiveSailorsRepository activeSailorsRepository, BoatsRepository boatsRepository) {
+    public AccountsService(EntityService entityService, JwtService jwtService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, SailorsRepository sailorsRepository, BoatsRepository boatsRepository) {
         this.entityService = entityService;
         this.jwtService = jwtService;
         this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
-        this.activeSailorsRepository = activeSailorsRepository;
+        this.sailorsRepository = sailorsRepository;
         this.boatsRepository = boatsRepository;
         this.boatImagesRepository = boatImagesRepository;
     }
@@ -218,49 +218,31 @@ public class AccountsService {
         }
     }
 
-
     /**
-     * Used by sailors to get and initialise their boat account
+     * Used by sailors to get and retrieve their boat account
+     * TODO - allow this api only to sailors using roles
      */
-    @Transactional
-    public Boat getBoat(Account requestAccount) {
-        var foundActiveSailor = entityService.findActiveSailorByCredentials(requestAccount);
+    public UBoatResponse getMyBoat(String authorizationHeader) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
 
-        if (foundActiveSailor == null) {
-            log.warn("No account was retrieved. Aborting");
-            return null;
+            //cant be null because the API is accessible only to sailors which create the sailor upon registration
+            var sailor = sailorsRepository.findFirstByAccountId(account.getId());
+
+            //cant be null because the boat is created during sailor registration
+            var boat = sailor.getBoat();
+
+            log.info("Retrieved boat for the sailor.");
+            return new UBoatResponse(UBoatStatus.BOAT_RETRIEVED, boat);
+        } catch (UBoatJwtException e) {
+            log.error("Exception occurred during Authorization Header/JWT processing.", e);
+            return new UBoatResponse(e.getStatus(), false);
+        } catch (Exception e) {
+            log.error("An exception occurred while retrieving credit cards.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
-
-        if (foundActiveSailor.getBoat() == null) {
-            log.warn("Sailor does not have any boat set. Creating empty boat now.");
-            var boat = new Boat();
-            boat.setSailor(foundActiveSailor);
-            foundActiveSailor.setBoat(boat);
-            activeSailorsRepository.save(foundActiveSailor);
-            return boat;
-        }
-
-        log.info("Found boat details for sailor with id " + foundActiveSailor.getAccountId());
-        return foundActiveSailor.getBoat();
-    }
-
-    /**
-     * Used by clients to retrieve informations about their journey.
-     */
-    @Transactional
-    public Boat getBoat(String sailorId) {
-        var foundActiveSailor = entityService.findActiveSailorBySailorId(sailorId);
-
-        if (foundActiveSailor == null)
-            return null;
-
-        if (foundActiveSailor.getBoat() == null) {
-            log.warn("Sailor does not have any boat set. Creating empty boat now.");
-            return null;
-        }
-
-        log.info("Found boat details for sailor with id " + foundActiveSailor.getAccountId());
-        return foundActiveSailor.getBoat();
     }
 
     @Transactional
@@ -368,6 +350,26 @@ public class AccountsService {
             boatsRepository.save(foundBoat);
             log.info("Updated boat.");
         } else log.info("Boat is identical.");
+    }
+
+    /**
+     * Used by clients to retrieve information about their journey.
+     * TODO - allow this api only to clients using roles
+     */
+    @Transactional
+    public Boat getJourneyBoat(String sailorId) {
+        var foundActiveSailor = entityService.findActiveSailorBySailorId(sailorId);
+
+        if (foundActiveSailor == null)
+            return null;
+
+        if (foundActiveSailor.getBoat() == null) {
+            log.warn("Sailor does not have any boat set. Creating empty boat now.");
+            return null;
+        }
+
+        log.info("Found boat details for sailor with id " + foundActiveSailor.getAccountId());
+        return foundActiveSailor.getBoat();
     }
 
     public String getSailorName(String sailorId) {

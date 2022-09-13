@@ -48,7 +48,7 @@ public class Boat {
     @Getter
     @Setter
     @OneToOne(mappedBy = "boat", cascade = CascadeType.MERGE)
-    private ActiveSailor sailor;
+    private Sailor sailor;
 
     @Getter
     @Setter

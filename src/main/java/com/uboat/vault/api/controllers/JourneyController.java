@@ -47,7 +47,7 @@ public class JourneyController {
 
     @GetMapping(value = "/api/getJourneyBoat")
     public ResponseEntity<Boat> getBoat(@RequestParam(name = "sailorId") String sailorId) {
-        var boat = accountsService.getBoat(sailorId);
+        var boat = accountsService.getJourneyBoat(sailorId);
         return new ResponseEntity<>(boat, HttpStatus.OK);
     }
 

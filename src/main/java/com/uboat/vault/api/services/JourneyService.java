@@ -14,11 +14,11 @@ import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.sailing.Journey;
 import com.uboat.vault.api.model.persistence.sailing.LocationData;
 import com.uboat.vault.api.model.persistence.sailing.Stage;
-import com.uboat.vault.api.model.persistence.sailing.sailor.ActiveSailor;
+import com.uboat.vault.api.model.persistence.sailing.sailor.Sailor;
 import com.uboat.vault.api.repositories.AccountsRepository;
-import com.uboat.vault.api.repositories.ActiveSailorsRepository;
 import com.uboat.vault.api.repositories.JourneyRepository;
 import com.uboat.vault.api.repositories.LocationDataRepository;
+import com.uboat.vault.api.repositories.SailorsRepository;
 import com.uboat.vault.api.utilities.GeoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,16 +44,16 @@ public class JourneyService {
 
     private final AccountsRepository accountsRepository;
     private final JourneyRepository journeyRepository;
-    private final ActiveSailorsRepository activeSailorsRepository;
+    private final SailorsRepository sailorsRepository;
     private final LocationDataRepository locationDataRepository;
 
     @Autowired
-    public JourneyService(EntityService entityService, GeoService geoService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, ActiveSailorsRepository activeSailorsRepository, LocationDataRepository locationDataRepository1) {
+    public JourneyService(EntityService entityService, GeoService geoService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, SailorsRepository sailorsRepository, LocationDataRepository locationDataRepository1) {
         this.entityService = entityService;
         this.geoService = geoService;
         this.accountsRepository = accountsRepository;
         this.journeyRepository = journeyRepository;
-        this.activeSailorsRepository = activeSailorsRepository;
+        this.sailorsRepository = sailorsRepository;
         this.locationDataRepository = locationDataRepository1;
     }
 
@@ -126,9 +126,9 @@ public class JourneyService {
      * This method returns a list of Pairs < ActiveSailor, distance > where each pair represents
      * the distance from the ActiveSailor's coordinates to the destinationCoordinates given as parameter
      */
-    private List<Pair<ActiveSailor, Double>> getDistanceToCoordinatesList(List<ActiveSailor> activeSailors, LatLng destinationCoordinates) {
-        List<Pair<ActiveSailor, Double>> activeSailorsDistanceList = new LinkedList<>();
-        for (var activeSailor : activeSailors) {
+    private List<Pair<Sailor, Double>> getDistanceToCoordinatesList(List<Sailor> sailors, LatLng destinationCoordinates) {
+        List<Pair<Sailor, Double>> activeSailorsDistanceList = new LinkedList<>();
+        for (var activeSailor : sailors) {
             try {
                 LatLng sailorCoordinates = GeoUtils.getCoordinates(activeSailor.getLocationData());
 
@@ -155,8 +155,8 @@ public class JourneyService {
      * <p><br>
      * This method returns a list of pairs sorted by ActiveSailor id!
      */
-    private List<Pair<ActiveSailor, Double>> sumListsOfDistances(List<Pair<ActiveSailor, Double>> list1, List<Pair<ActiveSailor, Double>> list2) {
-        List<Pair<ActiveSailor, Double>> totalDistanceList = new LinkedList<>();
+    private List<Pair<Sailor, Double>> sumListsOfDistances(List<Pair<Sailor, Double>> list1, List<Pair<Sailor, Double>> list2) {
+        List<Pair<Sailor, Double>> totalDistanceList = new LinkedList<>();
 
         for (int i = 0; i < Math.min(list1.size(), list2.size()); i++) {
             var pair1 = list1.get(i);
@@ -165,8 +165,8 @@ public class JourneyService {
             if (pair1.getFirst().getAccountId().equals(pair2.getFirst().getAccountId())) {
                 totalDistanceList.add(Pair.of(pair1.getFirst(), pair1.getSecond() + pair2.getSecond()));
             } else {
-                Pair<ActiveSailor, Double> pair;
-                List<Pair<ActiveSailor, Double>> searchList;
+                Pair<Sailor, Double> pair;
+                List<Pair<Sailor, Double>> searchList;
                 if (pair1.getFirst().getAccountId() >= pair2.getFirst().getAccountId()) {
                     pair = pair1;
                     searchList = list2;
@@ -190,12 +190,12 @@ public class JourneyService {
      * This method finds the total distance between each active sailor given as parameter to the client's destination.<br>
      * The calculation is done by summing the distance calculated by the algorithm between the sailor boat to the client plus the distance between the client to the destination.
      */
-    private List<Pair<ActiveSailor, Double>> findSailorsJourneyTotalDistancesList(List<ActiveSailor> freeActiveSailorList, LocationData clientLocationData, LatLng destinationCoordinates) {
+    private List<Pair<Sailor, Double>> findSailorsJourneyTotalDistancesList(List<Sailor> freeSailorList, LocationData clientLocationData, LatLng destinationCoordinates) {
         try {
             var clientCoordinates = GeoUtils.getCoordinates(clientLocationData);
 
-            var distanceToClientList = getDistanceToCoordinatesList(freeActiveSailorList, clientCoordinates);
-            var distanceToDestinationList = getDistanceToCoordinatesList(freeActiveSailorList, destinationCoordinates);
+            var distanceToClientList = getDistanceToCoordinatesList(freeSailorList, clientCoordinates);
+            var distanceToDestinationList = getDistanceToCoordinatesList(freeSailorList, destinationCoordinates);
 
             if (distanceToClientList.size() != distanceToDestinationList.size())
                 log.warn("Distance lists sizes are different. Computation time will increase.");
@@ -213,12 +213,12 @@ public class JourneyService {
     /**
      * This method calls all the required services in order to build the response given the data calculated earlier.
      */
-    private JourneyResponse buildResponseWithData(List<Pair<ActiveSailor, Double>> totalDistancesList) {
+    private JourneyResponse buildResponseWithData(List<Pair<Sailor, Double>> totalDistancesList) {
         List<SailorDetails> availableSailorsDetails = new LinkedList<>();
 
         for (var pair : totalDistancesList) {
             try {
-                ActiveSailor sailor = pair.getFirst();
+                Sailor sailor = pair.getFirst();
                 double totalDistance = pair.getSecond();
 
                 var sailorLocationData = sailor.getLocationData();
@@ -286,7 +286,7 @@ public class JourneyService {
 
         log.info("Credentials are ok. Searching for sailors...");
 
-        var freeActiveSailors = activeSailorsRepository.findAllFreeActiveSailors(MAX_ACTIVE_SECONDS);
+        var freeActiveSailors = sailorsRepository.findAllFreeActiveSailors(MAX_ACTIVE_SECONDS);
         if (freeActiveSailors.isEmpty()) {
             log.info("There are no free active sailors in the last " + MAX_ACTIVE_SECONDS + " seconds.");
             return new JourneyResponse(new LinkedList<>());
@@ -336,7 +336,7 @@ public class JourneyService {
             return JourneyConnectionResponse.PossibleResponse.ERROR;
         }
 
-        var activeSailor = activeSailorsRepository.findFreeActiveSailorById(MAX_ACTIVE_SAILORS, sailorId);
+        var activeSailor = sailorsRepository.findFreeActiveSailorById(MAX_ACTIVE_SAILORS, sailorId);
         if (activeSailor == null) {
             log.warn("Couldn't find the active sailor. Either the sailor is busy,not active or the user request is wrong.");
             return JourneyConnectionResponse.PossibleResponse.SAILOR_NOT_FOUND;
@@ -405,7 +405,7 @@ public class JourneyService {
             }
             log.info("Account is a sailor account.");
 
-            var sailor = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
+            var sailor = sailorsRepository.findFirstByAccountId(foundAccount.getId());
             if (sailor == null) {
                 log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
                 return null;
@@ -416,7 +416,7 @@ public class JourneyService {
             sailor.setLocationData(locationData);
             sailor.setLastUpdate(new Date());
             sailor.setLookingForClients(lookingForClients);
-            activeSailorsRepository.save(sailor);
+            sailorsRepository.save(sailor);
             log.info("Updated active sailor location data and status via pulse. ");
             if (oldLocationData != null) {
                 locationDataRepository.deleteById(oldLocationData.getId());
@@ -450,7 +450,7 @@ public class JourneyService {
             }
             log.info("Account is a sailor account.");
 
-            var sailor = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
+            var sailor = sailorsRepository.findFirstByAccountId(foundAccount.getId());
             if (sailor == null) {
                 log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
                 return null;
@@ -460,7 +460,7 @@ public class JourneyService {
             if (!sailor.isLookingForClients()) {
                 log.info("Setting status of sailor of lookingForClients to true.");
                 sailor.setLookingForClients(true);
-                activeSailorsRepository.save(sailor);
+                sailorsRepository.save(sailor);
             }
 
             var journeys = journeyRepository.findAllBySailor_IdAndStatus(foundAccount.getId(), Stage.ESTABLISHING_CONNECTION);
@@ -491,7 +491,7 @@ public class JourneyService {
             }
             log.info("Account is a sailor account.");
 
-            var sailor = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
+            var sailor = sailorsRepository.findFirstByAccountId(foundAccount.getId());
             if (sailor == null) {
                 log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
                 return JourneyConnectionResponse.PossibleResponse.ERROR;
@@ -501,7 +501,7 @@ public class JourneyService {
             if (!sailor.isLookingForClients()) {
                 log.info("Setting status of sailor of lookingForClients to true.");
                 sailor.setLookingForClients(true);
-                activeSailorsRepository.save(sailor);
+                sailorsRepository.save(sailor);
             }
 
             var latitude = journey.getDestinationLatitude();

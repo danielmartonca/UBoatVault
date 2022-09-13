@@ -13,8 +13,8 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "ActiveSailors")
-public class ActiveSailor {
+@Table(name = "Sailors")
+public class Sailor {
     @Id
     @Getter
     @Setter
@@ -55,7 +55,7 @@ public class ActiveSailor {
 
     @Getter
     @Setter
-    @OneToMany(mappedBy = "activeSailor", cascade = {CascadeType.REMOVE, CascadeType.MERGE})
+    @OneToMany(mappedBy = "sailor", cascade = {CascadeType.REMOVE, CascadeType.MERGE})
     private Set<Ranking> rankings;
 
     @Override

@@ -8,8 +8,8 @@ import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.RegistrationData;
 import com.uboat.vault.api.model.persistence.account.pending.PendingAccount;
 import com.uboat.vault.api.model.persistence.account.pending.PendingToken;
-import com.uboat.vault.api.model.persistence.sailing.sailor.ActiveSailor;
 import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
+import com.uboat.vault.api.model.persistence.sailing.sailor.Sailor;
 import com.uboat.vault.api.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,14 +33,14 @@ public class AuthenticationService {
     private final PendingTokenRepository pendingTokenRepository;
     private final PendingAccountsRepository pendingAccountsRepository;
     private final PhoneNumbersRepository phoneNumbersRepository;
-    private final ActiveSailorsRepository activeSailorsRepository;
+    private final SailorsRepository sailorsRepository;
 
     private final Pattern phoneNumberPattern = Pattern.compile("^\\s*(?:\\+?(\\d{1,3}))?[-. (]*(\\d{3})[-. )]*(\\d{3})[-. ]*(\\d{4})(?: *x(\\d+))?\\s*$");
     private final Pattern usernamePattern = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_.-]*$");
 //    private final Pattern passwordPattern = Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$");
 
     @Autowired
-    public AuthenticationService(RegistrationDataRepository registrationDataRepository, JwtService jwtService, EntityService entityService, PendingTokenRepository pendingTokenRepository, PendingAccountsRepository pendingAccountsRepository, AccountsRepository accountsRepository, PhoneNumbersRepository phoneNumbersRepository, ActiveSailorsRepository activeSailorsRepository) {
+    public AuthenticationService(RegistrationDataRepository registrationDataRepository, JwtService jwtService, EntityService entityService, PendingTokenRepository pendingTokenRepository, PendingAccountsRepository pendingAccountsRepository, AccountsRepository accountsRepository, PhoneNumbersRepository phoneNumbersRepository, SailorsRepository sailorsRepository) {
         this.registrationDataRepository = registrationDataRepository;
         this.jwtService = jwtService;
         this.entityService = entityService;
@@ -48,7 +48,7 @@ public class AuthenticationService {
         this.pendingAccountsRepository = pendingAccountsRepository;
         this.accountsRepository = accountsRepository;
         this.phoneNumbersRepository = phoneNumbersRepository;
-        this.activeSailorsRepository = activeSailorsRepository;
+        this.sailorsRepository = sailorsRepository;
     }
 
     public Boolean checkUsername(String username) {
@@ -173,13 +173,13 @@ public class AuthenticationService {
     private void createActiveSailorAccount(Account account) {
         if (account.getType() == UserType.SAILOR) {
             var boat = new Boat();
-            var activeSailor = ActiveSailor.builder()
+            var activeSailor = Sailor.builder()
                     .accountId(accountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword()).getId())
                     .boat(boat)
                     .averageRating(0)
                     .build();
             boat.setSailor(activeSailor);
-            activeSailorsRepository.save(activeSailor);
+            sailorsRepository.save(activeSailor);
             log.info("Successfully created active sailor entity.");
         } else {
             log.error("Account given as parameter is not a sailor account");

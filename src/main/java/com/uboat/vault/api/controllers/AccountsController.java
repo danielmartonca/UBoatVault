@@ -6,7 +6,6 @@ import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.http.new_requests.RequestAccountDetails;
 import com.uboat.vault.api.model.http.new_requests.RequestCreditCard;
 import com.uboat.vault.api.model.http.requests.UpdateBoatRequest;
-import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
 import com.uboat.vault.api.services.AccountsService;
 import com.uboat.vault.api.services.AuthenticationService;
@@ -148,10 +147,23 @@ public class AccountsController {
         };
     }
 
-    @PostMapping(value = "/getBoat")
-    public ResponseEntity<Boat> getBoat(@RequestBody Account requestAccount) {
-        var boat = accountsService.getBoat(requestAccount);
-        return new ResponseEntity<>(boat, HttpStatus.OK);
+    @Operation(summary = "Gets the boat details for the sailor account extracted from the JWT.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The boat was retrieved successfully", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " +
+                    "the authorization header is missing 'Bearer', " +
+                    "has a malformed format " +
+                    "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
+    @GetMapping(value = "/getMyBoat")
+    public ResponseEntity<UBoatResponse> getMyBoat(@RequestHeader(value = "Authorization") String authorizationHeader) {
+        var responseBody = accountsService.getMyBoat(authorizationHeader);
+
+        return switch (responseBody.getHeader()) {
+            case BOAT_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
     }
 
     @PostMapping(value = "/updateBoat")

@@ -7,7 +7,7 @@ import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;
 import com.uboat.vault.api.model.persistence.account.info.SimCard;
-import com.uboat.vault.api.model.persistence.sailing.sailor.ActiveSailor;
+import com.uboat.vault.api.model.persistence.sailing.sailor.Sailor;
 import com.uboat.vault.api.repositories.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,15 +22,15 @@ public class EntityService {
     private final AccountsRepository accountsRepository;
     private final RegistrationDataRepository registrationDataRepository;
     private final SimCardRepository simCardRepository;
-    private final ActiveSailorsRepository activeSailorsRepository;
+    private final SailorsRepository sailorsRepository;
     private final PhoneNumbersRepository phoneNumbersRepository;
 
     @Autowired
-    public EntityService(RegistrationDataRepository registrationDataRepository, AccountsRepository accountsRepository, SimCardRepository simCardRepository, ActiveSailorsRepository activeSailorsRepository, PhoneNumbersRepository phoneNumbersRepository) {
+    public EntityService(RegistrationDataRepository registrationDataRepository, AccountsRepository accountsRepository, SimCardRepository simCardRepository, SailorsRepository sailorsRepository, PhoneNumbersRepository phoneNumbersRepository) {
         this.registrationDataRepository = registrationDataRepository;
         this.accountsRepository = accountsRepository;
         this.simCardRepository = simCardRepository;
-        this.activeSailorsRepository = activeSailorsRepository;
+        this.sailorsRepository = sailorsRepository;
         this.phoneNumbersRepository = phoneNumbersRepository;
     }
 
@@ -81,7 +81,7 @@ public class EntityService {
     /**
      * This method searches for the active sailor entity based on the data given as parameter
      */
-    public ActiveSailor findActiveSailorByCredentials(Account account) {
+    public Sailor findActiveSailorByCredentials(Account account) {
         var foundAccount = findAccountByCredentials(Credentials.fromAccount(account));
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
@@ -93,7 +93,7 @@ public class EntityService {
             return null;
         }
 
-        var foundSailorAccount = activeSailorsRepository.findFirstByAccountId(foundAccount.getId());
+        var foundSailorAccount = sailorsRepository.findFirstByAccountId(foundAccount.getId());
         if (foundSailorAccount == null) {
             log.warn("Sailor account is null. User hasn't setup any account details.");
             return null;
@@ -103,7 +103,7 @@ public class EntityService {
         return foundSailorAccount;
     }
 
-    public ActiveSailor findActiveSailorBySailorId(String sailorId) {
+    public Sailor findActiveSailorBySailorId(String sailorId) {
         long sailorIdLong;
         try {
             sailorIdLong = Long.parseLong(sailorId);
@@ -112,7 +112,7 @@ public class EntityService {
             return null;
         }
 
-        var foundActiveSailor = activeSailorsRepository.findFirstByAccountId(sailorIdLong);
+        var foundActiveSailor = sailorsRepository.findFirstByAccountId(sailorIdLong);
         if (foundActiveSailor == null) {
             log.warn("Couldn't find active sailor account by id " + sailorIdLong);
             return null;

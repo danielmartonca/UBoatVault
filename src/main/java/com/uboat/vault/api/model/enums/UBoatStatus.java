@@ -43,6 +43,10 @@ public enum UBoatStatus {
     CREDIT_CARD_NOT_FOUND(0, "The credit card is not bounded to the account.", "Credit card is not used"),
     CREDIT_CARD_DELETED(1, "Credit card was deleted from the account.", "Credit card deleted"),
 
+    // /api/getMyBoat
+    BOAT_RETRIEVED(1, "The boat has been returned by the sailor", CommonStatus.SUCCESS),
+
+
     // /api/checkDeviceRegistration
     DEVICE_NOT_REGISTERED(1, "Device unique identifier and sim cards not found in the database.", "Current device is not used."),
     DEVICE_INFO_ALREADY_USED(2, "Device info unique identifier code already present in the database.", "Your phone is already used by another account."),
