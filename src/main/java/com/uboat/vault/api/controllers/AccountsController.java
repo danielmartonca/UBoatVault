@@ -3,11 +3,11 @@ package com.uboat.vault.api.controllers;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.new_requests.RequestAccount;
+import com.uboat.vault.api.model.http.new_requests.RequestAccountDetails;
 import com.uboat.vault.api.model.http.requests.CreditCardRequest;
 import com.uboat.vault.api.model.http.requests.UpdateBoatRequest;
 import com.uboat.vault.api.model.http.response.CreditCardResponse;
 import com.uboat.vault.api.model.persistence.account.Account;
-import com.uboat.vault.api.model.persistence.account.info.AccountDetails;
 import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
 import com.uboat.vault.api.services.AccountsService;
 import com.uboat.vault.api.services.AuthenticationService;
@@ -78,22 +78,44 @@ public class AccountsController {
         return switch (responseBody.getHeader()) {
             case MISSING_ACCOUNT_INFORMATION_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
             case ACCOUNT_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
-            case INVALID_AUTHORIZATION_HEADER -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
-            case CREDENTIALS_NOT_MATCHING_JWT -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID, CREDENTIALS_NOT_MATCHING_JWT ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
         };
     }
 
-    @PostMapping(value = "/getAccountDetails")
-    public ResponseEntity<AccountDetails> getAccountDetails(@RequestBody Account requestAccount) {
-        var accountDetails = accountsService.getAccountDetails(requestAccount);
-        return ResponseEntity.ok(accountDetails);
+    @Operation(summary = "Returns the account details such as email and full name. Credentials and very sensitive data will not be displayed.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Account details of the account extracted from JWT  will be returned.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),
+    })
+    @GetMapping(value = "/getAccountDetails")
+    public ResponseEntity<UBoatResponse> getAccountDetails(@RequestHeader(value = "Authorization") String authorizationHeader) {
+        var responseBody = accountsService.getAccountDetails(authorizationHeader);
+
+        return switch (responseBody.getHeader()) {
+            case ACCOUNT_DETAILS_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
     }
 
+    @Operation(summary = "Updates details such as email and full name. Fields that are not empty/null will update their corresponding data in the database.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The response body will contain custom body 'true' meaning the data was updated successfully.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),
+    })
     @PostMapping(value = "/updateAccountDetails")
-    public ResponseEntity<AccountDetails> updateAccountDetails(@RequestBody Account requestAccount) {
-        var accountDetails = accountsService.updateAccountDetails(requestAccount);
-        return ResponseEntity.ok(accountDetails);
+    public ResponseEntity<UBoatResponse> updateAccountDetails(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody RequestAccountDetails accountDetails) {
+        var responseBody = accountsService.updateAccountDetails(authorizationHeader, accountDetails);
+
+        return switch (responseBody.getHeader()) {
+            case ACCOUNT_DETAILS_UPDATED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
     }
 
     @PostMapping(value = "/getCreditCards")

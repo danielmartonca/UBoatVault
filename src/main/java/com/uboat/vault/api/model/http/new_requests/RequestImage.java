@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.http.new_response;
+package com.uboat.vault.api.model.http.new_requests;
 
 import com.uboat.vault.api.model.persistence.account.info.Image;
 import lombok.AllArgsConstructor;
@@ -10,13 +10,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResponseImage {
+public class RequestImage {
     private byte[] bytes;
 
     //TODO
     //    private String hash;
 
-    public ResponseImage(Image image) {
+    public RequestImage(Image image) {
         this.bytes = image.getBytes();
         //this.hash=image.getHash();
     }

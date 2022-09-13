@@ -34,10 +34,19 @@ public class EntityService {
         this.phoneNumbersRepository = phoneNumbersRepository;
     }
 
+    public Account findAccountByUsername(String username) {
+        Account foundAccount;
+        if ((username == null || username.isBlank()))
+            throw new RuntimeException("Both phone number and username are null/empty while retrieving account by credentials.");
+
+        foundAccount = accountsRepository.findFirstByUsername(username);
+        log.debug("Account found by username.");
+        return foundAccount;
+    }
+
     public Account findAccountByCredentials(Credentials credentials) {
         return findAccountByCredentials(credentials.getPhoneNumber(), credentials.getUsername(), credentials.getPassword());
     }
-
 
     /**
      * This method searches for an account in the database that matches the username OR phone number AND the password given as parameter

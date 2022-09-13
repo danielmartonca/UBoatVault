@@ -1,5 +1,6 @@
 package com.uboat.vault.api.configuration.filter;
 
+import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import com.uboat.vault.api.services.JwtService;
 import com.uboat.vault.api.services.JwtUserDetailsService;
 import com.uboat.vault.api.utilities.LoggingUtils;
@@ -38,7 +39,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         final String requestTokenHeader = request.getHeader("Authorization");
 
         String jwtToken = null;
-        String usernameAndPhoneNumber = null;
+        JwtService.Data jwtData = null;
         if (requestTokenHeader == null) {
             if (Arrays.stream(whiteListUrls).noneMatch(url -> request.getRequestURI().contains(url)))
                 logger.warn(LoggingUtils.colorString("Authorization header is empty.", LoggingUtils.TextColor.RED));
@@ -49,11 +50,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 logger.info(LoggingUtils.colorString("Authorization Bearer header found.", LoggingUtils.TextColor.GREEN));
 
                 jwtToken = requestTokenHeader.substring(7);
-                usernameAndPhoneNumber = jwtService.extractUsernameAndPhoneNumber(jwtToken);
-                if (usernameAndPhoneNumber != null)
+                try {
+                    jwtData = jwtService.extractUsernameAndPhoneNumber(jwtToken);
                     logger.info(LoggingUtils.colorString("JWT is valid", LoggingUtils.TextColor.GREEN));
-                else
-                    logger.warn(LoggingUtils.colorString("JWT is invalid.", LoggingUtils.TextColor.RED));
+                } catch (UBoatJwtException e) {
+                    logger.warn(LoggingUtils.colorString("JWT is invalid: " + e.getStatus().getServerMessage(), LoggingUtils.TextColor.RED));
+                }
 
             } else if (requestTokenHeader.startsWith("RToken "))
                 logger.info(LoggingUtils.colorString("Authorization RToken header found.", LoggingUtils.TextColor.GREEN));
@@ -61,8 +63,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 logger.warn(LoggingUtils.colorString("JWT Token does not begin with Bearer String", LoggingUtils.TextColor.RED));
         }
 
-        if (usernameAndPhoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            var userDetails = jwtUserDetailsService.loadUserByUsername(usernameAndPhoneNumber);
+        if (jwtData != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            var userDetails = jwtUserDetailsService.loadUserByUsername(jwtData.join());
             if (jwtService.validateJsonWebToken(jwtToken)) {
                 var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

@@ -1,6 +1,5 @@
-package com.uboat.vault.api.model.http.new_response;
+package com.uboat.vault.api.model.http.new_requests;
 
-import com.uboat.vault.api.model.http.new_requests.RequestPhoneNumber;
 import com.uboat.vault.api.model.persistence.account.Account;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,13 +12,13 @@ import javax.validation.constraints.NotNull;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MissingAccountInformation {
+public class RequestMissingAccountInformation {
     @NotNull
     private String username;
     @NotNull
     private RequestPhoneNumber phoneNumber;
 
-    public MissingAccountInformation(Account account) {
+    public RequestMissingAccountInformation(Account account) {
         this.username = account.getUsername();
         var accountPhoneNumber = account.getPhoneNumber();
         this.phoneNumber = new RequestPhoneNumber(accountPhoneNumber.getPhoneNumber(), accountPhoneNumber.getDialCode(), accountPhoneNumber.getIsoCode());

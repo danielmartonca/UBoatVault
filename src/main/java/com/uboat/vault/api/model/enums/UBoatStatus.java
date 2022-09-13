@@ -23,6 +23,12 @@ public enum UBoatStatus {
     // /api/getMissingAccountInformation
     MISSING_ACCOUNT_INFORMATION_RETRIEVED(1, "Retrieved the account in the request missing information.", CommonStatus.SUCCESS),
 
+    // /api/getAccountDetails
+    ACCOUNT_DETAILS_RETRIEVED(1, "Account details were extracted successfully using JWT data.", CommonStatus.SUCCESS),
+
+    // /api/updateAccountDetails
+    ACCOUNT_DETAILS_UPDATED(1, "Updated account details with information that was not empty in the request.", "Updated successfully"),
+
     // /api/checkDeviceRegistration
     DEVICE_NOT_REGISTERED(1, "Device unique identifier and sim cards not found in the database.", "Current device is not used."),
     DEVICE_INFO_ALREADY_USED(2, "Device info unique identifier code already present in the database.", "Your phone is already used by another account."),
@@ -39,6 +45,7 @@ public enum UBoatStatus {
     ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED(1, "A new registration token was created.", "Registration requested successfully"),
     ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS(2, "The account cannot be registered because the credentials already exist in the database.", "Credentials already used"),
     ACCOUNT_ALREADY_PENDING_REGISTRATION(0, "The given credentials have already requested a registration. Pending registration token returned.", "Already requested registration"),
+
 
     // /api/register
     MISSING_RTOKEN(2, "The request contains 'Authorization' header but is missing the 'RToken' value.", CommonStatus.UNEXPECTED_ERROR),

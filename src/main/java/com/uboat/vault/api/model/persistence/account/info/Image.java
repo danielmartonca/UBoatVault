@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.*;
 
@@ -13,6 +15,8 @@ import javax.persistence.*;
 @Entity
 @Table(name = "Images")
 public class Image {
+    private static final Logger log = LoggerFactory.getLogger(Image.class);
+
     @JsonIgnore
     @Id
     @Getter
@@ -20,11 +24,12 @@ public class Image {
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
-    @Getter
-    @Setter
     @Lob
+    @Getter
     @Basic(fetch = FetchType.EAGER)
     private byte[] bytes;
+    @Getter
+    private String hash;
 
     @JsonIgnore
     @Getter
@@ -33,12 +38,27 @@ public class Image {
     @JoinColumn(name = "account_details_id")
     private AccountDetails accountDetails;
 
-    public Image(byte[] bytes) {
-        this.bytes = bytes;
+    public Image(AccountDetails accountDetails) {
+        this.accountDetails = accountDetails;
     }
 
     @Override
     public String toString() {
         return "{" + "bytes:" + '"' + bytes.length + " bytes\"" + '}';
+    }
+
+    //TODO implement code of hashing
+    private void calculateHash() {
+        if (bytes == null) {
+            log.debug("Image bytes are null. Cannot calculate hash.");
+            return;
+        }
+        hash = Integer.toString(bytes.length);
+        log.debug("Calculated image hash successfully.");
+    }
+
+    public void setBytes(byte[] bytes) {
+        this.bytes = bytes;
+        calculateHash();
     }
 }

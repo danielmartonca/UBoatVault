@@ -1,5 +1,7 @@
 package com.uboat.vault.api.services;
 
+import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -45,16 +47,16 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractUsernameAndPhoneNumber(String jsonWebToken) {
+    public Data extractUsernameAndPhoneNumber(String jsonWebToken) throws UBoatJwtException {
         try {
             final String subject = extractClaim(jsonWebToken, Claims::getSubject);
             final String[] parts = subject.split("\t");
             if (parts[0].isEmpty()) parts[0] = "null";
             if (parts[1].isEmpty()) parts[1] = "null";
-            return parts[0] + "\t" + parts[1];
+            return new Data(parts[1], parts[0]);
         } catch (Exception e) {
             log.warn("Failed to extract username from JWT: {}. Reason: {}", jsonWebToken, e.getMessage());
-            return null;
+            throw new UBoatJwtException(UBoatStatus.JWT_INVALID);
         }
     }
 
@@ -88,14 +90,30 @@ public class JwtService {
         }
     }
 
-    public String extractFromHeader(String authorizationHeader) {
+    public String extractJwtFromHeader(String authorizationHeader) throws UBoatJwtException {
         if (!authorizationHeader.contains("Bearer "))
-            return null;
+            throw new UBoatJwtException(UBoatStatus.MISSING_BEARER);
 
         var split = authorizationHeader.split(" ");
         if (split.length != 2)
-            return null;
+            throw new UBoatJwtException(UBoatStatus.INVALID_BEARER_FORMAT);
 
         return split[1];
+    }
+
+    public Data extractUsernameAndPhoneNumberFromHeader(String authorizationHeader) throws UBoatJwtException {
+        var jwt = extractJwtFromHeader(authorizationHeader);
+        log.debug("JWT extracted from authorization 'Bearer' header.");
+
+        var data = extractUsernameAndPhoneNumber(jwt);
+        log.debug("JWT decrypted and data extracted.");
+        return data;
+    }
+
+
+    public record Data(String username, String phoneNumber) {
+        public String join() {
+            return username + '\t' + phoneNumber;
+        }
     }
 }

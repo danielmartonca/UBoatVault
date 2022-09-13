@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.http.new_response;
+package com.uboat.vault.api.model.http.new_requests;
 
 import com.uboat.vault.api.model.persistence.account.info.AccountDetails;
 import lombok.AllArgsConstructor;
@@ -10,14 +10,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResponseAccountDetails {
+public class RequestAccountDetails {
     private String fullName;
     private String email;
-    private ResponseImage image;
 
-    public ResponseAccountDetails(AccountDetails accountDetails) {
+    public RequestAccountDetails(AccountDetails accountDetails) {
         this.fullName = accountDetails.getFullName();
         this.email = accountDetails.getEmail();
-        this.image = new ResponseImage(accountDetails.getImage());
     }
 }

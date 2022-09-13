@@ -73,6 +73,8 @@ public class Account {
         this.username = requestAccount.getUsername();
         this.password = requestAccount.getPassword();
 
+        this.accountDetails = new AccountDetails(this);
+
         //create a new phone number object based on request data
         this.phoneNumber = new PhoneNumber(requestAccount.getPhoneNumber());
 

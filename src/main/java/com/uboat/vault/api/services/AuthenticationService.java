@@ -225,7 +225,7 @@ public class AuthenticationService {
             if (account.getType() == UserType.SAILOR)
                 createActiveSailorAccount(account);
 
-            log.info("Registration successful. Returning JWT '" + jsonWebToken + "'.");
+            log.info("Registration successful. Returning JWT.");
             return new UBoatResponse(UBoatStatus.REGISTRATION_SUCCESSFUL, jsonWebToken);
         } catch (Exception e) {
             log.error("Exception occurred while registering.", e);
@@ -243,7 +243,7 @@ public class AuthenticationService {
 
         for (var foundAccount : foundAccountsList) {
             if (foundAccount.getUsername().equals(account.getUsername()) ||
-                foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
+                    foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
                 log.info("Credentials matched. Found account.");
                 var jwt = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
                 return new UBoatResponse(UBoatStatus.LOGIN_SUCCESSFUL, jwt);

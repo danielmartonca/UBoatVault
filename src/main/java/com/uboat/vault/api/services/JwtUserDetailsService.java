@@ -45,8 +45,8 @@ public class JwtUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String usernameAndPhoneNumber) throws UsernameNotFoundException {
         var split = usernameAndPhoneNumber.split("\t");
-        final String phoneNumber = split[0];
-        final String username = split[1];
+        final String username = split[0];
+        final String phoneNumber = split[1];
 
         Account foundAccount = null;
 
@@ -56,10 +56,9 @@ public class JwtUserDetailsService implements UserDetailsService {
         if (foundAccount == null && !username.equals("null"))
             foundAccount = findAccountByUsername(username);
 
-        if (foundAccount != null) {
+        if (foundAccount != null)
             return new User(foundAccount.getUsername(), foundAccount.getPassword(), new ArrayList<>());
-        } else {
-            throw new UsernameNotFoundException("User not found with credentials: '" + usernameAndPhoneNumber.replace("null", "").replace("\t", "") + "'");
-        }
+
+        throw new UsernameNotFoundException("User not found.");
     }
 }
