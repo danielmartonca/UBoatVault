@@ -38,6 +38,11 @@ public enum UBoatStatus {
     CREDIT_CARD_DUPLICATE(0, "Credit card has an expiration date in the past.", "Credit card is already set to your account"),
     CREDIT_CARD_ADDED(1, "Credit card has an expiration date in the past.", "Credit card added successfully"),
 
+    // /api/deleteCreditCard
+
+    CREDIT_CARD_NOT_FOUND(0, "The credit card is not bounded to the account.", "Credit card is not used"),
+    CREDIT_CARD_DELETED(1, "Credit card was deleted from the account.", "Credit card deleted"),
+
     // /api/checkDeviceRegistration
     DEVICE_NOT_REGISTERED(1, "Device unique identifier and sim cards not found in the database.", "Current device is not used."),
     DEVICE_INFO_ALREADY_USED(2, "Device info unique identifier code already present in the database.", "Your phone is already used by another account."),

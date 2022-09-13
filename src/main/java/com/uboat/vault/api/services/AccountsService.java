@@ -31,21 +31,18 @@ public class AccountsService {
 
     private final EntityService entityService;
     private final JwtService jwtService;
-
     private final AccountsRepository accountsRepository;
     private final AccountDetailsRepository accountDetailsRepository;
-    private final CreditCardsRepository creditCardsRepository;
     private final ActiveSailorsRepository activeSailorsRepository;
     private final BoatsRepository boatsRepository;
     private final BoatImagesRepository boatImagesRepository;
 
     @Autowired
-    public AccountsService(EntityService entityService, JwtService jwtService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, ImagesRepository imagesRepository, CreditCardsRepository creditCardsRepository, ActiveSailorsRepository activeSailorsRepository, BoatsRepository boatsRepository) {
+    public AccountsService(EntityService entityService, JwtService jwtService, @Lazy BoatImagesRepository boatImagesRepository, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, ActiveSailorsRepository activeSailorsRepository, BoatsRepository boatsRepository) {
         this.entityService = entityService;
         this.jwtService = jwtService;
         this.accountsRepository = accountsRepository;
         this.accountDetailsRepository = accountDetailsRepository;
-        this.creditCardsRepository = creditCardsRepository;
         this.activeSailorsRepository = activeSailorsRepository;
         this.boatsRepository = boatsRepository;
         this.boatImagesRepository = boatImagesRepository;
@@ -128,6 +125,7 @@ public class AccountsService {
         }
     }
 
+
     public UBoatResponse getCreditCards(String authorizationHeader) {
         try {
             //cant be null because the operation is already done in the filter before
@@ -187,28 +185,37 @@ public class AccountsService {
     }
 
     @Transactional
-    public Boolean deleteCreditCard(Account requestAccount, CreditCard creditCard) {
-        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(requestAccount));
-        if (foundAccount == null) {
-            log.info("Request account or token are invalid.");
-            return null;
+    public UBoatResponse deleteCreditCard(String authorizationHeader, RequestCreditCard creditCard) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
+
+            //cant be null because it is created during registration
+            var creditCards = account.getCreditCards();
+
+            for (var card : creditCards)
+                if (card.equals(creditCard)) {
+                    creditCards.remove(card);
+                    accountsRepository.save(account);
+
+                    log.info("Credit card was deleted from the account.");
+                    return new UBoatResponse(UBoatStatus.CREDIT_CARD_DELETED, true);
+                }
+
+            if (creditCards.isEmpty())
+                log.warn("Account does not have any credit cards set. Cannot delete card from the request.");
+            else
+                log.warn("Couldn't find the request credit card belonging to the given account.");
+
+            return new UBoatResponse(UBoatStatus.CREDIT_CARD_NOT_FOUND, false);
+        } catch (UBoatJwtException e) {
+            log.error("Exception occurred during Authorization Header/JWT processing.", e);
+            return new UBoatResponse(e.getStatus(), false);
+        } catch (Exception e) {
+            log.error("An exception occurred while retrieving credit cards.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
-        log.info("Token and account are matching.");
-
-        if (foundAccount.getCreditCards() == null || foundAccount.getCreditCards().isEmpty()) {
-            log.warn("Account does not have any credit cards.");
-            return false;
-        }
-
-        for (var card : foundAccount.getCreditCards())
-            if (card.equals(creditCard)) {
-                creditCardsRepository.deleteById(card.getId());
-                log.info("Found matching request credit card to the account. Deleting entry from database.");
-                return true;
-            }
-
-        log.warn("Couldn't find the request credit card belonging to the given account.");
-        return false;
     }
 
 

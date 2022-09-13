@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.http.new_requests.RequestCreditCard;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.utilities.LoggingUtils;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +15,12 @@ import javax.persistence.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Objects;
 
 import static com.uboat.vault.api.model.persistence.account.info.CreditCard.ValidationStatus.EXPIRED;
 import static com.uboat.vault.api.model.persistence.account.info.CreditCard.ValidationStatus.VALID;
 
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "CreditCards")
 public class CreditCard {
@@ -63,17 +66,8 @@ public class CreditCard {
         this.account = account;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CreditCard card = (CreditCard) o;
-        return number.equals(card.number) && ownerFullName.equals(card.ownerFullName) && cvc.equals(card.cvc);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(number, ownerFullName, cvc);
+    public boolean equals(RequestCreditCard requestCreditCard) {
+        return this.number.equals(requestCreditCard.getNumber()) && this.ownerFullName.equals(requestCreditCard.getOwnerFullName());
     }
 
     @Override
@@ -87,12 +81,12 @@ public class CreditCard {
             var cardDate = dateFormat.parse(expirationDate);
 
             if (new Date().compareTo(cardDate) > 0) {
-                log.debug("Credit card is not expired.");
-                return false;
+                log.warn("Credit card is expired. Expiration date is: {}", expirationDate);
+                return true;
             }
 
-            log.warn("Credit card is expired. Expiration date is: {}", expirationDate);
-            return true;
+            log.debug("Credit card is not expired.");
+            return false;
         } catch (ParseException e) {
             log.debug("Exception occurred while parsing expiration date of the card. Expiration date value: {}", expirationDate, e);
             return false;
