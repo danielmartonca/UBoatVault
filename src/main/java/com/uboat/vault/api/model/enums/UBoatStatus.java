@@ -49,7 +49,7 @@ public enum UBoatStatus {
     // /api/updateMyBoat
     BOAT_UPDATED(1, "The boat details have been updated", "Updated your boat details"),
 
-    // /api/getSailorName
+    // /api/getSailorDetails
     SAILOR_DETAILS_RETRIEVED(1, "The sailor name has been retrieved", CommonStatus.SUCCESS),
     SAILOR_NOT_FOUND(0, "The sailor couldn't be found by ID", "Sailor not found"),
 
