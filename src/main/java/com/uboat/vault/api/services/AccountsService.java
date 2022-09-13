@@ -7,7 +7,6 @@ import com.uboat.vault.api.model.http.new_requests.*;
 import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.persistence.account.info.CreditCard;
 import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
-import com.uboat.vault.api.repositories.AccountDetailsRepository;
 import com.uboat.vault.api.repositories.AccountsRepository;
 import com.uboat.vault.api.repositories.SailorsRepository;
 import org.slf4j.Logger;
@@ -26,15 +25,13 @@ public class AccountsService {
     private final EntityService entityService;
     private final JwtService jwtService;
     private final AccountsRepository accountsRepository;
-    private final AccountDetailsRepository accountDetailsRepository;
     private final SailorsRepository sailorsRepository;
 
     @Autowired
-    public AccountsService(EntityService entityService, JwtService jwtService, AccountsRepository accountsRepository, AccountDetailsRepository accountDetailsRepository, SailorsRepository sailorsRepository) {
+    public AccountsService(EntityService entityService, JwtService jwtService, AccountsRepository accountsRepository, SailorsRepository sailorsRepository) {
         this.entityService = entityService;
         this.jwtService = jwtService;
         this.accountsRepository = accountsRepository;
-        this.accountDetailsRepository = accountDetailsRepository;
         this.sailorsRepository = sailorsRepository;
     }
 
@@ -102,7 +99,7 @@ public class AccountsService {
             //accountDetails can't be null due to its initialization during registration
             var accountDetails = account.getAccountDetails();
             accountDetails.update(requestAccountDetails);
-            accountDetailsRepository.save(accountDetails);
+            accountsRepository.save(account);
 
             log.info("Account details updated successfully.");
             return new UBoatResponse(UBoatStatus.ACCOUNT_DETAILS_UPDATED, true);
@@ -151,8 +148,7 @@ public class AccountsService {
                     var accountCards = account.getCreditCards();
 
                     //if there is already a card with the given owner full name and number
-                    if (accountCards.stream().anyMatch(creditCard -> newCreditCard.getNumber().equals(creditCard.getNumber())
-                            && newCreditCard.getOwnerFullName().equals(creditCard.getOwnerFullName()))) {
+                    if (accountCards.stream().anyMatch(creditCard -> newCreditCard.getNumber().equals(creditCard.getNumber()) && newCreditCard.getOwnerFullName().equals(creditCard.getOwnerFullName()))) {
                         log.warn("There is already an credit card with number '{}' and Owner Name '{}' for the account.", newCreditCard.getNumber(), newCreditCard.getNumber());
                         yield new UBoatResponse(UBoatStatus.CREDIT_CARD_DUPLICATE, true);
                     }
@@ -195,8 +191,7 @@ public class AccountsService {
 
             if (creditCards.isEmpty())
                 log.warn("Account does not have any credit cards set. Cannot delete card from the request.");
-            else
-                log.warn("Couldn't find the request credit card belonging to the given account.");
+            else log.warn("Couldn't find the request credit card belonging to the given account.");
 
             return new UBoatResponse(UBoatStatus.CREDIT_CARD_NOT_FOUND, false);
         } catch (UBoatJwtException e) {
@@ -211,8 +206,8 @@ public class AccountsService {
 
     /**
      * Used by sailors to get and retrieve their boat account
-     * TODO - allow this api only to sailors using roles
      */
+    // TODO - allow this api only to sailors using roles
     public UBoatResponse getMyBoat(String authorizationHeader) {
         try {
             //cant be null because the operation is already done in the filter before
@@ -268,10 +263,7 @@ public class AccountsService {
     public UBoatResponse getSailorDetails(String sailorId) {
         try {
             var sailorAccount = entityService.findSailorAccountById(sailorId);
-            var sailorDetails = RequestSailorDetails.builder()
-                    .fullName(sailorAccount.getAccountDetails().getFullName())
-                    .phoneNumber(sailorAccount.getPhoneNumber().getPhoneNumber())
-                    .build();
+            var sailorDetails = RequestSailorDetails.builder().fullName(sailorAccount.getAccountDetails().getFullName()).phoneNumber(sailorAccount.getPhoneNumber().getPhoneNumber()).build();
 
             log.info("Retrieved sailor details successfully.");
             return new UBoatResponse(UBoatStatus.SAILOR_DETAILS_RETRIEVED, sailorDetails);
@@ -281,16 +273,16 @@ public class AccountsService {
         }
     }
 
+
     /**
      * Used by clients to retrieve information about their journey.
-     * TODO - allow this api only to clients using roles
      */
+    //TODO - allow this api only to clients using roles
     @Transactional
     public Boat getJourneyBoat(String sailorId) {
         var foundActiveSailor = entityService.findActiveSailorBySailorId(sailorId);
 
-        if (foundActiveSailor == null)
-            return null;
+        if (foundActiveSailor == null) return null;
 
         if (foundActiveSailor.getBoat() == null) {
             log.warn("Sailor does not have any boat set. Creating empty boat now.");
