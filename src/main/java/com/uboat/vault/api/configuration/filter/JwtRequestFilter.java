@@ -34,45 +34,51 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         this.jwtUserDetailsService = jwtUserDetailsService;
     }
 
+    private void handleNoAuthorizationRequest(HttpServletRequest request) {
+        if (Arrays.stream(whiteListUrls).noneMatch(url -> request.getRequestURI().contains(url)))
+            logger.warn(LoggingUtils.colorString("API requires authorization and header is empty.", LoggingUtils.TextColor.RED));
+        else
+            logger.info(LoggingUtils.colorString("Api does not require authorization.", LoggingUtils.TextColor.GREEN));
+    }
+
+    private void handleRTokenRequest() {
+        logger.info(LoggingUtils.colorString("Authorization 'RToken ' header found.", LoggingUtils.TextColor.GREEN));
+    }
+
+    private void handleBearerRequest(String jwtToken, HttpServletRequest request) {
+        logger.info(LoggingUtils.colorString("Authorization 'Bearer ' header found.", LoggingUtils.TextColor.GREEN));
+
+        try {
+            var jwtData = jwtService.extractUsernameAndPhoneNumber(jwtToken);
+            logger.info(LoggingUtils.colorString("JWT is valid", LoggingUtils.TextColor.GREEN));
+
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                var userDetails = jwtUserDetailsService.loadUserByUsername(jwtData.join());
+
+                if (jwtService.validateJsonWebToken(jwtToken)) {
+                    var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                }
+            }
+        } catch (UBoatJwtException e) {
+            logger.warn(LoggingUtils.colorString("JWT is invalid: " + e.getStatus().getServerMessage(), LoggingUtils.TextColor.RED));
+        }
+    }
+
+    private void handleNotRecognizedAuthorizationRequest() {
+        logger.warn(LoggingUtils.colorString("Authorization header exists but does not begin with 'Bearer' or 'RToken'.", LoggingUtils.TextColor.RED));
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain chain) throws ServletException, IOException {
-        final String requestTokenHeader = request.getHeader("Authorization");
+        final var header = request.getHeader("Authorization");
 
-        String jwtToken = null;
-        JwtService.Data jwtData = null;
-        if (requestTokenHeader == null) {
-            if (Arrays.stream(whiteListUrls).noneMatch(url -> request.getRequestURI().contains(url)))
-                logger.warn(LoggingUtils.colorString("Authorization header is empty.", LoggingUtils.TextColor.RED));
-            else
-                logger.info(LoggingUtils.colorString("Api does not require authorization.", LoggingUtils.TextColor.GREEN));
-        } else {
-            if (requestTokenHeader.startsWith("Bearer ")) {
-                logger.info(LoggingUtils.colorString("Authorization Bearer header found.", LoggingUtils.TextColor.GREEN));
-
-                jwtToken = requestTokenHeader.substring(7);
-                try {
-                    jwtData = jwtService.extractUsernameAndPhoneNumber(jwtToken);
-                    logger.info(LoggingUtils.colorString("JWT is valid", LoggingUtils.TextColor.GREEN));
-                } catch (UBoatJwtException e) {
-                    logger.warn(LoggingUtils.colorString("JWT is invalid: " + e.getStatus().getServerMessage(), LoggingUtils.TextColor.RED));
-                }
-
-            } else if (requestTokenHeader.startsWith("RToken "))
-                logger.info(LoggingUtils.colorString("Authorization RToken header found.", LoggingUtils.TextColor.GREEN));
-            else
-                logger.warn(LoggingUtils.colorString("JWT Token does not begin with Bearer String", LoggingUtils.TextColor.RED));
-        }
-
-        if (jwtData != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            var userDetails = jwtUserDetailsService.loadUserByUsername(jwtData.join());
-            if (jwtService.validateJsonWebToken(jwtToken)) {
-                var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-            }
-        }
+        if (header == null) handleNoAuthorizationRequest(request);
+        else if (header.startsWith("RToken ")) handleRTokenRequest();
+        else if (header.startsWith("Bearer ")) handleBearerRequest(header.substring(7), request);
+        else handleNotRecognizedAuthorizationRequest();
 
         chain.doFilter(request, response);
     }
-
 }

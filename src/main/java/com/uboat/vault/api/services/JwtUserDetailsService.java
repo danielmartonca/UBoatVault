@@ -2,9 +2,6 @@ package com.uboat.vault.api.services;
 
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.repositories.AccountsRepository;
-import com.uboat.vault.api.utilities.LoggingUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -17,7 +14,6 @@ import java.util.List;
 
 @Service
 public class JwtUserDetailsService implements UserDetailsService {
-    private final Logger log = LoggerFactory.getLogger(AccountsService.class);
     private final AccountsRepository accountsRepository;
 
     @Autowired
@@ -25,22 +21,12 @@ public class JwtUserDetailsService implements UserDetailsService {
         this.accountsRepository = accountsRepository;
     }
 
-    public Account findAccountByUsername(String username) {
-        var foundAccount = accountsRepository.findFirstByUsername(username);
-        if (foundAccount == null)
-            log.warn(LoggingUtils.colorString("Couldn't find any account by username '" + username + "'.", LoggingUtils.TextColor.RED));
-        else
-            log.info(LoggingUtils.colorString("[Filter] Found account by username '" + username + "'.", LoggingUtils.TextColor.GREEN));
-        return foundAccount;
+    private Account findAccountByUsername(String username) {
+        return accountsRepository.findFirstByUsername(username);
     }
 
-    public Account findAccountByPhoneNumber(String phoneNumber) {
-        var foundAccount = accountsRepository.findFirstByPhoneNumber_PhoneNumber(phoneNumber);
-        if (foundAccount == null)
-            log.warn(LoggingUtils.colorString("Couldn't find any account by phone number '" + phoneNumber + "'.", LoggingUtils.TextColor.RED));
-        else
-            log.info(LoggingUtils.colorString("[Filter] Found account by phone number '" + phoneNumber + "'.", LoggingUtils.TextColor.GREEN));
-        return foundAccount;
+    private Account findAccountByPhoneNumber(String phoneNumber) {
+        return accountsRepository.findFirstByPhoneNumber_PhoneNumber(phoneNumber);
     }
 
     @Override
