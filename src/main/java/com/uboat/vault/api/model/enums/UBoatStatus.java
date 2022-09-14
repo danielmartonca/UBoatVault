@@ -84,20 +84,29 @@ public enum UBoatStatus {
     MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER(6, "The account given in the request is missing registration data or phone number information", CommonStatus.UNEXPECTED_ERROR),
     REGISTRATION_SUCCESSFUL(1, "Registration for the account was successful. JWT is present in the response body.", "Registration successful"),
 
+
     // /api/login
     CREDENTIALS_NOT_FOUND(2, "The password is not used by any account.", CommonStatus.INVALID_CREDENTIALS),
     INVALID_CREDENTIALS(0, "The username or phone number don't match with the given password", CommonStatus.INVALID_CREDENTIALS),
     LOGIN_SUCCESSFUL(1, "The credentials match. Login was successful", "Logged in successfully"),
 
+
     // /images/getDefaultProfilePicture
     DEFAULT_PROFILE_PICTURE_RETRIEVED(1, "Default profile picture retrieved successfully.", CommonStatus.SUCCESS),
 
+
     // /images/getDefaultProfilePicture
     SAILOR_PROFILE_PICTURE_RETRIEVED(1, "Sailor profile picture retrieved successfully.", CommonStatus.SUCCESS),
-    SAILOR_PROFILE_PICTURE_NOT_SET(1, "Sailor has not set a profile picture.", CommonStatus.SUCCESS),
+    SAILOR_PROFILE_PICTURE_NOT_SET(0, "Sailor has not set a profile picture.", CommonStatus.SUCCESS),
+
 
     // /images/getSailorBoatImages
-    SAILOR_BOAT_IMAGES_RETRIEVED(1, "Sailor boat images retrieved successfully.", CommonStatus.SUCCESS);
+    SAILOR_BOAT_IMAGES_RETRIEVED(1, "Sailor boat images retrieved successfully.", CommonStatus.SUCCESS),
+
+
+    // /images/uploadBoatImage
+    BOAT_IMAGE_UPLOADED(1, "Boat image has been uploaded successfully.", "Boat image uploaded"),
+    BOAT_IMAGE_ALREADY_EXISTING(0, "Boat image was already existing for the sailor.", "Boat image uploaded");
 
     private final int code;
     private final String serverMessage;

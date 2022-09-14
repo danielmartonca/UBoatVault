@@ -1,19 +1,23 @@
 package com.uboat.vault.api.model.persistence.sailing.sailor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.uboat.vault.api.utilities.HashUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.*;
-import java.util.Arrays;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "BoatImages")
 public class BoatImage {
+    private static final Logger log = LoggerFactory.getLogger(BoatImage.class);
+
     @JsonIgnore
     @Id
     @Getter
@@ -23,11 +27,12 @@ public class BoatImage {
     private Long id;
 
     @Getter
-    @Setter
     @Lob
     @Basic(fetch = FetchType.EAGER)
     private byte[] bytes;
 
+    @Getter
+    private String hash;
     @JsonIgnore
     @Getter
     @Setter
@@ -36,20 +41,26 @@ public class BoatImage {
     private Boat boat;
 
     public BoatImage(byte[] bytes, Boat boat) {
-        this.bytes = bytes;
         this.boat = boat;
+        setBytes(bytes);
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        BoatImage boatImage = (BoatImage) o;
-        return Arrays.equals(bytes, boatImage.bytes);
+    public String toString() {
+        return "{" + "bytes:" + '"' + bytes.length + " bytes\"" + '}';
     }
 
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(bytes);
+    private void calculateHash() {
+        if (bytes == null) {
+            log.debug("Boat Image bytes are null. Cannot calculate hash.");
+            return;
+        }
+        hash = HashUtils.calculateHash(this.bytes);
+        log.debug("Calculated boat image hash successfully.");
+    }
+
+    public void setBytes(byte[] bytes) {
+        this.bytes = bytes;
+        calculateHash();
     }
 }

@@ -1,6 +1,7 @@
 package com.uboat.vault.api.controllers;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.services.ImagesService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -52,9 +53,17 @@ public class ImagesController {
         };
     }
 
-//    @PutMapping(value = "/uploadProfilePicture")
-//    public @ResponseBody
-//    ResponseEntity<UBoatResponse> uploadBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody byte[] imageBytes) {
-////        var imagesBytesList = imagesService.getSailorBoatImages(sailorId);
-//    }
+    @PutMapping(value = "/uploadBoatImage")
+    public @ResponseBody
+    ResponseEntity<UBoatResponse> uploadBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody byte[] imageBytes) {
+        var uBoatResponse = imagesService.uploadBoatImage(authorizationHeader, imageBytes);
+
+        return switch (uBoatResponse.getHeader()) {
+            case BOAT_IMAGE_UPLOADED, BOAT_IMAGE_ALREADY_EXISTING ->
+                    ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+        };
+    }
 }

@@ -207,7 +207,6 @@ public class AccountsService {
     /**
      * Used by sailors to get and retrieve their boat account
      */
-    // TODO - allow this api only to sailors using roles
     public UBoatResponse getMyBoat(String authorizationHeader) {
         try {
             //cant be null because the operation is already done in the filter before
@@ -231,7 +230,6 @@ public class AccountsService {
         }
     }
 
-    //TODO - allow this api only to sailors using roles
     @Transactional
     public UBoatResponse updateMyBoat(String authorizationHeader, RequestBoat newBoatDetails) {
         try {
@@ -259,7 +257,6 @@ public class AccountsService {
     }
 
 
-    //TODO - allow this api only to clients using roles
     public UBoatResponse getSailorDetails(String sailorId) {
         try {
             var sailorAccount = entityService.findSailorAccountById(sailorId);
@@ -280,7 +277,6 @@ public class AccountsService {
     /**
      * Used by clients to retrieve information about their journey.
      */
-    //TODO - allow this api only to clients using roles
     @Transactional
     public Boat getJourneyBoat(String sailorId) {
         var foundActiveSailor = entityService.findSailorBySailorId(sailorId);

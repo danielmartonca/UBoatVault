@@ -1,6 +1,7 @@
 package com.uboat.vault.api.model.persistence.account.info;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.uboat.vault.api.utilities.HashUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -47,13 +48,12 @@ public class Image {
         return "{" + "bytes:" + '"' + bytes.length + " bytes\"" + '}';
     }
 
-    //TODO implement code of hashing
     private void calculateHash() {
         if (bytes == null) {
             log.debug("Image bytes are null. Cannot calculate hash.");
             return;
         }
-        hash = Integer.toString(bytes.length);
+        hash = HashUtils.calculateHash(this.bytes);
         log.debug("Calculated image hash successfully.");
     }
 
