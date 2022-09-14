@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -173,21 +174,23 @@ public class AuthenticationService {
         }
     }
 
-    private void createActiveSailorAccount(Account account) {
-        if (account.getType() == UserType.SAILOR) {
-            var boat = new Boat();
-            var activeSailor = Sailor.builder()
-                    .accountId(accountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword()).getId())
-                    .boat(boat)
-                    .averageRating(0)
-                    .build();
-            boat.setSailor(activeSailor);
-            sailorsRepository.save(activeSailor);
-            log.info("Successfully created active sailor entity.");
-        } else {
+    private void createSailor(Account account) {
+        if (account.getType() != UserType.SAILOR) {
             log.error("Account given as parameter is not a sailor account");
             throw new RuntimeException("Account given as parameter is not a sailor account");
         }
+
+        var boat = new Boat();
+        var activeSailor = Sailor.builder()
+                .accountId(accountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword()).getId())
+                .boat(boat)
+                .averageRating(0)
+                .rankings(new HashSet<>())
+                .build();
+        boat.setSailor(activeSailor);
+
+        sailorsRepository.save(activeSailor);
+        log.info("Successfully created sailor entity.");
     }
 
     @Transactional
@@ -226,7 +229,7 @@ public class AuthenticationService {
             pendingAccountsRepository.delete(pendingAccount);
 
             if (account.getType() == UserType.SAILOR)
-                createActiveSailorAccount(account);
+                createSailor(account);
 
             log.info("Registration successful. Returning JWT.");
             return new UBoatResponse(UBoatStatus.REGISTRATION_SUCCESSFUL, jsonWebToken);

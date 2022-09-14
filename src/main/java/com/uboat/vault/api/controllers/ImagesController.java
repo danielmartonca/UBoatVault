@@ -1,12 +1,11 @@
 package com.uboat.vault.api.controllers;
 
+import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.services.ImagesService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("images")
@@ -20,21 +19,42 @@ public class ImagesController {
     @GetMapping(value = "/getDefaultProfilePicture", produces = MediaType.IMAGE_PNG_VALUE)
     public @ResponseBody
     ResponseEntity<byte[]> getDefaultProfilePicture() {
-        var bytes = imagesService.getDefaultProfilePicture();
-        return ResponseEntity.status(HttpStatus.OK).body(bytes);
+        var uBoatResponse = imagesService.getDefaultProfilePicture();
+
+        if (uBoatResponse.getHeader() == UBoatStatus.DEFAULT_PROFILE_PICTURE_RETRIEVED)
+            return ResponseEntity.status(HttpStatus.OK).body((byte[]) uBoatResponse.getBody());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 
     @GetMapping(value = "/getSailorProfilePicture", produces = MediaType.IMAGE_PNG_VALUE)
     public @ResponseBody
     ResponseEntity<byte[]> getSailorProfilePicture(@RequestParam(name = "sailorId") String sailorId) {
-        var bytes = imagesService.getSailorProfilePicture(sailorId);
-        return ResponseEntity.status(HttpStatus.OK).body(bytes);
+        var uBoatResponse = imagesService.getSailorProfilePicture(sailorId);
+
+        return switch (uBoatResponse.getHeader()) {
+            case SAILOR_PROFILE_PICTURE_RETRIEVED, SAILOR_PROFILE_PICTURE_NOT_SET ->
+                    ResponseEntity.status(HttpStatus.OK).body((byte[]) uBoatResponse.getBody());
+            case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
     }
 
     @GetMapping(value = "/getSailorBoatImages", produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody
-    ResponseEntity<List<byte[]>> getSailorBoatImages(@RequestParam(name = "sailorId") String sailorId) {
-        var imagesBytesList = imagesService.getSailorBoatImages(sailorId);
-        return ResponseEntity.status(HttpStatus.OK).body(imagesBytesList);
+    ResponseEntity<Object> getSailorBoatImages(@RequestParam(name = "sailorId") String sailorId) {
+        var uBoatResponse = imagesService.getSailorBoatImages(sailorId);
+
+        return switch (uBoatResponse.getHeader()) {
+            case SAILOR_BOAT_IMAGES_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse.getBody());
+            case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
     }
+
+//    @PutMapping(value = "/uploadProfilePicture")
+//    public @ResponseBody
+//    ResponseEntity<UBoatResponse> uploadBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody byte[] imageBytes) {
+////        var imagesBytesList = imagesService.getSailorBoatImages(sailorId);
+//    }
 }

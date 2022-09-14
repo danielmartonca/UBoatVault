@@ -19,7 +19,9 @@ client-blacklist:
   /api/updateMyBoat
 
 sailor-blacklist:
-  /api/getSailorDetails
+  /api/getSailorDetails,
+  /images/getSailorProfilePicture,
+  /images/getSailorBoatImages
 
 spring:
   mvc:

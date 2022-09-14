@@ -1,5 +1,7 @@
 package com.uboat.vault.api.services;
 
+import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.persistence.sailing.sailor.BoatImage;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -11,8 +13,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.LinkedList;
-import java.util.List;
 
 @Service
 public class ImagesService {
@@ -25,58 +25,62 @@ public class ImagesService {
         this.entityService = entityService;
     }
 
-    public byte[] getDefaultProfilePicture() {
+    public UBoatResponse getDefaultProfilePicture() {
         try {
-            File initialFile = new File("src/main/resources/static/default_profile_pic.png");
-            if (!initialFile.exists())
-                throw new IOException("File doesn't exist.");
-            InputStream in = new FileInputStream(initialFile);
+            var defaultProfilePictureFile = new File("src/main/resources/static/default_profile_pic.png");
+            if (!defaultProfilePictureFile.exists())
+                throw new IOException("Default profile picture file doesn't exist.");
+
+            InputStream in = new FileInputStream(defaultProfilePictureFile);
+
             log.info("Returning default profile picture.");
-            return IOUtils.toByteArray(in);
+            return new UBoatResponse(UBoatStatus.DEFAULT_PROFILE_PICTURE_RETRIEVED, IOUtils.toByteArray(in));
         } catch (IOException e) {
             log.error("Exception while retrieving default profile picture.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
 
-    public byte[] getSailorProfilePicture(String sailorId) {
-        var foundAccount = entityService.findSailorAccountById(sailorId);
-        if (foundAccount == null)
-            return null;
+    public UBoatResponse getSailorProfilePicture(String sailorId) {
+        try {
+            var account = entityService.findSailorAccountById(sailorId);
+            if (account == null)
+                return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
 
-        var accountDetails = foundAccount.getAccountDetails();
-        if (accountDetails == null) {
-            log.info("Account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
-            return new byte[0];
+            var accountDetails = account.getAccountDetails();
+            if (accountDetails == null) {
+                log.info("Account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
+                return new UBoatResponse(UBoatStatus.SAILOR_PROFILE_PICTURE_NOT_SET, new byte[0]);
+            }
+
+            var image = accountDetails.getImage();
+            if (image == null || image.getBytes() == null) {
+                log.info("Image of account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
+                return new UBoatResponse(UBoatStatus.SAILOR_PROFILE_PICTURE_NOT_SET, new byte[0]);
+            }
+
+            log.info("Found profile picture for sailor id " + sailorId);
+            return new UBoatResponse(UBoatStatus.SAILOR_DETAILS_RETRIEVED, image.getBytes());
+        } catch (Exception e) {
+            log.error("Exception occurred while retrieving sailor profile picture.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
-        var image = accountDetails.getImage();
-        if (image == null || image.getBytes() == null) {
-            log.info("Image of account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
-            return new byte[0];
-        }
-
-        log.info("Found profile picture for sailor id " + sailorId);
-        return image.getBytes();
-
     }
 
-    public List<byte[]> getSailorBoatImages(String sailorId) {
-        var foundActiveSailor = entityService.findActiveSailorBySailorId(sailorId);
+    public UBoatResponse getSailorBoatImages(String sailorId) {
+        try {
+            var sailor = entityService.findSailorBySailorId(sailorId);
 
-        if (foundActiveSailor == null)
-            return null;
+            if (sailor == null)
+                return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
 
-        var boat = foundActiveSailor.getBoat();
+            var imagesBytes = sailor.getBoat().getBoatImages().stream().map(BoatImage::getBytes).toList();
+            log.info("Found {} boat images for sailor id {}", imagesBytes.size(), sailorId);
 
-        var images = boat.getBoatImages();
-        if (images == null) {
-            log.info("Images of boat are null. Sailor does not have a boat images set yet. Returning empty list.");
-            return new LinkedList<>();
+            return new UBoatResponse(UBoatStatus.SAILOR_BOAT_IMAGES_RETRIEVED, imagesBytes);
+        } catch (Exception e) {
+            log.error("Exception occurred while retrieving sailor boat images.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
-
-        var imagesBytes = images.stream().map(BoatImage::getBytes).toList();
-        log.info("Found profile picture for sailor id " + sailorId);
-        return imagesBytes;
-
     }
 }

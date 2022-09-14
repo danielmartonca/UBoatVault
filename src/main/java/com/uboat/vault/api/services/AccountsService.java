@@ -283,7 +283,7 @@ public class AccountsService {
     //TODO - allow this api only to clients using roles
     @Transactional
     public Boat getJourneyBoat(String sailorId) {
-        var foundActiveSailor = entityService.findActiveSailorBySailorId(sailorId);
+        var foundActiveSailor = entityService.findSailorBySailorId(sailorId);
 
         if (foundActiveSailor == null) return null;
 

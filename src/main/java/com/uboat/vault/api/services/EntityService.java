@@ -81,7 +81,7 @@ public class EntityService {
     /**
      * This method searches for the active sailor entity based on the data given as parameter
      */
-    public Sailor findActiveSailorByCredentials(Account account) {
+    public Sailor findSailorByCredentials(Account account) {
         var foundAccount = findAccountByCredentials(Credentials.fromAccount(account));
         if (foundAccount == null) {
             log.info("Request account or token are invalid.");
@@ -103,7 +103,7 @@ public class EntityService {
         return foundSailorAccount;
     }
 
-    public Sailor findActiveSailorBySailorId(String sailorId) {
+    public Sailor findSailorBySailorId(String sailorId) {
         long sailorIdLong;
         try {
             sailorIdLong = Long.parseLong(sailorId);
