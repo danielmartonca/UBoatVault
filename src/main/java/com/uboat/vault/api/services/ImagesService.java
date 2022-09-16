@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.NoSuchElementException;
 
 @Service
 public class ImagesService {
@@ -169,6 +170,31 @@ public class ImagesService {
         } catch (Exception e) {
             log.error("An exception occurred while retrieving boat images hashes.", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
+        }
+    }
+
+    public UBoatResponse getBoatImage(String authorizationHeader, String identifier) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
+            var sailor = entityService.findSailorByCredentials(account);
+
+            var image = sailor.getBoat().getBoatImages().stream()
+                    .filter(boatImage -> boatImage.getHash().equals(identifier))
+                    .findFirst()
+                    .orElseThrow();
+
+            return new UBoatResponse(UBoatStatus.BOAT_IMAGE_RETRIEVED, image.getBytes());
+        } catch (NoSuchElementException e) {
+            log.warn("Boat image not found by identifier for the user extracted from JWT.");
+            return new UBoatResponse(UBoatStatus.BOAT_IMAGE_NOT_FOUND);
+        } catch (UBoatJwtException e) {
+            log.error("Exception occurred during Authorization Header/JWT processing.", e);
+            return new UBoatResponse(e.getStatus());
+        } catch (Exception e) {
+            log.error("An exception occurred while retrieving boat images hashes.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
 }

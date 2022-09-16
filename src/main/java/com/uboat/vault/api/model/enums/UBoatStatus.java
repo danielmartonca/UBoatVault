@@ -118,7 +118,12 @@ public enum UBoatStatus {
 
     BOAT_IMAGES_HASHES_RETRIEVED(1, "All boat images hash values have been retrieved.", CommonStatus.SUCCESS),
 
-    BOAT_IMAGES_HASHES_EMPTY(0, "Boat does not have any pictures set.", "Boat does not have images");
+    BOAT_IMAGES_HASHES_EMPTY(0, "Boat does not have any pictures set.", "Boat does not have images"),
+
+    // /images/getBoatImage
+
+    BOAT_IMAGE_RETRIEVED(1, "Boat image bytes retrieved successfully.", CommonStatus.SUCCESS),
+    BOAT_IMAGE_NOT_FOUND(0, "Boat image could not be found by identifier.", "Failed to retrieve image");
 
     private final int code;
     private final String serverMessage;

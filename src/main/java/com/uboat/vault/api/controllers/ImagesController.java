@@ -95,5 +95,17 @@ public class ImagesController {
         };
     }
 
+    @GetMapping(value = "/getBoatImage")
+    public @ResponseBody
+    ResponseEntity<Object> getBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam String identifier) {
+        var uBoatResponse = imagesService.getBoatImage(authorizationHeader, identifier);
 
+        return switch (uBoatResponse.getHeader()) {
+            case BOAT_IMAGE_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse.getBody());
+            case BOAT_IMAGE_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(uBoatResponse);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
+    }
 }
