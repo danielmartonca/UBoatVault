@@ -1,10 +1,12 @@
 package com.uboat.vault.api.services;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.persistence.sailing.sailor.BoatImage;
 import com.uboat.vault.api.repositories.AccountsRepository;
+import com.uboat.vault.api.repositories.BoatImagesRepository;
 import com.uboat.vault.api.repositories.SailorsRepository;
 import com.uboat.vault.api.utilities.HashUtils;
 import org.apache.commons.io.IOUtils;
@@ -29,13 +31,15 @@ public class ImagesService {
 
     private final AccountsRepository accountsRepository;
     private final SailorsRepository sailorsRepository;
+    private final BoatImagesRepository boatImagesRepository;
 
     @Autowired
-    public ImagesService(EntityService entityService, JwtService jwtService, AccountsRepository accountsRepository, SailorsRepository sailorsRepository) {
+    public ImagesService(EntityService entityService, JwtService jwtService, AccountsRepository accountsRepository, SailorsRepository sailorsRepository, BoatImagesRepository boatImagesRepository) {
         this.entityService = entityService;
         this.jwtService = jwtService;
         this.accountsRepository = accountsRepository;
         this.sailorsRepository = sailorsRepository;
+        this.boatImagesRepository = boatImagesRepository;
     }
 
     public UBoatResponse getDefaultProfilePicture() {
@@ -136,21 +140,19 @@ public class ImagesService {
         }
     }
 
-    public UBoatResponse getBoatImagesIdentifiers(String authorizationHeader) {
+    public UBoatResponse getBoatImagesIdentifiers(String sailorId) {
         try {
             //cant be null because the operation is already done in the filter before
-            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
-            var sailor = entityService.findSailorByCredentials(account);
+            var sailor = entityService.findSailorBySailorId(sailorId);
+            if (sailor == null)
+                return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
+
             var boatImages = sailor.getBoat().getBoatImages();
 
             var list = boatImages.stream().map(BoatImage::getHash).toList();
             if (list.isEmpty()) return new UBoatResponse(UBoatStatus.BOAT_IMAGES_HASHES_EMPTY, list);
 
             return new UBoatResponse(UBoatStatus.BOAT_IMAGES_HASHES_RETRIEVED, list);
-        } catch (UBoatJwtException e) {
-            log.error("Exception occurred during Authorization Header/JWT processing.", e);
-            return new UBoatResponse(e.getStatus(), false);
         } catch (Exception e) {
             log.error("An exception occurred while retrieving boat images hashes.", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
@@ -162,16 +164,23 @@ public class ImagesService {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var account = entityService.findAccountByUsername(jwtData.username());
-            var sailor = entityService.findSailorByCredentials(account);
 
-            var image = sailor.getBoat().getBoatImages().stream()
-                    .filter(boatImage -> boatImage.getHash().equals(identifier))
-                    .findFirst()
-                    .orElseThrow();
+            //sailors are not allowed to access other sailors images
+            if (account.getType() == UserType.SAILOR) {
+                var sailor = entityService.findSailorByCredentials(account);
+                var image = sailor.getBoat().getBoatImages().stream()
+                        .filter(boatImage -> boatImage.getHash().equals(identifier))
+                        .findFirst()
+                        .orElseThrow();
+                return new UBoatResponse(UBoatStatus.BOAT_IMAGE_RETRIEVED, image.getBytes());
+            }
+
+            var image = boatImagesRepository.findBoatImageByHash(identifier);
+            if (image == null) throw new NoSuchElementException("Boat image not found by identifier.");
 
             return new UBoatResponse(UBoatStatus.BOAT_IMAGE_RETRIEVED, image.getBytes());
         } catch (NoSuchElementException e) {
-            log.warn("Boat image not found by identifier for the user extracted from JWT.");
+            log.warn("Boat image not found by identifier.");
             return new UBoatResponse(UBoatStatus.BOAT_IMAGE_NOT_FOUND);
         } catch (UBoatJwtException e) {
             log.error("Exception occurred during Authorization Header/JWT processing.", e);
@@ -181,4 +190,5 @@ public class ImagesService {
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
+
 }
