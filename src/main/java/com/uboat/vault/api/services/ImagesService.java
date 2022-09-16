@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -55,8 +56,7 @@ public class ImagesService {
     public UBoatResponse getSailorProfilePicture(String sailorId) {
         try {
             var account = entityService.findSailorAccountById(sailorId);
-            if (account == null)
-                return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
+            if (account == null) return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
 
             var accountDetails = account.getAccountDetails();
             if (accountDetails == null) {
@@ -82,8 +82,7 @@ public class ImagesService {
         try {
             var sailor = entityService.findSailorBySailorId(sailorId);
 
-            if (sailor == null)
-                return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
+            if (sailor == null) return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
 
             var imagesBytes = sailor.getBoat().getBoatImages().stream().map(BoatImage::getBytes).toList();
             log.info("Found {} boat images for sailor id {}", imagesBytes.size(), sailorId);
@@ -95,6 +94,7 @@ public class ImagesService {
         }
     }
 
+    @Transactional
     public UBoatResponse uploadProfileImage(String authorizationHeader, byte[] imageBytes) {
         try {
             //cant be null because the operation is already done in the filter before
@@ -122,6 +122,7 @@ public class ImagesService {
         }
     }
 
+    @Transactional
     public UBoatResponse uploadBoatImage(String authorizationHeader, byte[] imageBytes) {
         try {
             //cant be null because the operation is already done in the filter before
@@ -146,6 +147,27 @@ public class ImagesService {
             return new UBoatResponse(e.getStatus(), false);
         } catch (Exception e) {
             log.error("An exception occurred while uploading a boat image", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
+        }
+    }
+
+    public UBoatResponse getBoatImagesIdentifiers(String authorizationHeader) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
+            var sailor = entityService.findSailorByCredentials(account);
+            var boatImages = sailor.getBoat().getBoatImages();
+
+            var list = boatImages.stream().map(BoatImage::getHash).toList();
+            if (list.isEmpty()) return new UBoatResponse(UBoatStatus.BOAT_IMAGES_HASHES_EMPTY, list);
+
+            return new UBoatResponse(UBoatStatus.BOAT_IMAGES_HASHES_RETRIEVED, list);
+        } catch (UBoatJwtException e) {
+            log.error("Exception occurred during Authorization Header/JWT processing.", e);
+            return new UBoatResponse(e.getStatus(), false);
+        } catch (Exception e) {
+            log.error("An exception occurred while retrieving boat images hashes.", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
     }

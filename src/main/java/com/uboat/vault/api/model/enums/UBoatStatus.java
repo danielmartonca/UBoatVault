@@ -109,9 +109,16 @@ public enum UBoatStatus {
     PROFILE_IMAGE_UPLOADED(1, "Profile image has been uploaded successfully.", "Profile picture updated"),
     PROFILE_IMAGE_ALREADY_EXISTING(1, "Boat image has been uploaded successfully.", "Profile picture updated"),
 
+
     // /images/uploadBoatImage
     BOAT_IMAGE_UPLOADED(1, "Boat image has been uploaded successfully.", "Boat image uploaded"),
-    BOAT_IMAGE_ALREADY_EXISTING(0, "Boat image was already existing for the sailor.", "Boat image uploaded");
+    BOAT_IMAGE_ALREADY_EXISTING(0, "Boat image was already existing for the sailor.", "Boat image uploaded"),
+
+    // /images/getBoatImagesIdentifiers
+
+    BOAT_IMAGES_HASHES_RETRIEVED(1, "All boat images hash values have been retrieved.", CommonStatus.SUCCESS),
+
+    BOAT_IMAGES_HASHES_EMPTY(0, "Boat does not have any pictures set.", "Boat does not have images");
 
     private final int code;
     private final String serverMessage;

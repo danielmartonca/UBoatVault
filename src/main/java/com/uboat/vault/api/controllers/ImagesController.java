@@ -59,11 +59,11 @@ public class ImagesController {
         var uBoatResponse = imagesService.uploadProfileImage(authorizationHeader, imageBytes);
 
         return switch (uBoatResponse.getHeader()) {
-            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
             case PROFILE_IMAGE_UPLOADED, PROFILE_IMAGE_ALREADY_EXISTING ->
                     ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
                     ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };
     }
 
@@ -80,4 +80,20 @@ public class ImagesController {
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };
     }
+
+    @GetMapping(value = "/getBoatImagesIdentifiers")
+    public @ResponseBody
+    ResponseEntity<UBoatResponse> getBoatImagesIdentifiers(@RequestHeader(value = "Authorization") String authorizationHeader) {
+        var uBoatResponse = imagesService.getBoatImagesIdentifiers(authorizationHeader);
+
+        return switch (uBoatResponse.getHeader()) {
+            case BOAT_IMAGES_HASHES_EMPTY, BOAT_IMAGES_HASHES_RETRIEVED ->
+                    ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+        };
+    }
+
+
 }
