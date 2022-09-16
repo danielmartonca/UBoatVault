@@ -53,6 +53,20 @@ public class ImagesController {
         };
     }
 
+    @PutMapping(value = "/uploadProfileImage")
+    public @ResponseBody
+    ResponseEntity<UBoatResponse> uploadProfileImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody byte[] imageBytes) {
+        var uBoatResponse = imagesService.uploadProfileImage(authorizationHeader, imageBytes);
+
+        return switch (uBoatResponse.getHeader()) {
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+            case PROFILE_IMAGE_UPLOADED, PROFILE_IMAGE_ALREADY_EXISTING ->
+                    ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
+        };
+    }
+
     @PutMapping(value = "/uploadBoatImage")
     public @ResponseBody
     ResponseEntity<UBoatResponse> uploadBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody byte[] imageBytes) {

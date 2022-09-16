@@ -104,6 +104,11 @@ public enum UBoatStatus {
     SAILOR_BOAT_IMAGES_RETRIEVED(1, "Sailor boat images retrieved successfully.", CommonStatus.SUCCESS),
 
 
+    // /images/uploadProfileImage
+
+    PROFILE_IMAGE_UPLOADED(1, "Profile image has been uploaded successfully.", "Profile picture updated"),
+    PROFILE_IMAGE_ALREADY_EXISTING(1, "Boat image has been uploaded successfully.", "Profile picture updated"),
+
     // /images/uploadBoatImage
     BOAT_IMAGE_UPLOADED(1, "Boat image has been uploaded successfully.", "Boat image uploaded"),
     BOAT_IMAGE_ALREADY_EXISTING(0, "Boat image was already existing for the sailor.", "Boat image uploaded");

@@ -4,6 +4,7 @@ import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.persistence.sailing.sailor.BoatImage;
+import com.uboat.vault.api.repositories.AccountsRepository;
 import com.uboat.vault.api.repositories.SailorsRepository;
 import com.uboat.vault.api.utilities.HashUtils;
 import org.apache.commons.io.IOUtils;
@@ -24,12 +25,14 @@ public class ImagesService {
     private final EntityService entityService;
     private final JwtService jwtService;
 
+    private final AccountsRepository accountsRepository;
     private final SailorsRepository sailorsRepository;
 
     @Autowired
-    public ImagesService(EntityService entityService, JwtService jwtService, SailorsRepository sailorsRepository) {
+    public ImagesService(EntityService entityService, JwtService jwtService, AccountsRepository accountsRepository, SailorsRepository sailorsRepository) {
         this.entityService = entityService;
         this.jwtService = jwtService;
+        this.accountsRepository = accountsRepository;
         this.sailorsRepository = sailorsRepository;
     }
 
@@ -89,6 +92,33 @@ public class ImagesService {
         } catch (Exception e) {
             log.error("Exception occurred while retrieving sailor boat images.", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public UBoatResponse uploadProfileImage(String authorizationHeader, byte[] imageBytes) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
+
+            //can't be null because it is initialized when creating account
+            var image = account.getAccountDetails().getImage();
+            var hash = HashUtils.calculateHash(imageBytes);
+            if (image.getHash().equals(hash)) {
+                log.info("Profile image is already bound to the account.");
+                return new UBoatResponse(UBoatStatus.PROFILE_IMAGE_ALREADY_EXISTING, true);
+            }
+
+            log.info("New profile picture has been uploaded.");
+            image.setBytes(imageBytes);
+            accountsRepository.save(account);
+            return new UBoatResponse(UBoatStatus.PROFILE_IMAGE_UPLOADED, true);
+        } catch (UBoatJwtException e) {
+            log.error("Exception occurred during Authorization Header/JWT processing.", e);
+            return new UBoatResponse(e.getStatus(), false);
+        } catch (Exception e) {
+            log.error("An exception occurred while uploading a client profile picture", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
     }
 
