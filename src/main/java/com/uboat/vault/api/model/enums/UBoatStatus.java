@@ -123,7 +123,10 @@ public enum UBoatStatus {
     // /images/getBoatImage
 
     BOAT_IMAGE_RETRIEVED(1, "Boat image bytes retrieved successfully.", CommonStatus.SUCCESS),
-    BOAT_IMAGE_NOT_FOUND(0, "Boat image could not be found by identifier.", "Failed to retrieve image");
+    BOAT_IMAGE_NOT_FOUND(0, "Boat image could not be found by identifier.", "Failed to retrieve image"),
+    // /images/getBoatImage
+
+    BOAT_IMAGE_DELETED(1, "Boat image deleted successfully.", "Boat image deleted");
 
     private final int code;
     private final String serverMessage;

@@ -110,4 +110,21 @@ public class ImagesController {
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
     }
+
+    @Operation(summary = "This API retrieves deletes the boat image by hash of the account extracted from the JWT.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The boat image was deleted.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "There is not boat image with the given hash bound to the sailor account.", content = @Content(mediaType = "application/json")),
+    })
+    @DeleteMapping(value = "/deleteBoatImage")
+    public @ResponseBody
+    ResponseEntity<UBoatResponse> deleteBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam String identifier) {
+        var uBoatResponse = imagesService.deleteBoatImage(authorizationHeader, identifier);
+
+        return switch (uBoatResponse.getHeader()) {
+            case BOAT_IMAGE_DELETED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case BOAT_IMAGE_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
+    }
 }

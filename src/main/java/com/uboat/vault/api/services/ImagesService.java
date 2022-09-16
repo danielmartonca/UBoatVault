@@ -186,9 +186,37 @@ public class ImagesService {
             log.error("Exception occurred during Authorization Header/JWT processing.", e);
             return new UBoatResponse(e.getStatus());
         } catch (Exception e) {
-            log.error("An exception occurred while retrieving boat images hashes.", e);
+            log.error("An exception occurred while retrieving boat image.", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
 
+    @Transactional
+    public UBoatResponse deleteBoatImage(String authorizationHeader, String identifier) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
+            var sailorImages = entityService.findSailorByCredentials(account).getBoat().getBoatImages();
+
+            sailorImages.remove(
+                    sailorImages.stream()
+                            .filter(boatImage -> boatImage.getHash().equals(identifier))
+                            .findFirst()
+                            .orElseThrow()
+            );
+
+            accountsRepository.save(account);
+            return new UBoatResponse(UBoatStatus.BOAT_IMAGE_DELETED, true);
+        } catch (NoSuchElementException e) {
+            log.warn("Boat image not found by identifier to the account in the JWT.");
+            return new UBoatResponse(UBoatStatus.BOAT_IMAGE_NOT_FOUND, false);
+        } catch (UBoatJwtException e) {
+            log.error("Exception occurred during Authorization Header/JWT processing.", e);
+            return new UBoatResponse(e.getStatus());
+        } catch (Exception e) {
+            log.error("An exception occurred while deleting the boat image by hash.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
+        }
+    }
 }
