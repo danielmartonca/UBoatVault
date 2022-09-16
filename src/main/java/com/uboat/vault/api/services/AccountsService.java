@@ -279,17 +279,17 @@ public class AccountsService {
      */
     @Transactional
     public Boat getJourneyBoat(String sailorId) {
-        var foundActiveSailor = entityService.findSailorBySailorId(sailorId);
+        var sailor = entityService.findSailorBySailorId(sailorId);
 
-        if (foundActiveSailor == null) return null;
+        if (sailor == null) return null;
 
 //        if (foundActiveSailor.getBoat() == null) {
 //            log.warn("Sailor does not have any boat set. Creating empty boat now.");
 //            return null;
 //        }
 
-        log.info("Found boat details for sailor with id " + foundActiveSailor.getAccountId());
-        return foundActiveSailor.getBoat();
+        log.info("Found boat details for sailor with id " + sailor.getAccountId());
+        return sailor.getBoat();
     }
 }
 

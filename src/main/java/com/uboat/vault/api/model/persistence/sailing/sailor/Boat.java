@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.*;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Builder
@@ -59,6 +60,13 @@ public class Boat {
     @Setter
     @OneToMany(mappedBy = "boat", cascade = CascadeType.ALL)
     private Set<BoatImage> boatImages;
+
+    public Boat(Sailor sailor) {
+        this.sailor = sailor;
+        this.averageSpeed = 0;
+        this.type = "";
+        this.boatImages = new LinkedHashSet<>();
+    }
 
 
     private void updateBoatType(String newValue) {

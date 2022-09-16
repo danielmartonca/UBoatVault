@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -43,6 +44,19 @@ public class BoatImage {
     public BoatImage(byte[] bytes, Boat boat) {
         this.boat = boat;
         setBytes(bytes);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BoatImage boatImage = (BoatImage) o;
+        return id.equals(boatImage.id) && hash.equals(boatImage.hash);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, hash);
     }
 
     @Override

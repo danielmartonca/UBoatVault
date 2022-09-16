@@ -39,7 +39,7 @@ public class Ranking {
     @Getter
     @Setter
     @ManyToOne()
-    @JoinColumn(name = "active_sailor_id", nullable = false)
+    @JoinColumn(name = "sailor_id", nullable = false)
     private Sailor sailor;
 }
 

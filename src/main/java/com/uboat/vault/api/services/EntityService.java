@@ -112,14 +112,14 @@ public class EntityService {
             return null;
         }
 
-        var foundActiveSailor = sailorsRepository.findFirstByAccountId(sailorIdLong);
-        if (foundActiveSailor == null) {
+        var sailor = sailorsRepository.findFirstByAccountId(sailorIdLong);
+        if (sailor == null) {
             log.warn("Couldn't find active sailor account by id " + sailorIdLong);
             return null;
         }
 
         log.info("Found active sailor account.");
-        return foundActiveSailor;
+        return sailor;
     }
 
     public Account findSailorAccountById(String accountId) {

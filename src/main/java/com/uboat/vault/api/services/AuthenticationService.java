@@ -180,16 +180,14 @@ public class AuthenticationService {
             throw new RuntimeException("Account given as parameter is not a sailor account");
         }
 
-        var boat = new Boat();
-        var activeSailor = Sailor.builder()
-                .accountId(accountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword()).getId())
-                .boat(boat)
+        var sailor = Sailor.builder()
+                .accountId(account.getId())
                 .averageRating(0)
                 .rankings(new HashSet<>())
                 .build();
-        boat.setSailor(activeSailor);
+        sailor.setBoat(new Boat(sailor));
 
-        sailorsRepository.save(activeSailor);
+        sailorsRepository.save(sailor);
         log.info("Successfully created sailor entity.");
     }
 
