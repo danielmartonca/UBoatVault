@@ -79,22 +79,6 @@ public class ImagesService {
         }
     }
 
-    public UBoatResponse getSailorBoatImages(String sailorId) {
-        try {
-            var sailor = entityService.findSailorBySailorId(sailorId);
-
-            if (sailor == null) return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
-
-            var imagesBytes = sailor.getBoat().getBoatImages().stream().map(BoatImage::getBytes).toList();
-            log.info("Found {} boat images for sailor id {}", imagesBytes.size(), sailorId);
-
-            return new UBoatResponse(UBoatStatus.SAILOR_BOAT_IMAGES_RETRIEVED, imagesBytes);
-        } catch (Exception e) {
-            log.error("Exception occurred while retrieving sailor boat images.", e);
-            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
-        }
-    }
-
     @Transactional
     public UBoatResponse uploadProfileImage(String authorizationHeader, byte[] imageBytes) {
         try {

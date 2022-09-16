@@ -41,18 +41,6 @@ public class ImagesController {
         };
     }
 
-    @GetMapping(value = "/getSailorBoatImages", produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody
-    ResponseEntity<Object> getSailorBoatImages(@RequestParam(name = "sailorId") String sailorId) {
-        var uBoatResponse = imagesService.getSailorBoatImages(sailorId);
-
-        return switch (uBoatResponse.getHeader()) {
-            case SAILOR_BOAT_IMAGES_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse.getBody());
-            case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        };
-    }
-
     @PutMapping(value = "/uploadProfileImage")
     public @ResponseBody
     ResponseEntity<UBoatResponse> uploadProfileImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody byte[] imageBytes) {
