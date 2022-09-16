@@ -1,6 +1,11 @@
 {
   "properties": [
     {
+      "name": "uboat.pretty-print-logs",
+      "type": "java.lang.String",
+      "description": "Set to true if the app should print objects formatted with spaces and multiple lines."
+    },
+    {
       "name": "uboat.max-active-seconds",
       "type": "java.lang.String",
       "description": "Description for uboat.MAX_ACTIVE_SECONDS."
