@@ -17,12 +17,13 @@ whitelist:
 client-blacklist:
   /api/getMyBoat,
   /api/updateMyBoat,
-  /images/uploadBoatImage
+  /images/uploadBoatImage,
   /api/sailor/**
 
 sailor-blacklist:
   /api/getSailorDetails,
-  /images/getSailorProfilePicture
+  /images/getSailorProfilePicture,
+  /api/client/**
 
 spring:
   mvc:

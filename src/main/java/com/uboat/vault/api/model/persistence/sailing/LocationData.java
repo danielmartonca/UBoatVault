@@ -69,6 +69,7 @@ public class LocationData {
 
     public static LocationData createRandomLocationData() {
         LocationData locationData = new LocationData();
+        locationData.timeOfRecording = new Date();
         locationData.latitude = String.valueOf(rnd.nextInt() * 100);
         locationData.longitude = "1";
         locationData.accuracy = "1";

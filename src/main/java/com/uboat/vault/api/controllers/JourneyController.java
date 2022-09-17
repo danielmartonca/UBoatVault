@@ -1,14 +1,18 @@
 package com.uboat.vault.api.controllers;
 
+import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.requests.JourneyRequest;
-import com.uboat.vault.api.model.http.requests.MostRecentRidesRequest;
 import com.uboat.vault.api.model.http.requests.SailorConnectionRequest;
 import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
 import com.uboat.vault.api.model.http.response.JourneyResponse;
-import com.uboat.vault.api.model.http.response.MostRecentRidesResponse;
 import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
 import com.uboat.vault.api.services.AccountsService;
 import com.uboat.vault.api.services.JourneyService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +20,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 @RestController
+@RequestMapping("api/client")
 public class JourneyController {
     private final Logger log = LoggerFactory.getLogger(JourneyController.class);
 
@@ -30,28 +38,33 @@ public class JourneyController {
     }
 
     //TODO delete this after it's use cases are gone
-    @GetMapping(value = "/api/test/addFakeJourney")
+    @GetMapping(value = "/test/addFakeJourney")
     public ResponseEntity<Boolean> addFakeJourney(@RequestParam String clientId, @RequestParam String sailorId) {
         return new ResponseEntity<>(journeyService.addFakeJourney(clientId, sailorId), HttpStatus.CREATED);
     }
 
-    @PostMapping(value = "/api/getMostRecentRides")
-    public ResponseEntity<MostRecentRidesResponse> getMostRecentRides(@RequestBody MostRecentRidesRequest request) {
-        var journeys = journeyService.getMostRecentRides(request);
+    @Operation(summary = "Retrieves the last {ridesRequested} number of journeys for the client extracted from the JWT. ")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The journeys have been retrieved successfully", content = @Content(mediaType = "application/json")),
+    })
+    @GetMapping(value = "/getMostRecentRides")
+    public ResponseEntity<UBoatResponse> getMostRecentRides(@RequestHeader(value = "Authorization") String authorizationHeader,
+                                                            @RequestParam @Min(1) @Max(3) Integer ridesRequested) {
+        var uBoatResponse = journeyService.getMostRecentRides(authorizationHeader, ridesRequested);
 
-        if (journeys == null) return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        if (uBoatResponse.getHeader() == UBoatStatus.MOST_RECENT_RIDES_RETRIEVED)
+            return ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
 
-        MostRecentRidesResponse response = new MostRecentRidesResponse(journeys);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
     }
 
-    @GetMapping(value = "/api/getJourneyBoat")
+    @GetMapping(value = "/getJourneyBoat")
     public ResponseEntity<Boat> getBoat(@RequestParam(name = "sailorId") String sailorId) {
         var boat = accountsService.getJourneyBoat(sailorId);
         return new ResponseEntity<>(boat, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/api/requestJourney")
+    @PostMapping(value = "/requestJourney")
     public ResponseEntity<JourneyResponse> requestJourney(@RequestBody JourneyRequest request) {
         var response = journeyService.requestJourney(request);
         if (response == null) {
@@ -61,7 +74,7 @@ public class JourneyController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/api/connectToSailor")
+    @PostMapping(value = "/connectToSailor")
     public ResponseEntity<JourneyConnectionResponse> connectToSailor(@RequestBody SailorConnectionRequest request) {
         var response = journeyService.connectToSailor(request);
         if (response == null || response.getMsg() == null) {

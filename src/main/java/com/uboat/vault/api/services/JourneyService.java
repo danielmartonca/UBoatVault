@@ -3,9 +3,9 @@ package com.uboat.vault.api.services;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.http.UBoatResponse;
+import com.uboat.vault.api.model.http.new_requests.RequestJourney;
 import com.uboat.vault.api.model.http.new_requests.RequestPulse;
 import com.uboat.vault.api.model.http.requests.JourneyRequest;
-import com.uboat.vault.api.model.http.requests.MostRecentRidesRequest;
 import com.uboat.vault.api.model.http.requests.SailorConnectionRequest;
 import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
 import com.uboat.vault.api.model.http.response.JourneyResponse;
@@ -61,49 +61,23 @@ public class JourneyService {
         this.locationDataRepository = locationDataRepository;
     }
 
-    public List<Journey> getMostRecentRides(MostRecentRidesRequest mostRecentRidesRequest) {
-        List<Journey> journeys = new LinkedList<>();
-        if (mostRecentRidesRequest.getNrOfRides() <= 0) {
-            log.warn("Invalid number of journeys requested: " + mostRecentRidesRequest.getNrOfRides());
-            return journeys;
-        }
-
-
-        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(mostRecentRidesRequest.getAccount()));
-        if (foundAccount == null) {
-            log.warn("Credentials are invalid. User is not authorized to receive recent rides data.");
-            return null;
-        }
-
-        List<Journey> foundJourneys = journeyRepository.findAllByClient_IdAndStatus(foundAccount.getId(), Stage.FINISHED);
-        if (foundJourneys == null || foundJourneys.isEmpty()) {
-            log.warn("User has no completed journeys.");
-            return journeys;
-        }
-
-        log.info("Found journeys for the user.");
-        for (int i = 0; i < mostRecentRidesRequest.getNrOfRides() && i < foundJourneys.size(); i++) {
-            log.info("Added journey " + (i + 1) + " to the response.");
-            var journey = foundJourneys.get(i);
-            journey.setSailorId(journey.getSailor().getId());
-            journey.calculateDuration();
-            journeys.add(journey);
-        }
-
-        return journeys;
-    }
-
     @Transactional
     public boolean addFakeJourney(String clientId, String sailorId) {
         var clientAccount = accountsRepository.findById(Long.parseLong(clientId));
         var sailorAccount = accountsRepository.findById(Long.parseLong(sailorId));
 
         if (clientAccount.isPresent() && sailorAccount.isPresent()) {
+            if (clientAccount.get().getType() != UserType.CLIENT || sailorAccount.get().getType() != UserType.SAILOR) {
+                log.info("Invalid clientId or sailorId");
+                return false;
+            }
+
             List<LocationData> locationDataSet = new LinkedList<>();
             var locationData = LocationData.createRandomLocationData();
             locationDataSet.add(locationData);
-            Journey journey = Journey.builder().client(clientAccount.get()).sailor(
-                            sailorAccount.get())
+            Journey journey = Journey.builder()
+                    .client(clientAccount.get())
+                    .sailor(sailorAccount.get())
                     .status(Stage.FINISHED)
                     .dateBooking(new Date())
                     .dateArrival(new Date())
@@ -123,6 +97,34 @@ public class JourneyService {
         }
         log.info("Client account or sailor account don't exist");
         return false;
+    }
+
+    public UBoatResponse getMostRecentRides(String authorizationHeader, Integer ridesRequested) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
+
+            List<Journey> foundJourneys = journeyRepository.findAllByClient_IdAndStatus(account.getId(), Stage.FINISHED);
+            if (foundJourneys == null || foundJourneys.isEmpty()) {
+                log.info("User has no completed journeys.");
+                return new UBoatResponse(UBoatStatus.MOST_RECENT_RIDES_RETRIEVED, new LinkedList<>());
+            }
+            log.info("Found journeys for the user.");
+
+
+            List<RequestJourney> journeys = new LinkedList<>();
+            for (var journey : foundJourneys) {
+                if (ridesRequested == 0) break;
+                journeys.add(new RequestJourney(journey));
+                ridesRequested--;
+            }
+
+            return new UBoatResponse(UBoatStatus.MOST_RECENT_RIDES_RETRIEVED, journeys);
+        } catch (Exception e) {
+            log.error("An exception occurred during getMostRecentRides workflow.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -390,9 +392,7 @@ public class JourneyService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
-            //can't be null due to API being accessible only by sailors
-            var sailor = sailorsRepository.findFirstByAccountId(account.getId());
+            var sailor = entityService.findSailorByJwt(jwtData);
 
             var oldLocationData = sailor.getCurrentLocation();
             sailor.setCurrentLocation(pulseRequest.getLocationData());
@@ -450,7 +450,6 @@ public class JourneyService {
                 log.info("No new clients for the sailor.");
                 return new LinkedList<>();
             }
-            journeys.forEach((journey -> journey.setSailorId(sailor.getId())));
             return journeys;
         } catch (Exception e) {
             log.error("Exception occurred during findClients workflow. Returning null.", e);

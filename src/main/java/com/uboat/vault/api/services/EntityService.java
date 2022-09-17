@@ -142,6 +142,12 @@ public class EntityService {
         return sailor;
     }
 
+    public Sailor findSailorByJwt(JwtService.Data jwtData) {
+        var account = findAccountByUsername(jwtData.username());
+        //can't be null due to API being accessible only by sailors
+        return sailorsRepository.findFirstByAccountId(account.getId());
+    }
+
     /**
      * Checks if an account exists with the given username in the database.
      */

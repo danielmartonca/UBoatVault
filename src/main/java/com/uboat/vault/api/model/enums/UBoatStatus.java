@@ -129,7 +129,10 @@ public enum UBoatStatus {
     BOAT_IMAGE_DELETED(1, "Boat image deleted successfully.", "Boat image deleted"),
 
     // /api/sailor/pulse
-    PULSE_SUCCESSFUL(1, "The pulse has been registered.", null);
+    PULSE_SUCCESSFUL(1, "The pulse has been registered.", null),
+
+    // /api/client/getMostRecentRides
+    MOST_RECENT_RIDES_RETRIEVED(1, "Retrieved most recent rides for the client.", null);
 
     private final int code;
     private final String serverMessage;
