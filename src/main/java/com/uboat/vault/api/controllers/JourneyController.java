@@ -6,7 +6,6 @@ import com.uboat.vault.api.model.http.requests.JourneyRequest;
 import com.uboat.vault.api.model.http.requests.SailorConnectionRequest;
 import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
 import com.uboat.vault.api.model.http.response.JourneyResponse;
-import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
 import com.uboat.vault.api.services.AccountsService;
 import com.uboat.vault.api.services.JourneyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,12 +43,9 @@ public class JourneyController {
     }
 
     @Operation(summary = "Retrieves the last {ridesRequested} number of journeys for the client extracted from the JWT. ")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "The journeys have been retrieved successfully", content = @Content(mediaType = "application/json")),
-    })
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The journeys have been retrieved successfully", content = @Content(mediaType = "application/json")),})
     @GetMapping(value = "/getMostRecentRides")
-    public ResponseEntity<UBoatResponse> getMostRecentRides(@RequestHeader(value = "Authorization") String authorizationHeader,
-                                                            @RequestParam @Min(1) @Max(3) Integer ridesRequested) {
+    public ResponseEntity<UBoatResponse> getMostRecentRides(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam @Min(1) @Max(3) Integer ridesRequested) {
         var uBoatResponse = journeyService.getMostRecentRides(authorizationHeader, ridesRequested);
 
         if (uBoatResponse.getHeader() == UBoatStatus.MOST_RECENT_RIDES_RETRIEVED)
@@ -58,10 +54,20 @@ public class JourneyController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
     }
 
-    @GetMapping(value = "/getJourneyBoat")
-    public ResponseEntity<Boat> getBoat(@RequestParam(name = "sailorId") String sailorId) {
-        var boat = accountsService.getJourneyBoat(sailorId);
-        return new ResponseEntity<>(boat, HttpStatus.OK);
+    @Operation(summary = "Retrieves information about the boat of the sailor searched by ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The boat details have been retrieved.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "The sailor could not be found by that id.", content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping(value = "/getSailorBoat")
+    public ResponseEntity<UBoatResponse> getSailorBoat(@RequestParam(name = "sailorId") String sailorId) {
+        var uBoatResponse = accountsService.getSailorBoat(sailorId);
+
+        return switch (uBoatResponse.getHeader()) {
+            case SAILOR_BOAT_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
     }
 
     @PostMapping(value = "/requestJourney")

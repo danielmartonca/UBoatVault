@@ -132,7 +132,10 @@ public enum UBoatStatus {
     PULSE_SUCCESSFUL(1, "The pulse has been registered.", null),
 
     // /api/client/getMostRecentRides
-    MOST_RECENT_RIDES_RETRIEVED(1, "Retrieved most recent rides for the client.", null);
+    MOST_RECENT_RIDES_RETRIEVED(1, "Retrieved most recent rides for the client.", null),
+
+    // /api/client/getSailorBoat
+    SAILOR_BOAT_RETRIEVED(1, "Sailor boat details have been retrieved successfully.", null);
 
     private final int code;
     private final String serverMessage;

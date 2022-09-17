@@ -6,7 +6,6 @@ import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.new_requests.*;
 import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.persistence.account.info.CreditCard;
-import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
 import com.uboat.vault.api.repositories.AccountsRepository;
 import com.uboat.vault.api.repositories.SailorsRepository;
 import org.slf4j.Logger;
@@ -287,18 +286,15 @@ public class AccountsService {
      * Used by clients to retrieve information about their journey.
      */
     @Transactional
-    public Boat getJourneyBoat(String sailorId) {
-        var sailor = entityService.findSailorBySailorId(sailorId);
-
-        if (sailor == null) return null;
-
-//        if (foundActiveSailor.getBoat() == null) {
-//            log.warn("Sailor does not have any boat set. Creating empty boat now.");
-//            return null;
-//        }
-
-        log.info("Found boat details for sailor with id " + sailor.getAccountId());
-        return sailor.getBoat();
+    public UBoatResponse getSailorBoat(String sailorId) {
+        try {
+            var sailor = entityService.findSailorBySailorId(sailorId);
+            if (sailor == null) return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
+            return new UBoatResponse(UBoatStatus.SAILOR_BOAT_RETRIEVED, new RequestBoat(sailor.getBoat()));
+        } catch (Exception e) {
+            log.error("An exception occurred while retrieving journey boat.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
+        }
     }
 }
 
