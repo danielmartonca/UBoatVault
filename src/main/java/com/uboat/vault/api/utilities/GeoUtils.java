@@ -1,5 +1,6 @@
 package com.uboat.vault.api.utilities;
 
+import com.uboat.vault.api.model.http.new_requests.RequestLocationData;
 import com.uboat.vault.api.model.other.LatLng;
 import com.uboat.vault.api.model.persistence.sailing.LocationData;
 import org.slf4j.Logger;
@@ -10,7 +11,7 @@ import static java.lang.Math.*;
 public class GeoUtils {
     private static final Logger log = LoggerFactory.getLogger(GeoUtils.class);
 
-    public static LatLng getCoordinates(LocationData locationData) {
+    public static LatLng getCoordinates(RequestLocationData locationData) {
         try {
             double latitude = Double.parseDouble(locationData.getLatitude());
             double longitude = Double.parseDouble(locationData.getLongitude());
@@ -19,6 +20,10 @@ public class GeoUtils {
             log.error("Exception while converting LocationData to LatLng.", e);
             throw e;
         }
+    }
+
+    public static LatLng getCoordinates(LocationData locationData) {
+       return getCoordinates(new RequestLocationData(locationData));
     }
 
     public static double distanceInMeters(LatLng x, LatLng y) {

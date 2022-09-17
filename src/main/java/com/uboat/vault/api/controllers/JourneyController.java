@@ -2,18 +2,13 @@ package com.uboat.vault.api.controllers;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.http.UBoatResponse;
-import com.uboat.vault.api.model.http.requests.JourneyRequest;
-import com.uboat.vault.api.model.http.requests.SailorConnectionRequest;
-import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
-import com.uboat.vault.api.model.http.response.JourneyResponse;
+import com.uboat.vault.api.model.http.new_requests.RequestNewJourney;
 import com.uboat.vault.api.services.AccountsService;
 import com.uboat.vault.api.services.JourneyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +20,6 @@ import javax.validation.constraints.Min;
 @RestController
 @RequestMapping("api/client")
 public class JourneyController {
-    private final Logger log = LoggerFactory.getLogger(JourneyController.class);
-
     private final JourneyService journeyService;
     private final AccountsService accountsService;
 
@@ -70,26 +63,34 @@ public class JourneyController {
         };
     }
 
+    @Operation(summary = "This API retrieves information about possible journeys." +
+            " It fetches all active sailors and calls all services to calculate details about the journey such as: " +
+            "sailor id, sailor name, estimated cost, duration, quality etc.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Free sailors were found. Details about each journey are returned.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "No free sailors could be found.", content = @Content(mediaType = "application/json"))
+    })
     @PostMapping(value = "/requestJourney")
-    public ResponseEntity<JourneyResponse> requestJourney(@RequestBody JourneyRequest request) {
-        var response = journeyService.requestJourney(request);
-        if (response == null) {
-            log.warn("User is not authorised to request a journey.");
-            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
-        }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+    public ResponseEntity<UBoatResponse> requestJourney(@RequestBody RequestNewJourney request) {
+        var uBoatResponse = journeyService.requestJourney(request);
+
+        return switch (uBoatResponse.getHeader()) {
+            case FREE_SAILORS_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case NO_FREE_SAILORS_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
     }
 
-    @PostMapping(value = "/connectToSailor")
-    public ResponseEntity<JourneyConnectionResponse> connectToSailor(@RequestBody SailorConnectionRequest request) {
-        var response = journeyService.connectToSailor(request);
-        if (response == null || response.getMsg() == null) {
-            log.warn("User is not authorised to connect to the sailor.");
-            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
-        }
-
-        var backendResponse = JourneyConnectionResponse.builder().status(response).message(response.getMsg()).build();
-
-        return new ResponseEntity<>(backendResponse, HttpStatus.OK);
-    }
+//    @PostMapping(value = "/connectToSailor")
+//    public ResponseEntity<JourneyConnectionResponse> connectToSailor(@RequestBody SailorConnectionRequest request) {
+//        var response = journeyService.connectToSailor(request);
+//        if (response == null || response.getMsg() == null) {
+//            log.warn("User is not authorised to connect to the sailor.");
+//            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+//        }
+//
+//        var backendResponse = JourneyConnectionResponse.builder().status(response).message(response.getMsg()).build();
+//
+//        return new ResponseEntity<>(backendResponse, HttpStatus.OK);
+//    }
 }

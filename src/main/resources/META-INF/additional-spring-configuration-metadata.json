@@ -8,12 +8,12 @@
     {
       "name": "uboat.max-active-seconds",
       "type": "java.lang.String",
-      "description": "Description for uboat.MAX_ACTIVE_SECONDS."
+      "description": "Describes how many seconds are allowed by an sailor to not give any update of his position(pulse) for clients to request a journey to him."
     },
     {
       "name": "uboat.max-active-sailors",
       "type": "java.lang.String",
-      "description": "Description for uboat.max-active-sailors."
+      "description": "Describes how many sailors can be retrieved when requesting a new journey. The closest [max-active-sailors] will be retrieved."
     },
     {
       "name": "uboat.hs256_key",

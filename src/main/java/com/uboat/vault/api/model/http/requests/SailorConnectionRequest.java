@@ -1,5 +1,6 @@
 package com.uboat.vault.api.model.http.requests;
 
+import com.uboat.vault.api.model.http.new_requests.RequestNewJourney;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class SailorConnectionRequest {
-   JourneyRequest journeyRequest;
+   RequestNewJourney journeyRequest;
    String sourceAddress;
    String destinationAddress;
    String sailorId;

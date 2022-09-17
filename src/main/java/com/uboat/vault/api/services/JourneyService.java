@@ -3,15 +3,10 @@ package com.uboat.vault.api.services;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.http.UBoatResponse;
-import com.uboat.vault.api.model.http.new_requests.RequestJourney;
-import com.uboat.vault.api.model.http.new_requests.RequestPulse;
-import com.uboat.vault.api.model.http.requests.JourneyRequest;
-import com.uboat.vault.api.model.http.requests.SailorConnectionRequest;
+import com.uboat.vault.api.model.http.new_requests.*;
 import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
-import com.uboat.vault.api.model.http.response.JourneyResponse;
 import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.other.LatLng;
-import com.uboat.vault.api.model.other.SailorDetails;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.sailing.Journey;
 import com.uboat.vault.api.model.persistence.sailing.LocationData;
@@ -99,6 +94,7 @@ public class JourneyService {
         return false;
     }
 
+
     public UBoatResponse getMostRecentRides(String authorizationHeader, Integer ridesRequested) {
         try {
             //cant be null because the operation is already done in the filter before
@@ -127,38 +123,37 @@ public class JourneyService {
         }
     }
 
+    //request journey
+
     /**
      * This method returns a list of Pairs < ActiveSailor, distance > where each pair represents
      * the distance from the ActiveSailor's coordinates to the destinationCoordinates given as parameter
      */
     private List<Pair<Sailor, Double>> getDistanceToCoordinatesList(List<Sailor> sailors, LatLng destinationCoordinates) {
-        List<Pair<Sailor, Double>> activeSailorsDistanceList = new LinkedList<>();
-        for (var activeSailor : sailors) {
+        List<Pair<Sailor, Double>> sailorsDistancesList = new LinkedList<>();
+        for (var sailor : sailors) {
             try {
-                LatLng sailorCoordinates = GeoUtils.getCoordinates(activeSailor.getCurrentLocation());
+                LatLng sailorCoordinates = GeoUtils.getCoordinates(sailor.getCurrentLocation());
 
                 double distanceToDestination = geoService.calculateDistanceBetweenCoordinates(sailorCoordinates, destinationCoordinates);
-                if (distanceToDestination < 0) {
-                    log.error("Distance calculated was negative value '" + distanceToDestination + "' for active sailor:\n" + activeSailor);
-                    continue;
-                }
 
-                var pair = Pair.of(activeSailor, distanceToDestination);
-                activeSailorsDistanceList.add(pair);
+                var pair = Pair.of(sailor, distanceToDestination);
+                sailorsDistancesList.add(pair);
             } catch (Exception e) {
-                log.error("Exception during distance calculation workflow for active sailor:\n" + activeSailor);
+                log.error("Exception during distance calculation workflow for active sailor:\n" + sailor);
             }
         }
-        activeSailorsDistanceList.sort(Comparator.comparingLong(pair -> pair.getFirst().getAccountId()));
-        return activeSailorsDistanceList;
+        sailorsDistancesList.sort(Comparator.comparingLong(pair -> pair.getFirst().getAccountId()));
+        return sailorsDistancesList;
     }
 
     /**
      * This method takes two lists of pairs calculated with {@link #getDistanceToCoordinatesList(List, LatLng)}
-     * and sums pairs that match ActiveSailor objects by accountId.
+     * and sums pairs that match Sailor objects by accountId.
      * <br>If there are pairs in any of the two lists where the ActiveSailor does not have a correspondence in the other list, they will be completely ignored by the algorithm.
      * <p><br>
-     * This method returns a list of pairs sorted by ActiveSailor id!
+     * This method returns a list of pairs sorted by Sailor id!
+     * TODO - merge lists using merge sort technique
      */
     private List<Pair<Sailor, Double>> sumListsOfDistances(List<Pair<Sailor, Double>> list1, List<Pair<Sailor, Double>> list2) {
         List<Pair<Sailor, Double>> totalDistanceList = new LinkedList<>();
@@ -195,194 +190,160 @@ public class JourneyService {
      * This method finds the total distance between each active sailor given as parameter to the client's destination.<br>
      * The calculation is done by summing the distance calculated by the algorithm between the sailor boat to the client plus the distance between the client to the destination.
      */
-    private List<Pair<Sailor, Double>> findSailorsJourneyTotalDistancesList(List<Sailor> freeSailorList, LocationData clientLocationData, LatLng destinationCoordinates) {
+    private List<Pair<Sailor, Double>> findSailorsJourneyTotalDistancesList(List<Sailor> freeSailorList, LatLng clientCoordinates, LatLng destinationCoordinates) {
         try {
-            var clientCoordinates = GeoUtils.getCoordinates(clientLocationData);
-
             var distanceToClientList = getDistanceToCoordinatesList(freeSailorList, clientCoordinates);
             var distanceToDestinationList = getDistanceToCoordinatesList(freeSailorList, destinationCoordinates);
 
-            if (distanceToClientList.size() != distanceToDestinationList.size())
-                log.warn("Distance lists sizes are different. Computation time will increase.");
-
             var totalDistanceList = sumListsOfDistances(distanceToClientList, distanceToDestinationList);
 
-            log.info("Calculated the fallowing list for client coordinates: " + clientCoordinates + " and destination coordinates: " + destinationCoordinates + ":\n" + totalDistanceList);
+            log.debug("Calculated the fallowing list for client coordinates: " + clientCoordinates + " and destination coordinates: " + destinationCoordinates + ":\n" + totalDistanceList);
+            log.info("Calculated the sum of distances list.");
             return totalDistanceList;
         } catch (Exception e) {
-            log.error("Exception occurred while searching for sailors.");
-            return null;
+            log.error("Exception occurred while searching for sailors.", e);
+            throw e;
         }
     }
 
     /**
      * This method calls all the required services in order to build the response given the data calculated earlier.
      */
-    private JourneyResponse buildResponseWithData(List<Pair<Sailor, Double>> totalDistancesList) {
-        List<SailorDetails> availableSailorsDetails = new LinkedList<>();
+    private RequestNewJourneyDetails buildNewJourneyDetails(Pair<Sailor, Double> sailorDoublePair) {
+        try {
+            var sailor = sailorDoublePair.getFirst();
+            var distance = sailorDoublePair.getSecond();
 
-        for (var pair : totalDistancesList) {
-            try {
-                Sailor sailor = pair.getFirst();
-                double totalDistance = pair.getSecond();
+            //retrieve sailor name from the account details if existing or account username otherwise
+            var accountOptional = accountsRepository.findById(sailor.getAccountId());
+            if (accountOptional.isEmpty())
+                throw new RuntimeException("Warning: sailor has account id which does not belong to any account");
 
-                var sailorLocationData = sailor.getCurrentLocation();
+            var account = accountOptional.get();
+            var sailorName = account.getUsername();
+            if (account.getAccountDetails().getFullName() != null)
+                sailorName = account.getAccountDetails().getFullName();
 
-                var accountId = sailor.getAccountId().toString();
+            var costPair = geoService.estimateCost(distance, sailor.getBoat());
+            var estimatedDuration = geoService.estimateDuration(distance, sailor.getBoat());
 
-                String name = null;
-                var accountOptional = accountsRepository.findById(sailor.getAccountId());
-                if (accountOptional.isPresent()) {
-                    var account = accountOptional.get();
-                    name = account.getUsername();
-                    if (account.getAccountDetails() != null && account.getAccountDetails().getFullName() != null)
-                        name = account.getAccountDetails().getFullName();
-                }
-
-                var rating = sailor.getAverageRating();
-
-                var costPair = geoService.estimateCost(totalDistance, sailor.getBoat());
-                var estimatedCostCurrency = costPair.getFirst();
-                var estimatedCost = String.valueOf(costPair.getSecond());
-
-                var estimatedDuration = geoService.estimateDuration(totalDistance, sailor.getBoat());
-                var estimatedTimeOfArrival = geoService.estimateTimeOfArrival(estimatedDuration);
-
-                var sailorDetails = SailorDetails.builder()
-                        .sailorId(accountId)
-                        .sailorName(name)
-                        .locationData(sailorLocationData)
-                        .averageRating(rating)
-                        .estimatedCost(estimatedCost)
-                        .estimatedCostCurrency(estimatedCostCurrency)
-                        .estimatedDuration(estimatedDuration)
-                        .estimatedTimeOfArrival(estimatedTimeOfArrival)
-                        .build();
-
-                availableSailorsDetails.add(sailorDetails);
-            } catch (Exception e) {
-                log.error("Exception occurred while building response for activeSailor:\n" + pair.getFirst(), e);
-            }
-        }
-
-        if (totalDistancesList.size() != 0 && availableSailorsDetails.size() == 0) {
-            log.error("Failed to build response.");
+            return RequestNewJourneyDetails.builder()
+                    .sailorId(String.valueOf(sailor.getId()))
+                    .sailorName(sailorName)
+                    .sailorCurrentLocation(new RequestLocationData(sailor.getCurrentLocation()))
+                    .distance(distance)
+                    .estimatedCost(String.valueOf(costPair.getSecond()))
+                    .estimatedCostCurrency(costPair.getFirst())
+                    .estimatedDuration(estimatedDuration)
+                    .estimatedTimeOfArrival(geoService.estimateTimeOfArrival(estimatedDuration))
+                    .build();
+        } catch (RuntimeException e) {
+            log.error("Exception while building response");
             return null;
         }
-        return new JourneyResponse(availableSailorsDetails);
     }
 
     /**
      * This method returns to the client all the available sailors that will be rendered on his map after clicking find sailor
      */
-    public JourneyResponse requestJourney(JourneyRequest request) {
-        var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(request.getClientAccount()));
-        if (foundAccount == null) {
-            log.warn("Token not found or token not matching the request account.");
-            return null;
+    public UBoatResponse requestJourney(RequestNewJourney request) {
+        try {
+            log.info("Searching for sailors...");
+            var freeSailors = sailorsRepository.findAllFreeActiveSailors(MAX_ACTIVE_SECONDS);
+            if (freeSailors.isEmpty()) {
+                log.info("There are no free active sailors in the last " + MAX_ACTIVE_SECONDS + " seconds.");
+                return new UBoatResponse(UBoatStatus.NO_FREE_SAILORS_FOUND);
+            }
+            log.info("Sailors were found. ");
+
+            var totalDistancesList = findSailorsJourneyTotalDistancesList(freeSailors, request.getCurrentCoordinates(), request.getDestinationCoordinates());
+
+            //sort the list by the shortest distance
+            totalDistancesList.sort(Comparator.comparingDouble(Pair::getSecond));
+            //only return the last MAX_ACTIVE_SAILORS
+            totalDistancesList = totalDistancesList.subList(0, Math.min(MAX_ACTIVE_SAILORS, totalDistancesList.size()));
+
+            //build data that will be sent to the user
+            var responseList = totalDistancesList.stream()
+                    .map(this::buildNewJourneyDetails)
+                    .filter(Objects::nonNull)
+                    .toList();
+            return new UBoatResponse(UBoatStatus.FREE_SAILORS_FOUND, responseList);
+        } catch (Exception e) {
+            log.error("An exception occurred during requestJourney workflow.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
-
-        if (request.getClientAccount().getType() == UserType.SAILOR || foundAccount.getType() == UserType.SAILOR) {
-            log.warn("Request account or account found in the database are not client accounts.");
-            return null;
-        }
-        var currentLocationData = request.getCurrentLocationData();
-        var destinationCoordinates = request.getDestinationCoordinates();
-
-        log.info("Credentials are ok. Searching for sailors...");
-
-        var freeActiveSailors = sailorsRepository.findAllFreeActiveSailors(MAX_ACTIVE_SECONDS);
-        if (freeActiveSailors.isEmpty()) {
-            log.info("There are no free active sailors in the last " + MAX_ACTIVE_SECONDS + " seconds.");
-            return new JourneyResponse(new LinkedList<>());
-        }
-
-        var totalDistancesList = findSailorsJourneyTotalDistancesList(freeActiveSailors, currentLocationData, destinationCoordinates);
-        if (totalDistancesList == null) {
-            log.error("Failed to search for sailors.");
-            return null;
-        }
-
-        totalDistancesList.sort(Comparator.comparingDouble(Pair::getSecond));
-        totalDistancesList = totalDistancesList.subList(0, Math.min(MAX_ACTIVE_SAILORS, totalDistancesList.size()));
-
-        var journeyResponse = buildResponseWithData(totalDistancesList);
-
-        if (journeyResponse == null) {
-            log.error("Failed to build JourneyResponse.");
-            return null;
-        }
-        return journeyResponse;
     }
 
-    /**
-     * This method establishes the connection between the client and the sailor after the client has chosen the sailorId sent from the request body.
-     * - it searches first checks the token and account in the request. If any have problems, null is returned
-     * - then it finds the free active sailor in the database active in the last MAX_ACTIVE_SECONDS seconds and has boolean lookingForClients=true.
-     * If id given by client is wrong, null is returned. If the account is not found, returns message notifying user that the sailor may be busy or has gone offline.
-     * - if the active sailor was found, a new journey with status ESTABLISHING_CONNECTION will be created with the given data by the client
-     */
-    public JourneyConnectionResponse.PossibleResponse connectToSailor(SailorConnectionRequest request) {
-        var clientAccount = entityService.findAccountByCredentials(Credentials.fromAccount(request.getJourneyRequest().getClientAccount()));
-        if (clientAccount == null)
-            return JourneyConnectionResponse.PossibleResponse.ERROR;
 
-        if (request.getJourneyRequest().getClientAccount().getType() == UserType.SAILOR || clientAccount.getType() == UserType.SAILOR) {
-            log.warn("Request account or account found in the database are not client accounts.");
-            return null;
-        }
-        log.info("Credentials are ok. Connecting to the sailor...");
-
-        long sailorId;
-        try {
-            sailorId = Long.parseLong(request.getSailorId());
-        } catch (Exception e) {
-            log.warn("Failed to parse sailor id from request. SailorId: " + request.getSailorId(), e);
-            return JourneyConnectionResponse.PossibleResponse.ERROR;
-        }
-
-        var activeSailor = sailorsRepository.findFreeActiveSailorById(MAX_ACTIVE_SAILORS, sailorId);
-        if (activeSailor == null) {
-            log.warn("Couldn't find the active sailor. Either the sailor is busy,not active or the user request is wrong.");
-            return JourneyConnectionResponse.PossibleResponse.SAILOR_NOT_FOUND;
-        }
-
-        var activeSailorAccountOptional = accountsRepository.findById(activeSailor.getAccountId());
-        if (activeSailorAccountOptional.isEmpty()) {
-            log.warn("Found active sailor but couldn't find account.");
-            return JourneyConnectionResponse.PossibleResponse.SERVER_ERROR;
-        }
-
-        var sailorAccount = activeSailorAccountOptional.get();
-
-        var currentLocationData = request.getJourneyRequest().getCurrentLocationData();
-        var destinationCoordinates = request.getJourneyRequest().getDestinationCoordinates();
-
-        try {
-            Double.parseDouble(currentLocationData.getLatitude());
-            Double.parseDouble(currentLocationData.getLongitude());
-        } catch (Exception e) {
-            log.error("Failed to parse current location data coordinates.");
-            return JourneyConnectionResponse.PossibleResponse.ERROR;
-        }
-
-        var newJourney = Journey.builder()
-                .status(Stage.ESTABLISHING_CONNECTION)
-                .client(clientAccount)
-                .sailor(sailorAccount)
-                .dateBooking(new Date())
-                .sourceLatitude(Double.parseDouble(currentLocationData.getLatitude()))
-                .sourceLongitude(Double.parseDouble(currentLocationData.getLongitude()))
-                .sourceAddress(request.getSourceAddress())
-                .destinationLatitude(destinationCoordinates.getLatitude())
-                .destinationLongitude(destinationCoordinates.getLongitude())
-                .destinationAddress(request.getDestinationAddress())
-                .build();
-
-        journeyRepository.save(newJourney);
-
-        return JourneyConnectionResponse.PossibleResponse.CONNECT_TO_SAILOR_SUCCESS;
-    }
+//    /**
+//     * This method establishes the connection between the client and the sailor after the client has chosen the sailorId sent from the request body.
+//     * - it searches first checks the token and account in the request. If any have problems, null is returned
+//     * - then it finds the free active sailor in the database active in the last MAX_ACTIVE_SECONDS seconds and has boolean lookingForClients=true.
+//     * If id given by client is wrong, null is returned. If the account is not found, returns message notifying user that the sailor may be busy or has gone offline.
+//     * - if the active sailor was found, a new journey with status ESTABLISHING_CONNECTION will be created with the given data by the client
+//     */
+//    public JourneyConnectionResponse.PossibleResponse connectToSailor(SailorConnectionRequest request) {
+//        var clientAccount = entityService.findAccountByCredentials(Credentials.fromAccount(request.getJourneyRequest().getClientAccount()));
+//        if (clientAccount == null)
+//            return JourneyConnectionResponse.PossibleResponse.ERROR;
+//
+//        if (request.getJourneyRequest().getClientAccount().getType() == UserType.SAILOR || clientAccount.getType() == UserType.SAILOR) {
+//            log.warn("Request account or account found in the database are not client accounts.");
+//            return null;
+//        }
+//        log.info("Credentials are ok. Connecting to the sailor...");
+//
+//        long sailorId;
+//        try {
+//            sailorId = Long.parseLong(request.getSailorId());
+//        } catch (Exception e) {
+//            log.warn("Failed to parse sailor id from request. SailorId: " + request.getSailorId(), e);
+//            return JourneyConnectionResponse.PossibleResponse.ERROR;
+//        }
+//
+//        var activeSailor = sailorsRepository.findFreeActiveSailorById(MAX_ACTIVE_SAILORS, sailorId);
+//        if (activeSailor == null) {
+//            log.warn("Couldn't find the active sailor. Either the sailor is busy,not active or the user request is wrong.");
+//            return JourneyConnectionResponse.PossibleResponse.SAILOR_NOT_FOUND;
+//        }
+//
+//        var activeSailorAccountOptional = accountsRepository.findById(activeSailor.getAccountId());
+//        if (activeSailorAccountOptional.isEmpty()) {
+//            log.warn("Found active sailor but couldn't find account.");
+//            return JourneyConnectionResponse.PossibleResponse.SERVER_ERROR;
+//        }
+//
+//        var sailorAccount = activeSailorAccountOptional.get();
+//
+//        var currentLocationData = request.getJourneyRequest().getCurrentLocationData();
+//        var destinationCoordinates = request.getJourneyRequest().getDestinationCoordinates();
+//
+//        try {
+//            Double.parseDouble(currentLocationData.getLatitude());
+//            Double.parseDouble(currentLocationData.getLongitude());
+//        } catch (Exception e) {
+//            log.error("Failed to parse current location data coordinates.");
+//            return JourneyConnectionResponse.PossibleResponse.ERROR;
+//        }
+//
+//        var newJourney = Journey.builder()
+//                .status(Stage.ESTABLISHING_CONNECTION)
+//                .client(clientAccount)
+//                .sailor(sailorAccount)
+//                .dateBooking(new Date())
+//                .sourceLatitude(Double.parseDouble(currentLocationData.getLatitude()))
+//                .sourceLongitude(Double.parseDouble(currentLocationData.getLongitude()))
+//                .sourceAddress(request.getSourceAddress())
+//                .destinationLatitude(destinationCoordinates.getLatitude())
+//                .destinationLongitude(destinationCoordinates.getLongitude())
+//                .destinationAddress(request.getDestinationAddress())
+//                .build();
+//
+//        journeyRepository.save(newJourney);
+//
+//        return JourneyConnectionResponse.PossibleResponse.CONNECT_TO_SAILOR_SUCCESS;
+//    }
 
     /**
      * This method updates the sailor account locationData and lastUpdate to the current system time in order to mark this sailor as active

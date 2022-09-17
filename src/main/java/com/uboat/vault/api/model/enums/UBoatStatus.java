@@ -135,7 +135,11 @@ public enum UBoatStatus {
     MOST_RECENT_RIDES_RETRIEVED(1, "Retrieved most recent rides for the client.", null),
 
     // /api/client/getSailorBoat
-    SAILOR_BOAT_RETRIEVED(1, "Sailor boat details have been retrieved successfully.", null);
+    SAILOR_BOAT_RETRIEVED(1, "Sailor boat details have been retrieved successfully.", null),
+
+    // /api/client/requestJourney
+    NO_FREE_SAILORS_FOUND(2, "No free sailors were found by backend.", "No free sailors were found. Please try again in a few moments"),
+    FREE_SAILORS_FOUND(1, "Free sailors have been found. ", "Found sailors");
 
     private final int code;
     private final String serverMessage;
