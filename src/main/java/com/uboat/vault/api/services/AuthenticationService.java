@@ -8,7 +8,6 @@ import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.RegistrationData;
 import com.uboat.vault.api.model.persistence.account.pending.PendingAccount;
 import com.uboat.vault.api.model.persistence.account.pending.PendingToken;
-import com.uboat.vault.api.model.persistence.sailing.sailor.Boat;
 import com.uboat.vault.api.model.persistence.sailing.sailor.Sailor;
 import com.uboat.vault.api.repositories.*;
 import org.slf4j.Logger;
@@ -17,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -175,18 +173,7 @@ public class AuthenticationService {
     }
 
     private void createSailor(Account account) {
-        if (account.getType() != UserType.SAILOR) {
-            log.error("Account given as parameter is not a sailor account");
-            throw new RuntimeException("Account given as parameter is not a sailor account");
-        }
-
-        var sailor = Sailor.builder()
-                .accountId(account.getId())
-                .averageRating(0)
-                .rankings(new HashSet<>())
-                .build();
-        sailor.setBoat(new Boat(sailor));
-
+        var sailor = new Sailor(account);
         sailorsRepository.save(sailor);
         log.info("Successfully created sailor entity.");
     }
@@ -239,22 +226,27 @@ public class AuthenticationService {
 
     @Transactional
     public UBoatResponse login(RequestAccount account) {
-        var foundAccountsList = accountsRepository.findAllByPassword(account.getPassword());
-        if (foundAccountsList == null) {
-            log.warn("No account was found with the given username/phone number and password.");
-            return new UBoatResponse(UBoatStatus.CREDENTIALS_NOT_FOUND);
-        }
+        try {
+            var foundAccountsList = accountsRepository.findAllByPassword(account.getPassword());
+            if (foundAccountsList == null) {
+                log.warn("No account was found with the given username/phone number and password.");
+                return new UBoatResponse(UBoatStatus.CREDENTIALS_NOT_FOUND);
+            }
 
-        for (var foundAccount : foundAccountsList) {
-            if (foundAccount.getUsername().equals(account.getUsername()) ||
-                    foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
-                log.info("Credentials matched. Found account.");
-                var jwt = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
-                return new UBoatResponse(UBoatStatus.LOGIN_SUCCESSFUL, jwt);
-            } else
-                log.warn("An account with given password found but neither username or phone number match.");
+            for (var foundAccount : foundAccountsList) {
+                if (foundAccount.getUsername().equals(account.getUsername()) ||
+                        foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
+                    log.info("Credentials matched. Found account.");
+                    var jwt = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
+                    return new UBoatResponse(UBoatStatus.LOGIN_SUCCESSFUL, jwt);
+                } else
+                    log.warn("An account with given password found but neither username or phone number match.");
+            }
+            log.warn("Invalid credentials. Login failed");
+            return new UBoatResponse(UBoatStatus.INVALID_CREDENTIALS);
+        } catch (Exception e) {
+            log.error("An exception occurred during login workflow.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
-        log.warn("Invalid credentials. Login failed");
-        return new UBoatResponse(UBoatStatus.INVALID_CREDENTIALS);
     }
 }

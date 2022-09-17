@@ -112,7 +112,7 @@ public enum UBoatStatus {
 
     // /images/uploadBoatImage
     BOAT_IMAGE_UPLOADED(1, "Boat image has been uploaded successfully.", "Boat image uploaded"),
-    BOAT_IMAGE_ALREADY_EXISTING(0, "Boat image was already existing for the sailor.", "Boat image uploaded"),
+    BOAT_IMAGE_ALREADY_EXISTING(0, "Boat image was already existing for the sailor.", "Image was already uploaded"),
 
     // /images/getBoatImagesIdentifiers
 
@@ -124,9 +124,12 @@ public enum UBoatStatus {
 
     BOAT_IMAGE_RETRIEVED(1, "Boat image bytes retrieved successfully.", CommonStatus.SUCCESS),
     BOAT_IMAGE_NOT_FOUND(0, "Boat image could not be found by identifier.", "Failed to retrieve image"),
-    // /images/getBoatImage
 
-    BOAT_IMAGE_DELETED(1, "Boat image deleted successfully.", "Boat image deleted");
+    // /images/getBoatImage
+    BOAT_IMAGE_DELETED(1, "Boat image deleted successfully.", "Boat image deleted"),
+
+    // /api/sailor/pulse
+    PULSE_SUCCESSFUL(1, "The pulse has been registered.", null);
 
     private final int code;
     private final String serverMessage;
@@ -135,7 +138,6 @@ public enum UBoatStatus {
     private static class CommonStatus {
         public static String UNEXPECTED_ERROR = "An unexpected error occurred. Please try again";
         public static String INVALID_CREDENTIALS = "Invalid credentials. Please try again";
-
         public static String SUCCESS = "Success";
     }
 }

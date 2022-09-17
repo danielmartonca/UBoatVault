@@ -76,7 +76,8 @@ public class Journey {
 
     @Getter
     @Setter
-    @OneToMany(mappedBy = "journey", cascade = {CascadeType.ALL})
+    @JoinTable(name = "journeys_location_data")
+    @OneToMany(cascade = {CascadeType.ALL})
     private List<LocationData> locationDataList;
 
     @Transient

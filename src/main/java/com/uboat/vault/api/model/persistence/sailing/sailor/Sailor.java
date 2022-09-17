@@ -1,16 +1,18 @@
 package com.uboat.vault.api.model.persistence.sailing.sailor;
 
+import com.uboat.vault.api.model.enums.UserType;
+import com.uboat.vault.api.model.http.new_requests.RequestLocationData;
+import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.sailing.LocationData;
 import com.uboat.vault.api.utilities.LoggingUtils;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
-import java.util.Set;
 
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "Sailors")
@@ -29,19 +31,17 @@ public class Sailor {
 
     @Getter
     @Setter
+    private boolean lookingForClients;
+
+    @Getter
+    @Setter
     @Column(name = "last_update")
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastUpdate;
-
     @Getter
-    @Setter
-    private boolean lookingForClients = false;
-
-    @Getter
-    @Setter
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "location_data_id")
-    private LocationData locationData;
+    private LocationData currentLocation;
 
     @NotNull
     @Getter
@@ -54,13 +54,28 @@ public class Sailor {
     @Setter
     private double averageRating;
 
-    @Getter
-    @Setter
-    @OneToMany(mappedBy = "sailor", cascade = {CascadeType.REMOVE, CascadeType.MERGE})
-    private Set<Ranking> rankings;
+    public Sailor(Account account) {
+        if (account.getType() != UserType.SAILOR)
+            throw new RuntimeException("Account given as parameter is not a sailor account");
+
+        this.accountId = account.getId();
+        this.boat = new Boat(this);
+        this.lookingForClients = false;
+        this.lastUpdate = null;
+        this.currentLocation = null;
+    }
+
+//    @Getter
+//    @Setter
+//    @OneToMany(mappedBy = "sailor", cascade = {CascadeType.REMOVE, CascadeType.MERGE})
+//    private Set<Ranking> rankings;
 
     @Override
     public String toString() {
         return LoggingUtils.toStringFormatted(this);
+    }
+
+    public void setCurrentLocation(RequestLocationData currentLocation) {
+        this.currentLocation = new LocationData(currentLocation);
     }
 }

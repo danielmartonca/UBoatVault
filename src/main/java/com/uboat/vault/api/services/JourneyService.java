@@ -1,9 +1,11 @@
 package com.uboat.vault.api.services;
 
+import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
+import com.uboat.vault.api.model.http.UBoatResponse;
+import com.uboat.vault.api.model.http.new_requests.RequestPulse;
 import com.uboat.vault.api.model.http.requests.JourneyRequest;
 import com.uboat.vault.api.model.http.requests.MostRecentRidesRequest;
-import com.uboat.vault.api.model.http.requests.PulseRequest;
 import com.uboat.vault.api.model.http.requests.SailorConnectionRequest;
 import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
 import com.uboat.vault.api.model.http.response.JourneyResponse;
@@ -41,6 +43,7 @@ public class JourneyService {
 
     private final EntityService entityService;
     private final GeoService geoService;
+    private final JwtService jwtService;
 
     private final AccountsRepository accountsRepository;
     private final JourneyRepository journeyRepository;
@@ -48,13 +51,14 @@ public class JourneyService {
     private final LocationDataRepository locationDataRepository;
 
     @Autowired
-    public JourneyService(EntityService entityService, GeoService geoService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, SailorsRepository sailorsRepository, LocationDataRepository locationDataRepository1) {
+    public JourneyService(EntityService entityService, GeoService geoService, JwtService jwtService, AccountsRepository accountsRepository, JourneyRepository journeyRepository, SailorsRepository sailorsRepository, LocationDataRepository locationDataRepository) {
         this.entityService = entityService;
         this.geoService = geoService;
+        this.jwtService = jwtService;
         this.accountsRepository = accountsRepository;
         this.journeyRepository = journeyRepository;
         this.sailorsRepository = sailorsRepository;
-        this.locationDataRepository = locationDataRepository1;
+        this.locationDataRepository = locationDataRepository;
     }
 
     public List<Journey> getMostRecentRides(MostRecentRidesRequest mostRecentRidesRequest) {
@@ -112,7 +116,6 @@ public class JourneyService {
                     .payment("10 EUR")
                     .duration("10 minutes")
                     .build();
-            locationData.setJourney(journey);
             journey.setLocationDataList(locationDataSet);
             journeyRepository.save(journey);
             log.info("Added mock data with success.");
@@ -130,7 +133,7 @@ public class JourneyService {
         List<Pair<Sailor, Double>> activeSailorsDistanceList = new LinkedList<>();
         for (var activeSailor : sailors) {
             try {
-                LatLng sailorCoordinates = GeoUtils.getCoordinates(activeSailor.getLocationData());
+                LatLng sailorCoordinates = GeoUtils.getCoordinates(activeSailor.getCurrentLocation());
 
                 double distanceToDestination = geoService.calculateDistanceBetweenCoordinates(sailorCoordinates, destinationCoordinates);
                 if (distanceToDestination < 0) {
@@ -221,7 +224,7 @@ public class JourneyService {
                 Sailor sailor = pair.getFirst();
                 double totalDistance = pair.getSecond();
 
-                var sailorLocationData = sailor.getLocationData();
+                var sailorLocationData = sailor.getCurrentLocation();
 
                 var accountId = sailor.getAccountId().toString();
 
@@ -380,54 +383,33 @@ public class JourneyService {
     }
 
     /**
-     * This method updates the active sailor account found by token and credentials location data to locationData and lastUpdate to the current system time
-     * in order to mark this user as currently active.
-     *
-     * @return true if the update was done successfully, null if the account couldn't be found and false if there was any exception during the flow
+     * This method updates the sailor account locationData and lastUpdate to the current system time in order to mark this sailor as active
      */
     @Transactional
-    public Boolean pulse(PulseRequest request) {
-        var account = request.getAccount();
-        var locationData = request.getLocationData();
-        var lookingForClients = request.isLookingForClients();
+    public UBoatResponse pulse(String authorizationHeader, RequestPulse pulseRequest) {
         try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
+            //can't be null due to API being accessible only by sailors
+            var sailor = sailorsRepository.findFirstByAccountId(account.getId());
 
-            var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(account));
-            if (foundAccount == null) {
-                log.info("Request account or token are invalid.");
-                return null;
-            }
-            log.info("Token and credentials match.");
-
-            if (foundAccount.getType() == UserType.CLIENT) {
-                log.warn("Account and token match but account is not a sailor account.");
-                return null;
-            }
-            log.info("Account is a sailor account.");
-
-            var sailor = sailorsRepository.findFirstByAccountId(foundAccount.getId());
-            if (sailor == null) {
-                log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
-                return null;
-            }
-            log.info("Sailor account found with the account id found earlier.");
-
-            var oldLocationData = sailor.getLocationData();
-            sailor.setLocationData(locationData);
+            var oldLocationData = sailor.getCurrentLocation();
+            sailor.setCurrentLocation(pulseRequest.getLocationData());
+            sailor.setLookingForClients(pulseRequest.isLookingForClients());
             sailor.setLastUpdate(new Date());
-            sailor.setLookingForClients(lookingForClients);
+
             sailorsRepository.save(sailor);
-            log.info("Updated active sailor location data and status via pulse. ");
+            log.info("Updated sailor location data and status via pulse.");
+
             if (oldLocationData != null) {
                 locationDataRepository.deleteById(oldLocationData.getId());
-                log.info("Deleted old location data with id: " + oldLocationData.getId());
+                log.debug("Deleted old location data.");
             }
-
-            log.info("Returning true");
-            return true;
+            return new UBoatResponse(UBoatStatus.PULSE_SUCCESSFUL, true);
         } catch (Exception e) {
-            log.error("Exception occurred during pulse workflow. Returning false", e);
-            return false;
+            log.error("An exception occurred during pulse workflow.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
 

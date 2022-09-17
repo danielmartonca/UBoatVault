@@ -18,6 +18,7 @@ client-blacklist:
   /api/getMyBoat,
   /api/updateMyBoat,
   /images/uploadBoatImage
+  /api/sailor/**
 
 sailor-blacklist:
   /api/getSailorDetails,
