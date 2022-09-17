@@ -7,6 +7,7 @@ import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.persistence.sailing.sailor.BoatImage;
 import com.uboat.vault.api.repositories.AccountsRepository;
 import com.uboat.vault.api.repositories.BoatImagesRepository;
+import com.uboat.vault.api.repositories.BoatsRepository;
 import com.uboat.vault.api.repositories.SailorsRepository;
 import com.uboat.vault.api.utilities.HashUtils;
 import org.apache.commons.io.IOUtils;
@@ -31,14 +32,16 @@ public class ImagesService {
 
     private final AccountsRepository accountsRepository;
     private final SailorsRepository sailorsRepository;
+    private final BoatsRepository boatsRepository;
     private final BoatImagesRepository boatImagesRepository;
 
     @Autowired
-    public ImagesService(EntityService entityService, JwtService jwtService, AccountsRepository accountsRepository, SailorsRepository sailorsRepository, BoatImagesRepository boatImagesRepository) {
+    public ImagesService(EntityService entityService, JwtService jwtService, AccountsRepository accountsRepository, SailorsRepository sailorsRepository, BoatsRepository boatsRepository, BoatImagesRepository boatImagesRepository) {
         this.entityService = entityService;
         this.jwtService = jwtService;
         this.accountsRepository = accountsRepository;
         this.sailorsRepository = sailorsRepository;
+        this.boatsRepository = boatsRepository;
         this.boatImagesRepository = boatImagesRepository;
     }
 
@@ -60,14 +63,15 @@ public class ImagesService {
 
     public UBoatResponse getSailorProfilePicture(String sailorId) {
         try {
-            var account = entityService.findSailorAccountById(sailorId);
-            if (account == null) return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
+            var sailor = entityService.findSailorBySailorId(sailorId);
+            if (sailor == null) return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
 
-            var accountDetails = account.getAccountDetails();
-            if (accountDetails == null) {
-                log.info("Account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
-                return new UBoatResponse(UBoatStatus.SAILOR_PROFILE_PICTURE_NOT_SET, new byte[0]);
-            }
+            var accountOptional = accountsRepository.findById(sailor.getAccountId());
+            if (accountOptional.isEmpty())
+                throw new RuntimeException("Warning: sailor has account id which does not belong to any account");
+
+            //cant be null
+            var accountDetails = accountOptional.get().getAccountDetails();
 
             var image = accountDetails.getImage();
             if (image == null || image.getBytes() == null) {
@@ -112,7 +116,7 @@ public class ImagesService {
     }
 
     @Transactional
-    public UBoatResponse uploadBoatImage(String authorizationHeader, byte[] imageBytes) {
+    public UBoatResponse uploadBoatImage(String authorizationHeader, byte[] imageBytes, String contentType) {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
@@ -126,11 +130,11 @@ public class ImagesService {
             if (boatImages.stream().map(BoatImage::getHash).anyMatch(hash::equals))
                 return new UBoatResponse(UBoatStatus.BOAT_IMAGE_ALREADY_EXISTING, true);
 
-            var newBoatImage = new BoatImage(imageBytes, boat);
+            var newBoatImage = new BoatImage(contentType, imageBytes, boat);
             boatImages.add(newBoatImage);
             sailorsRepository.save(sailor);
 
-            return new UBoatResponse(UBoatStatus.BOAT_IMAGE_UPLOADED, true);
+            return new UBoatResponse(UBoatStatus.BOAT_IMAGE_UPLOADED, newBoatImage.getHash());
         } catch (UBoatJwtException e) {
             log.error("Exception occurred during Authorization Header/JWT processing.", e);
             return new UBoatResponse(e.getStatus(), false);
@@ -140,6 +144,7 @@ public class ImagesService {
         }
     }
 
+    @Transactional //has to be transactional due to blob images
     public UBoatResponse getBoatImagesIdentifiers(String sailorId) {
         try {
             //cant be null because the operation is already done in the filter before
@@ -159,6 +164,7 @@ public class ImagesService {
         }
     }
 
+    @Transactional //has to be transactional due to blob images
     public UBoatResponse getBoatImage(String authorizationHeader, String identifier) {
         try {
             //cant be null because the operation is already done in the filter before
@@ -197,16 +203,17 @@ public class ImagesService {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var account = entityService.findAccountByUsername(jwtData.username());
-            var sailorImages = entityService.findSailorByCredentials(account).getBoat().getBoatImages();
+            var sailor = entityService.findSailorByCredentials(account);
+            var boat = sailor.getBoat();
+            var sailorImages = boat.getBoatImages();
 
-            sailorImages.remove(
-                    sailorImages.stream()
-                            .filter(boatImage -> boatImage.getHash().equals(identifier))
-                            .findFirst()
-                            .orElseThrow()
-            );
+            var image = sailorImages.stream()
+                    .filter(boatImage -> boatImage.getHash().equals(identifier))
+                    .findFirst()
+                    .orElseThrow();
 
-            accountsRepository.save(account);
+            sailorImages.remove(image);
+            boatsRepository.saveAndFlush(boat);
             return new UBoatResponse(UBoatStatus.BOAT_IMAGE_DELETED, true);
         } catch (NoSuchElementException e) {
             log.warn("Boat image not found by identifier to the account in the JWT.");

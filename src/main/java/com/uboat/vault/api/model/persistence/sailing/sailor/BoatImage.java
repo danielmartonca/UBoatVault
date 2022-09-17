@@ -28,8 +28,10 @@ public class BoatImage {
     private Long id;
 
     @Getter
+    private String contentType;
+    @Getter
     @Lob
-    @Basic(fetch = FetchType.EAGER)
+    @Basic(fetch = FetchType.LAZY)
     private byte[] bytes;
 
     @Getter
@@ -41,7 +43,8 @@ public class BoatImage {
     @JoinColumn(name = "boat_id", nullable = false)
     private Boat boat;
 
-    public BoatImage(byte[] bytes, Boat boat) {
+    public BoatImage(String contentType, byte[] bytes, Boat boat) {
+        this.contentType = contentType;
         this.boat = boat;
         setBytes(bytes);
     }

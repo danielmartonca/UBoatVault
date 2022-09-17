@@ -21,7 +21,7 @@ public class ImagesController {
         this.imagesService = imagesService;
     }
 
-    @GetMapping(value = "/getDefaultProfilePicture", produces = MediaType.IMAGE_PNG_VALUE)
+    @GetMapping(value = "/getDefaultProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody
     ResponseEntity<byte[]> getDefaultProfilePicture() {
         var uBoatResponse = imagesService.getDefaultProfilePicture();
@@ -32,7 +32,7 @@ public class ImagesController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 
-    @GetMapping(value = "/getSailorProfilePicture", produces = MediaType.IMAGE_PNG_VALUE)
+    @GetMapping(value = "/getSailorProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody
     ResponseEntity<byte[]> getSailorProfilePicture(@RequestParam(name = "sailorId") String sailorId) {
         var uBoatResponse = imagesService.getSailorProfilePicture(sailorId);
@@ -45,7 +45,8 @@ public class ImagesController {
         };
     }
 
-    @PutMapping(value = "/uploadProfileImage")
+    // @ApiResponse(responseCode = "415", description = "The format of the image is not supported. Only png and jpeg are accepted.", content = @Content(mediaType = "application/json")),
+    @PutMapping(value = "/uploadProfileImage", consumes = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     public @ResponseBody
     ResponseEntity<UBoatResponse> uploadProfileImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody byte[] imageBytes) {
         var uBoatResponse = imagesService.uploadProfileImage(authorizationHeader, imageBytes);
@@ -59,10 +60,14 @@ public class ImagesController {
         };
     }
 
-    @PutMapping(value = "/uploadBoatImage")
+    // @ApiResponse(responseCode = "200", description = "Body will contain the hash of the image", content = @Content(mediaType = "application/json")),
+    // @ApiResponse(responseCode = "415", description = "The format of the image is not supported. Only png and jpeg are accepted.", content = @Content(mediaType = "application/json")),
+    @PutMapping(value = "/uploadBoatImage", consumes = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     public @ResponseBody
-    ResponseEntity<UBoatResponse> uploadBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody byte[] imageBytes) {
-        var uBoatResponse = imagesService.uploadBoatImage(authorizationHeader, imageBytes);
+    ResponseEntity<UBoatResponse> uploadBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader,
+                                                  @RequestHeader(value = "Content-Type") String contentType,
+                                                  @RequestBody byte[] imageBytes) {
+        var uBoatResponse = imagesService.uploadBoatImage(authorizationHeader, imageBytes, contentType);
 
         return switch (uBoatResponse.getHeader()) {
             case BOAT_IMAGE_UPLOADED, BOAT_IMAGE_ALREADY_EXISTING ->
@@ -99,14 +104,14 @@ public class ImagesController {
             @ApiResponse(responseCode = "404", description = "No image matching the request parameter hash was found for any sailor(if client accesses the api)" +
                     " or personal boat(if sailor accesses the API).", content = @Content(mediaType = "application/json")),
     })
-    @GetMapping(value = "/getBoatImage")
+    @GetMapping(value = "/getBoatImage", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody
     ResponseEntity<Object> getBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam String identifier) {
         var uBoatResponse = imagesService.getBoatImage(authorizationHeader, identifier);
 
         return switch (uBoatResponse.getHeader()) {
             case BOAT_IMAGE_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse.getBody());
-            case BOAT_IMAGE_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(uBoatResponse);
+            case BOAT_IMAGE_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
     }

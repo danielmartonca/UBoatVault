@@ -112,37 +112,34 @@ public class EntityService {
             return null;
         }
 
-        var sailor = sailorsRepository.findFirstByAccountId(sailorIdLong);
-        if (sailor == null) {
-            log.warn("Couldn't find active sailor account by id " + sailorIdLong);
+        var sailorOptional = sailorsRepository.findById(sailorIdLong);
+        if (sailorOptional.isEmpty()) {
+            log.warn("Couldn't find sailor account by id " + sailorIdLong);
             return null;
+
         }
 
-        log.info("Found active sailor account.");
-        return sailor;
+        log.info("Found sailor account.");
+        return sailorOptional.get();
     }
 
-    public Account findSailorAccountById(String accountId) {
-        long sailorIdLong;
+    public Sailor findSailorByAccountId(String accountId) {
+        long accountIdLong;
         try {
-            sailorIdLong = Long.parseLong(accountId);
+            accountIdLong = Long.parseLong(accountId);
         } catch (Exception e) {
             log.error("Exception occurred while transforming sailorId String to Long", e);
             return null;
         }
-        var foundAccountOptional = accountsRepository.findById(sailorIdLong);
 
-        if (foundAccountOptional.isPresent()) {
-            var foundAccount = foundAccountOptional.get();
-            if (foundAccount.getType() == UserType.CLIENT) {
-                log.warn("Account was found by id " + accountId + " but the account is matching a client account, not a sailor.");
-                return null;
-            }
-            return foundAccountOptional.get();
+        var sailor = sailorsRepository.findFirstByAccountId(accountIdLong);
+        if (sailor == null) {
+            log.warn("No account was found by id " + accountId);
+            return null;
         }
+        log.warn("Found sailor account by id.");
 
-        log.warn("No account was found by id " + accountId);
-        return null;
+        return sailor;
     }
 
     /**

@@ -24,6 +24,7 @@ public class Sailor {
 
     @Getter
     @Setter
+    @Column(nullable = false, unique = true)
     private Long accountId;
 
     @Getter

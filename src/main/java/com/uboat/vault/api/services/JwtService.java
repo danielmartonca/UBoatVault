@@ -55,7 +55,7 @@ public class JwtService {
             if (parts[1].isEmpty()) parts[1] = "null";
             return new Data(parts[1], parts[0]);
         } catch (Exception e) {
-            log.warn("Failed to extract username from JWT: {}. Reason: {}", jsonWebToken, e.getMessage());
+            log.warn("Failed to decompose JWT: {}", e.getMessage());
             throw new UBoatJwtException(UBoatStatus.JWT_INVALID);
         }
     }

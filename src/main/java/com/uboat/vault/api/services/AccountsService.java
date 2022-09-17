@@ -259,11 +259,20 @@ public class AccountsService {
 
     public UBoatResponse getSailorDetails(String sailorId) {
         try {
-            var sailorAccount = entityService.findSailorAccountById(sailorId);
-            if (sailorAccount == null)
+            var sailor = entityService.findSailorByAccountId(sailorId);
+            if (sailor == null)
                 return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
 
-            var sailorDetails = RequestSailorDetails.builder().fullName(sailorAccount.getAccountDetails().getFullName()).phoneNumber(sailorAccount.getPhoneNumber().getPhoneNumber()).build();
+            var sailorAccountOptional = accountsRepository.findById(Long.valueOf(sailorId));
+            if (sailorAccountOptional.isEmpty())
+                throw new RuntimeException("Warning: sailor has account id which does not belong to any account");
+
+            var sailorAccount = sailorAccountOptional.get();
+
+            var sailorDetails = RequestSailorDetails.builder()
+                    .fullName(sailorAccount.getAccountDetails().getFullName())
+                    .phoneNumber(sailorAccount.getPhoneNumber().getPhoneNumber())
+                    .build();
 
             log.info("Retrieved sailor details successfully.");
             return new UBoatResponse(UBoatStatus.SAILOR_DETAILS_RETRIEVED, sailorDetails);

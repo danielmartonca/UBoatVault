@@ -58,7 +58,7 @@ public class Boat {
 
     @Getter
     @Setter
-    @OneToMany(mappedBy = "boat", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "boat", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<BoatImage> boatImages;
 
     public Boat(Sailor sailor) {
