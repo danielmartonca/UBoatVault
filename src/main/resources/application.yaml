@@ -27,3 +27,6 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+
+uboat:
+  pretty-print-logs: false

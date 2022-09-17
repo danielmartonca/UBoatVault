@@ -19,7 +19,7 @@ spring:
       ddl-auto: update
 
 uboat:
-  pretty-print-logs: false
+  pretty-print-logs: true
   max-active-seconds: 300
   max-active-sailors: 5
   hs256_key: key1234
