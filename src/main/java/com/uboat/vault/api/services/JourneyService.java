@@ -254,7 +254,7 @@ public class JourneyService {
                 log.info("There are no free active sailors in the last " + MAX_ACTIVE_SECONDS + " seconds.");
                 return new UBoatResponse(UBoatStatus.NO_FREE_SAILORS_FOUND);
             }
-            log.info("Sailors were found. ");
+            log.info("{} free sailors were found. ", freeSailors.size());
 
             var totalDistancesList = findSailorsJourneyTotalDistancesList(freeSailors, request.getCurrentCoordinates(), request.getDestinationCoordinates());
 
@@ -375,30 +375,14 @@ public class JourneyService {
     }
 
     /**
-     * This method searches for journey objects that have status ESTABLISHING_CONNECTION for the sailor from request and returns the objects.
-     * Returns null if any authentication problems occurred, a list of journeys if there are clients that chose this sailor or empty list otherwise
+     * This method searches for journey objects that have status ESTABLISHING_CONNECTION for the sailor from request and returns the journeys.
      */
-    public List<Journey> findClients(Account account) {
+    @Transactional
+    public UBoatResponse findClients(String authorizationHeader) {
         try {
-            var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(account));
-            if (foundAccount == null) {
-                log.info("Request account or token are invalid.");
-                return null;
-            }
-            log.info("Token and credentials match.");
-
-            if (foundAccount.getType() == UserType.CLIENT) {
-                log.warn("Account and token match but account is not a sailor account.");
-                return null;
-            }
-            log.info("Account is a sailor account.");
-
-            var sailor = sailorsRepository.findFirstByAccountId(foundAccount.getId());
-            if (sailor == null) {
-                log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
-                return null;
-            }
-            log.info("Sailor account found with the account id found earlier.");
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var sailor = entityService.findSailorByJwt(jwtData);
 
             if (!sailor.isLookingForClients()) {
                 log.info("Setting status of sailor of lookingForClients to true.");
@@ -406,12 +390,12 @@ public class JourneyService {
                 sailorsRepository.save(sailor);
             }
 
-            var journeys = journeyRepository.findAllBySailor_IdAndStatus(foundAccount.getId(), Stage.ESTABLISHING_CONNECTION);
-            if (journeys == null || journeys.isEmpty()) {
-                log.info("No new clients for the sailor.");
-                return new LinkedList<>();
-            }
-            return journeys;
+            var journeys = journeyRepository.findAllBySailor_IdAndStatus(sailor.getId(), Stage.ESTABLISHING_CONNECTION);
+            if (journeys == null || journeys.isEmpty())
+                return new UBoatResponse(UBoatStatus.NO_CLIENTS_FOUND, null);
+
+            var responseJourneys = journeys.stream().map(RequestJourney::new).toList();
+            return new UBoatResponse(UBoatStatus.CLIENTS_FOUND, responseJourneys);
         } catch (Exception e) {
             log.error("Exception occurred during findClients workflow. Returning null.", e);
             return null;

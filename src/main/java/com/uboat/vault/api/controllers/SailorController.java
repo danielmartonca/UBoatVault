@@ -5,8 +5,6 @@ import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.new_requests.RequestPulse;
 import com.uboat.vault.api.model.http.requests.SelectClientRequest;
 import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
-import com.uboat.vault.api.model.persistence.account.Account;
-import com.uboat.vault.api.model.persistence.sailing.Journey;
 import com.uboat.vault.api.services.JourneyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,8 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("api/sailor")
@@ -44,15 +40,22 @@ public class SailorController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
     }
 
+    @Operation(summary = "Queries the database for journeys that have the status ESTABLISHING_CONNECTION and the sailor id the current sailor's id extracted from JWT. " +
+            "When the users call the API /connectToSailor, a new Journey is created with status ESTABLISHING_CONNECTION and the sailor id of the chosen sailor. " +
+            "Then the sailor has to call the /selectClient API in order to proceed with the Journey.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The last known location of the sailor was updated and the status was saved.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "200", description = "The last known location of the sailor was updated and the status was saved.", content = @Content(mediaType = "application/json")),
+    })
     @PostMapping(value = "/findClients")
-    public ResponseEntity<List<Journey>> findClients(@RequestBody Account request) {
+    public ResponseEntity<UBoatResponse> findClients(@RequestHeader(value = "Authorization") String authorizationHeader) {
+        var uBoatResponse = journeyService.findClients(authorizationHeader);
 
-        var response = journeyService.findClients(request);
-        if (response == null) {
-            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
-        }
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return switch (uBoatResponse.getHeader()) {
+            case CLIENTS_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case NO_CLIENTS_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
     }
 
     @PostMapping(value = "/selectClient")

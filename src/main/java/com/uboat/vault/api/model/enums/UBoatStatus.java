@@ -131,6 +131,10 @@ public enum UBoatStatus {
     // /api/sailor/pulse
     PULSE_SUCCESSFUL(1, "The pulse has been registered.", null),
 
+    // /api/sailor/findClients
+    NO_CLIENTS_FOUND(0, "No new client were found.", "No new clients for the moment..."),
+    CLIENTS_FOUND(1, "Found new clients for the sailor", "New clients"),
+
     // /api/client/getMostRecentRides
     MOST_RECENT_RIDES_RETRIEVED(1, "Retrieved most recent rides for the client.", null),
 
@@ -140,6 +144,7 @@ public enum UBoatStatus {
     // /api/client/requestJourney
     NO_FREE_SAILORS_FOUND(2, "No free sailors were found by backend.", "No free sailors were found. Please try again in a few moments"),
     FREE_SAILORS_FOUND(1, "Free sailors have been found. ", "Found sailors");
+
 
     private final int code;
     private final String serverMessage;
