@@ -135,6 +135,10 @@ public enum UBoatStatus {
     NO_CLIENTS_FOUND(0, "No new client were found.", "No new clients for the moment..."),
     CLIENTS_FOUND(1, "Found new clients for the sailor", "New clients"),
 
+    // /api/client/requestJourney
+    JOURNEY_NOT_FOUND(2, "The journey could not be found", CommonStatus.UNEXPECTED_ERROR),
+    JOURNEY_SELECTED(1, "Sailor has selected a journey and canceled all the others.", "Journey accepted"),
+
     // /api/client/getMostRecentRides
     MOST_RECENT_RIDES_RETRIEVED(1, "Retrieved most recent rides for the client.", null),
 

@@ -4,10 +4,7 @@ import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.http.new_requests.*;
-import com.uboat.vault.api.model.http.response.JourneyConnectionResponse;
-import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.other.LatLng;
-import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.sailing.Journey;
 import com.uboat.vault.api.model.persistence.sailing.LocationData;
 import com.uboat.vault.api.model.persistence.sailing.Stage;
@@ -71,8 +68,8 @@ public class JourneyService {
             var locationData = LocationData.createRandomLocationData();
             locationDataSet.add(locationData);
             Journey journey = Journey.builder()
-                    .client(clientAccount.get())
-                    .sailor(sailorAccount.get())
+                    .clientAccount(clientAccount.get())
+                    .sailorAccount(sailorAccount.get())
                     .status(Stage.FINISHED)
                     .dateBooking(new Date())
                     .dateArrival(new Date())
@@ -101,7 +98,7 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var account = entityService.findAccountByUsername(jwtData.username());
 
-            List<Journey> foundJourneys = journeyRepository.findAllByClient_IdAndStatus(account.getId(), Stage.FINISHED);
+            List<Journey> foundJourneys = journeyRepository.findAllByClientAccount_IdAndStatus(account.getId(), Stage.FINISHED);
             if (foundJourneys == null || foundJourneys.isEmpty()) {
                 log.info("User has no completed journeys.");
                 return new UBoatResponse(UBoatStatus.MOST_RECENT_RIDES_RETRIEVED, new LinkedList<>());
@@ -390,7 +387,7 @@ public class JourneyService {
                 sailorsRepository.save(sailor);
             }
 
-            var journeys = journeyRepository.findAllBySailor_IdAndStatus(sailor.getId(), Stage.ESTABLISHING_CONNECTION);
+            var journeys = journeyRepository.findAllByStatusAndSailorAccount_Id(Stage.ESTABLISHING_CONNECTION, sailor.getAccountId());
             if (journeys == null || journeys.isEmpty())
                 return new UBoatResponse(UBoatStatus.NO_CLIENTS_FOUND, null);
 
@@ -402,27 +399,15 @@ public class JourneyService {
         }
     }
 
-    public JourneyConnectionResponse.PossibleResponse selectClient(Account account, Journey journey) {
+    /**
+     * This method queries all journeys that have status ESTABLISHING_CONNECTION for the sailor extracted from the JWT then searches for a match of RequestJourney
+     */
+    @Transactional
+    public UBoatResponse selectClient(String authorizationHeader, RequestJourney requestJourney) {
         try {
-            var foundAccount = entityService.findAccountByCredentials(Credentials.fromAccount(account));
-            if (foundAccount == null) {
-                log.info("Request account or token are invalid.");
-                return JourneyConnectionResponse.PossibleResponse.ERROR;
-            }
-            log.info("Token and credentials match.");
-
-            if (foundAccount.getType() == UserType.CLIENT) {
-                log.warn("Account and token match but account is not a sailor account.");
-                return JourneyConnectionResponse.PossibleResponse.ERROR;
-            }
-            log.info("Account is a sailor account.");
-
-            var sailor = sailorsRepository.findFirstByAccountId(foundAccount.getId());
-            if (sailor == null) {
-                log.warn("Couldn't find active sailor account by id '" + foundAccount.getId() + "'");
-                return JourneyConnectionResponse.PossibleResponse.ERROR;
-            }
-            log.info("Sailor account found with the account id found earlier.");
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var sailor = entityService.findSailorByJwt(jwtData);
 
             if (!sailor.isLookingForClients()) {
                 log.info("Setting status of sailor of lookingForClients to true.");
@@ -430,30 +415,35 @@ public class JourneyService {
                 sailorsRepository.save(sailor);
             }
 
-            var latitude = journey.getDestinationLatitude();
-            var longitude = journey.getDestinationLongitude();
+            var journey = journeyRepository.findNewJourneyOfSailorMatchingSourceAndDestination(
+                    Stage.ESTABLISHING_CONNECTION,
+                    sailor.getAccountId(),
+                    requestJourney.getSourceLatitude(), requestJourney.getSourceLongitude(),
+                    requestJourney.getDestinationLatitude(), requestJourney.getDestinationLongitude());
 
-            var foundJourney = journeyRepository.findBySailor_IdAndStatusAndDestinationLatitudeAndDestinationLongitude(foundAccount.getId(), Stage.ESTABLISHING_CONNECTION, latitude, longitude);
-            if (foundJourney == null) {
-                log.warn("Failed to find journey in request");
-                return JourneyConnectionResponse.PossibleResponse.JOURNEY_NOT_FOUND;
+            if (journey == null)
+                return new UBoatResponse(UBoatStatus.JOURNEY_NOT_FOUND, false);
+
+            log.info("Found journey from the request with status ESTABLISHING_CONNECTION. Journey id: {}", journey.getId());
+
+            //dismiss any other journey for the current sailor - set all the other ESTABLISHING_CONNECTION journeys for this sailor to SAILOR_CANCELED
+            var otherJourneys = journeyRepository.findAllByStatusAndSailorAccount_Id(Stage.ESTABLISHING_CONNECTION, sailor.getAccountId());
+            if (otherJourneys != null && otherJourneys.size() > 1) {
+                otherJourneys.removeIf(j -> j.getId().equals(journey.getId()));
+                for (var otherJourney : otherJourneys) {
+                    otherJourney.setStatus(Stage.SAILOR_CANCELED);
+                    journeyRepository.save(otherJourney);
+                    log.info("Canceled journey by id {}", otherJourney.getId());
+                }
             }
-            log.info("Found journey in the request with status ESTABLISHING_CONNECTION. Journey id:" + foundJourney.getId());
-            var otherJourneys = journeyRepository.findAllBySailor_IdAndStatus(foundAccount.getId(), Stage.ESTABLISHING_CONNECTION);
-            if (otherJourneys != null && !otherJourneys.isEmpty())
-                for (var otherJourney : otherJourneys)
-                    if (!Objects.equals(otherJourney.getClient().getId(), foundJourney.getClient().getId())) {
-                        otherJourney.setStatus(Stage.CANCELED);
-                        journeyRepository.save(otherJourney);
-                    }
 
-            foundJourney.setStatus(Stage.SAILOR_ACCEPTED);
-            journeyRepository.save(foundJourney);
-            log.info("Set status of journey from ESTABLISHING_CONNECTION to SAILOR_ACCEPTED. Journey id:" + foundJourney.getId());
-            return JourneyConnectionResponse.PossibleResponse.SELECT_CLIENT_SUCCESS;
+            journey.setStatus(Stage.SAILOR_ACCEPTED);
+            journeyRepository.save(journey);
+            log.info("Set status of journey from ESTABLISHING_CONNECTION to SAILOR_ACCEPTED. Journey id: {}", journey.getId());
+            return new UBoatResponse(UBoatStatus.JOURNEY_SELECTED, true);
         } catch (Exception e) {
-            log.error("Exception occurred during selectClient workflow. Returning null.", e);
-            return JourneyConnectionResponse.PossibleResponse.SERVER_ERROR;
+            log.error("Exception occurred during selectClient workflow.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
 }

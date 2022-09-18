@@ -44,7 +44,7 @@ public class RequestJourney {
         this.destinationAddress = journey.getDestinationAddress();
 
         this.payment = journey.getPayment();
-        this.sailorId = journey.getSailor().getId();
+        this.sailorId = journey.getSailorAccount().getId();
     }
 
     public void calculateDuration() {

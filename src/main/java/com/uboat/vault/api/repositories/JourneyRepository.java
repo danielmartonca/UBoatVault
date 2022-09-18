@@ -3,13 +3,15 @@ package com.uboat.vault.api.repositories;
 import com.uboat.vault.api.model.persistence.sailing.Journey;
 import com.uboat.vault.api.model.persistence.sailing.Stage;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
 public interface JourneyRepository extends JpaRepository<Journey, Long> {
-    List<Journey> findAllByClient_IdAndStatus(Long client_id, Stage status);
+    List<Journey> findAllByClientAccount_IdAndStatus(Long clientAccountId, Stage status);
 
-    List<Journey> findAllBySailor_IdAndStatus(Long sailorId, Stage status);
+    List<Journey> findAllByStatusAndSailorAccount_Id(Stage status, Long sailorAccountId);
 
-    Journey findBySailor_IdAndStatusAndDestinationLatitudeAndDestinationLongitude(Long sailorId, Stage status, double destinationLatitude, double destinationLongitude);
+    @Query("SELECT j from Journey  j where j.status=?1 and j.sailorAccount.id=?2 and j.sourceLatitude=?3 and j.sourceLongitude=?4 and j.destinationLatitude=?5 and j.destinationLongitude=?6")
+    Journey findNewJourneyOfSailorMatchingSourceAndDestination(Stage status, Long sailorId, double sourceLatitude, double sourceLongitude, double destinationLatitude, double destinationLongitude);
 }

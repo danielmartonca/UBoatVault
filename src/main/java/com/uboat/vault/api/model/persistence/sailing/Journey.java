@@ -88,13 +88,13 @@ public class Journey {
     @Getter
     @Setter
     @ManyToOne()
-    @JoinColumn(name = "client_id")
-    private Account client;
+    @JoinColumn(name = "client_account_id")
+    private Account clientAccount;
 
     @JsonIgnore
     @Getter
     @Setter
     @ManyToOne
-    @JoinColumn(name = "sailor_id")
-    private Account sailor;
+    @JoinColumn(name = "sailor_account_id")
+    private Account sailorAccount;
 }
