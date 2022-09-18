@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/sailor")
-public class SailorController {
+public class UBoatSailorController {
     private final JourneyService journeyService;
 
     @Autowired
-    public SailorController(JourneyService journeyService) {
+    public UBoatSailorController(JourneyService journeyService) {
         this.journeyService = journeyService;
     }
 
@@ -39,13 +39,13 @@ public class SailorController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
     }
 
-    @Operation(summary = "Queries the database for journeys that have the status ESTABLISHING_CONNECTION and the sailor id the current sailor's id extracted from JWT. " +
-            "When the users call the API /connectToSailor, a new Journey is created with status ESTABLISHING_CONNECTION and the sailor id of the chosen sailor. " +
+    @Operation(summary = "Queries the database for journeys that have the status CLIENT_ACCEPTED and the sailor id the current sailor's id extracted from JWT. " +
+            "When the users call the API /connectToSailor, a new Journey is created with status CLIENT_ACCEPTED and the sailor id of the chosen sailor. " +
             "Then the sailor has to call the /selectClient API in order to proceed with the Journey.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Api was processed correctly. A list of available journeys is returned if existing, null otherwise.", content = @Content(mediaType = "application/json")),
     })
-    @PostMapping(value = "/findClients")
+    @GetMapping(value = "/findClients")
     public ResponseEntity<UBoatResponse> findClients(@RequestHeader(value = "Authorization") String authorizationHeader) {
         var uBoatResponse = journeyService.findClients(authorizationHeader);
 
@@ -55,11 +55,11 @@ public class SailorController {
         };
     }
 
-    @Operation(summary = "Queries the database for journeys that have the status ESTABLISHING_CONNECTION and the sailor id the current sailor's id extracted from JWT. " +
+    @Operation(summary = "Queries the database for journeys that have the status CLIENT_ACCEPTED and the sailor id the current sailor's id extracted from JWT. " +
             "This API is called by the sailor only after he has called /findClients to query all available journeys.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Api was processed correctly. True will be returned if a journey was selected by the client and all the other requested journeys are canceled " +
-                    "or false if journey from the request could not be found in the database.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "200", description = "Api was processed correctly. True will be returned if a journey was selected by the client " +
+                    "and all the other requested journeys are canceled or false if journey from the request could not be found in the database.", content = @Content(mediaType = "application/json")),
     })
     @PostMapping(value = "/selectClient")
     public ResponseEntity<UBoatResponse> selectClient(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody RequestJourney journey) {

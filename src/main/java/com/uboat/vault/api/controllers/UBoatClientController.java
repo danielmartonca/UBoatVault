@@ -19,12 +19,12 @@ import javax.validation.constraints.Min;
 
 @RestController
 @RequestMapping("api/client")
-public class JourneyController {
+public class UBoatClientController {
     private final JourneyService journeyService;
     private final AccountsService accountsService;
 
     @Autowired
-    public JourneyController(JourneyService journeyService, AccountsService accountsService) {
+    public UBoatClientController(JourneyService journeyService, AccountsService accountsService) {
         this.journeyService = journeyService;
         this.accountsService = accountsService;
     }
@@ -63,34 +63,42 @@ public class JourneyController {
         };
     }
 
-    @Operation(summary = "This API retrieves information about possible journeys." +
-            " It fetches all active sailors and calls all services to calculate details about the journey such as: " +
-            "sailor id, sailor name, estimated cost, duration, quality etc.")
+    @Operation(summary = "This API retrieves information about possible journeys. " +
+            "It fetches all active sailors and calls all services to calculate details about the journey such as: " +
+            "sailor id, sailor name, estimated cost, duration, quality etc. " +
+            "This API just fetches and calculates data for each possible free sailor. Connection to the sailor can only be established by calling /chooseJourney API.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Free sailors were found. Details about each journey are returned.", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "404", description = "No free sailors could be found.", content = @Content(mediaType = "application/json"))
+            @ApiResponse(responseCode = "200", description = "Details about each journey are returned or empty list if no free sailors could be detected.", content = @Content(mediaType = "application/json")),
     })
     @PostMapping(value = "/requestJourney")
     public ResponseEntity<UBoatResponse> requestJourney(@RequestBody RequestNewJourney request) {
         var uBoatResponse = journeyService.requestJourney(request);
 
         return switch (uBoatResponse.getHeader()) {
-            case FREE_SAILORS_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
-            case NO_FREE_SAILORS_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            case FREE_SAILORS_FOUND, NO_FREE_SAILORS_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
     }
 
-//    @PostMapping(value = "/connectToSailor")
-//    public ResponseEntity<JourneyConnectionResponse> connectToSailor(@RequestBody SailorConnectionRequest request) {
-//        var response = journeyService.connectToSailor(request);
-//        if (response == null || response.getMsg() == null) {
-//            log.warn("User is not authorised to connect to the sailor.");
-//            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
-//        }
-//
-//        var backendResponse = JourneyConnectionResponse.builder().status(response).message(response.getMsg()).build();
-//
-//        return new ResponseEntity<>(backendResponse, HttpStatus.OK);
-//    }
+    @Operation(summary = "After fetching data with /requestJourney, this API uses that data to establish a possible new Journey request with the sailor: " +
+            "A new Journey is created with a status indicating that the client has chosen this Journey. The sailor must confirm this action too by calling: " +
+            "/findClients (to fetch all available Journeys selected by the clients) and " +
+            "/selectClient (to select the new Journey/or he might choose another one in which case the other journeys with that specific status will be canceled). " +
+            "This there is already an ongoing journey request for the client, the old journey request will be canceled.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "A new journey was created and the other ones with status CLIENT_ACCEPTED(due to app restart/error etc) are canceled.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "Could not find the sailor by sailor ID.", content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping(value = "/chooseJourney")
+    public ResponseEntity<UBoatResponse> chooseJourney(@RequestHeader(value = "Authorization") String authorizationHeader,
+                                                       @RequestBody RequestNewJourney journeyRequest,
+                                                       @RequestParam Long sailorId) {
+        var uBoatResponse = journeyService.chooseJourney(authorizationHeader, journeyRequest, sailorId);
+
+        return switch (uBoatResponse.getHeader()) {
+            case NEW_JOURNEY_CREATED -> ResponseEntity.status(HttpStatus.CREATED).body(uBoatResponse);
+            case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
+    }
 }
