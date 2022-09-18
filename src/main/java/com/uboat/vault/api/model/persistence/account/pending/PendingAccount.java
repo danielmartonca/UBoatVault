@@ -2,7 +2,7 @@ package com.uboat.vault.api.model.persistence.account.pending;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.enums.UserType;
-import com.uboat.vault.api.model.http.new_requests.RequestAccount;
+import com.uboat.vault.api.model.http.RequestAccount;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

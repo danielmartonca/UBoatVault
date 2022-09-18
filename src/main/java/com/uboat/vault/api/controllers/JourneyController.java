@@ -1,8 +1,8 @@
 package com.uboat.vault.api.controllers;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.model.http.RequestNewJourney;
 import com.uboat.vault.api.model.http.UBoatResponse;
-import com.uboat.vault.api.model.http.new_requests.RequestNewJourney;
 import com.uboat.vault.api.services.AccountsService;
 import com.uboat.vault.api.services.JourneyService;
 import io.swagger.v3.oas.annotations.Operation;

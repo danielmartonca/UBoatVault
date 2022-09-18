@@ -1,10 +1,6 @@
 package com.uboat.vault.api.controllers;
 
-import com.uboat.vault.api.model.http.UBoatResponse;
-import com.uboat.vault.api.model.http.new_requests.RequestAccount;
-import com.uboat.vault.api.model.http.new_requests.RequestAccountDetails;
-import com.uboat.vault.api.model.http.new_requests.RequestBoat;
-import com.uboat.vault.api.model.http.new_requests.RequestCreditCard;
+import com.uboat.vault.api.model.http.*;
 import com.uboat.vault.api.services.AccountsService;
 import com.uboat.vault.api.services.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;

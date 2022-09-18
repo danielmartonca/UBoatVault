@@ -1,6 +1,6 @@
 package com.uboat.vault.api.utilities;
 
-import com.uboat.vault.api.model.http.new_requests.RequestLocationData;
+import com.uboat.vault.api.model.http.RequestLocationData;
 import com.uboat.vault.api.model.other.LatLng;
 import com.uboat.vault.api.model.persistence.sailing.LocationData;
 import org.slf4j.Logger;

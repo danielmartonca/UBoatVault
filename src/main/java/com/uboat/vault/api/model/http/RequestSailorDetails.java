@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.http.new_requests;
+package com.uboat.vault.api.model.http;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

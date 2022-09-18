@@ -2,7 +2,7 @@ package com.uboat.vault.api.model.persistence.account;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.enums.UserType;
-import com.uboat.vault.api.model.http.new_requests.RequestAccount;
+import com.uboat.vault.api.model.http.RequestAccount;
 import com.uboat.vault.api.model.persistence.account.info.AccountDetails;
 import com.uboat.vault.api.model.persistence.account.info.CreditCard;
 import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;

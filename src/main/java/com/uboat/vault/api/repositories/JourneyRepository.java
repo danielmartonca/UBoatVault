@@ -1,7 +1,7 @@
 package com.uboat.vault.api.repositories;
 
+import com.uboat.vault.api.model.enums.Stage;
 import com.uboat.vault.api.model.persistence.sailing.Journey;
-import com.uboat.vault.api.model.persistence.sailing.Stage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

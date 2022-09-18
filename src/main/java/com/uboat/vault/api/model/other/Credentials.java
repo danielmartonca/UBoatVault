@@ -1,6 +1,6 @@
 package com.uboat.vault.api.model.other;
 
-import com.uboat.vault.api.model.http.new_requests.RequestAccount;
+import com.uboat.vault.api.model.http.RequestAccount;
 import com.uboat.vault.api.model.persistence.account.Account;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,13 +1,12 @@
 package com.uboat.vault.api.services;
 
+import com.uboat.vault.api.model.enums.Stage;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
-import com.uboat.vault.api.model.http.UBoatResponse;
-import com.uboat.vault.api.model.http.new_requests.*;
+import com.uboat.vault.api.model.http.*;
 import com.uboat.vault.api.model.other.LatLng;
 import com.uboat.vault.api.model.persistence.sailing.Journey;
 import com.uboat.vault.api.model.persistence.sailing.LocationData;
-import com.uboat.vault.api.model.persistence.sailing.Stage;
 import com.uboat.vault.api.model.persistence.sailing.sailor.Sailor;
 import com.uboat.vault.api.repositories.AccountsRepository;
 import com.uboat.vault.api.repositories.JourneyRepository;

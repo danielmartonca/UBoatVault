@@ -1,6 +1,7 @@
 package com.uboat.vault.api.model.persistence.sailing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.uboat.vault.api.model.enums.Stage;
 import com.uboat.vault.api.model.persistence.account.Account;
 import lombok.*;
 

@@ -2,8 +2,7 @@ package com.uboat.vault.api.services;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
-import com.uboat.vault.api.model.http.UBoatResponse;
-import com.uboat.vault.api.model.http.new_requests.*;
+import com.uboat.vault.api.model.http.*;
 import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.persistence.account.info.CreditCard;
 import com.uboat.vault.api.repositories.AccountsRepository;

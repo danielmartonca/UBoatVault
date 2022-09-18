@@ -1,7 +1,7 @@
 package com.uboat.vault.api.model.persistence.sailing.sailor;
 
 import com.uboat.vault.api.model.enums.UserType;
-import com.uboat.vault.api.model.http.new_requests.RequestLocationData;
+import com.uboat.vault.api.model.http.RequestLocationData;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.sailing.LocationData;
 import com.uboat.vault.api.utilities.LoggingUtils;

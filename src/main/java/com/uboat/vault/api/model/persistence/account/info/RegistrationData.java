@@ -1,7 +1,7 @@
 package com.uboat.vault.api.model.persistence.account.info;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.uboat.vault.api.model.http.new_requests.RequestRegistrationData;
+import com.uboat.vault.api.model.http.RequestRegistrationData;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.utilities.LoggingUtils;
 import lombok.AllArgsConstructor;

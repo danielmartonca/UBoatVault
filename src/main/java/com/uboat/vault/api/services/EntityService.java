@@ -2,7 +2,7 @@ package com.uboat.vault.api.services;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
-import com.uboat.vault.api.model.http.new_requests.RequestRegistrationData;
+import com.uboat.vault.api.model.http.RequestRegistrationData;
 import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;

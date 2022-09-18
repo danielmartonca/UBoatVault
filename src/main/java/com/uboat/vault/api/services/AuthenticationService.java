@@ -2,8 +2,8 @@ package com.uboat.vault.api.services;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
+import com.uboat.vault.api.model.http.RequestAccount;
 import com.uboat.vault.api.model.http.UBoatResponse;
-import com.uboat.vault.api.model.http.new_requests.RequestAccount;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.RegistrationData;
 import com.uboat.vault.api.model.persistence.account.pending.PendingAccount;

@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.persistence.sailing;
+package com.uboat.vault.api.model.enums;
 
 public enum Stage {
     ESTABLISHING_CONNECTION, SAILOR_CANCELED, SAILOR_ACCEPTED, VERIFYING_PAYMENT, PAYMENT_ACCEPTED, SAILING_TO_CLIENT, SAILING_TO_DESTINATION, FINISHED, ERROR

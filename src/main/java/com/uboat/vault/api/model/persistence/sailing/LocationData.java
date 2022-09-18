@@ -1,7 +1,7 @@
 package com.uboat.vault.api.model.persistence.sailing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.uboat.vault.api.model.http.new_requests.RequestLocationData;
+import com.uboat.vault.api.model.http.RequestLocationData;
 import com.uboat.vault.api.utilities.LoggingUtils;
 import lombok.*;
 

@@ -1,7 +1,7 @@
 package com.uboat.vault.api.model.persistence.sailing.sailor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.uboat.vault.api.model.http.new_requests.RequestBoat;
+import com.uboat.vault.api.model.http.RequestBoat;
 import lombok.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

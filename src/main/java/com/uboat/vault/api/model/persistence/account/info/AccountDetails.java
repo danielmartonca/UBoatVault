@@ -1,8 +1,7 @@
 package com.uboat.vault.api.model.persistence.account.info;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.uboat.vault.api.model.http.new_requests.RequestAccountDetails;
-import com.uboat.vault.api.model.http.new_requests.RequestImage;
+import com.uboat.vault.api.model.http.RequestAccountDetails;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.services.AccountsService;
 import lombok.AllArgsConstructor;
@@ -74,7 +73,4 @@ public class AccountDetails {
             updateEmail(newData.getEmail());
     }
 
-    public void updateImage(RequestImage newImage) {
-        this.image.setBytes(newImage.getBytes());
-    }
 }

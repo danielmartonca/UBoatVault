@@ -1,7 +1,7 @@
-package com.uboat.vault.api.model.http.new_requests;
+package com.uboat.vault.api.model.http;
 
+import com.uboat.vault.api.model.enums.Stage;
 import com.uboat.vault.api.model.persistence.sailing.Journey;
-import com.uboat.vault.api.model.persistence.sailing.Stage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

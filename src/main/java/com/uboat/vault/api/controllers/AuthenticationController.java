@@ -1,9 +1,9 @@
 package com.uboat.vault.api.controllers;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.model.http.RequestAccount;
+import com.uboat.vault.api.model.http.RequestRegistrationData;
 import com.uboat.vault.api.model.http.UBoatResponse;
-import com.uboat.vault.api.model.http.new_requests.RequestAccount;
-import com.uboat.vault.api.model.http.new_requests.RequestRegistrationData;
 import com.uboat.vault.api.services.AuthenticationService;
 import com.uboat.vault.api.services.EntityService;
 import com.uboat.vault.api.services.JwtService;

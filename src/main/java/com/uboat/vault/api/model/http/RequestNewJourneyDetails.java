@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.http.new_requests;
+package com.uboat.vault.api.model.http;
 
 import com.uboat.vault.api.model.enums.Currency;
 import lombok.AllArgsConstructor;
