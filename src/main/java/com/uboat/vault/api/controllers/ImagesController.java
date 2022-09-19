@@ -32,18 +32,17 @@ public class ImagesController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 
-    @GetMapping(value = "/getSailorProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/getProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody
-    ResponseEntity<byte[]> getSailorProfilePicture(@RequestParam(name = "sailorId") String sailorId) {
-        var uBoatResponse = imagesService.getSailorProfilePicture(sailorId);
+    ResponseEntity<UBoatResponse> getProfilePicture(@RequestHeader(value = "Authorization") String authorizationHeader) {
+        var uBoatResponse = imagesService.getProfilePicture(authorizationHeader);
 
-        return switch (uBoatResponse.getHeader()) {
-            case SAILOR_PROFILE_PICTURE_RETRIEVED, SAILOR_PROFILE_PICTURE_NOT_SET ->
-                    ResponseEntity.status(HttpStatus.OK).body((byte[]) uBoatResponse.getBody());
-            case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        };
+        if (uBoatResponse.getHeader() == UBoatStatus.PROFILE_PICTURE_RETRIEVED)
+            return ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
     }
+
 
     // @ApiResponse(responseCode = "415", description = "The format of the image is not supported. Only png and jpeg are accepted.", content = @Content(mediaType = "application/json")),
     @PutMapping(value = "/uploadProfileImage", consumes = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
@@ -75,6 +74,19 @@ public class ImagesController {
             case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
                     ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+        };
+    }
+
+    @GetMapping(value = "/getSailorProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public @ResponseBody
+    ResponseEntity<byte[]> getSailorProfilePicture(@RequestParam(name = "sailorId") String sailorId) {
+        var uBoatResponse = imagesService.getSailorProfilePicture(sailorId);
+
+        return switch (uBoatResponse.getHeader()) {
+            case SAILOR_PROFILE_PICTURE_RETRIEVED, SAILOR_PROFILE_PICTURE_NOT_SET ->
+                    ResponseEntity.status(HttpStatus.OK).body((byte[]) uBoatResponse.getBody());
+            case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
     }
 

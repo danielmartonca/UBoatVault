@@ -96,6 +96,10 @@ public enum UBoatStatus {
 
 
     // /images/getDefaultProfilePicture
+    PROFILE_PICTURE_RETRIEVED(1, "Profile picture has been retrieved.", null),
+
+
+    // /images/getSailorProfilePicture
     SAILOR_PROFILE_PICTURE_RETRIEVED(1, "Sailor profile picture retrieved successfully.", CommonStatus.SUCCESS),
     SAILOR_PROFILE_PICTURE_NOT_SET(0, "Sailor has not set a profile picture.", CommonStatus.SUCCESS),
 

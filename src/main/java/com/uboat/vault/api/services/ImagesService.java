@@ -61,28 +61,18 @@ public class ImagesService {
         }
     }
 
-    public UBoatResponse getSailorProfilePicture(String sailorId) {
+    public UBoatResponse getProfilePicture(String authorizationHeader) {
         try {
-            var sailor = entityService.findSailorBySailorId(sailorId);
-            if (sailor == null) return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
 
-            var accountOptional = accountsRepository.findById(sailor.getAccountId());
-            if (accountOptional.isEmpty())
-                throw new RuntimeException("Warning: sailor has account id which does not belong to any account");
+            //can't be null because it is initialized when creating account
+            var image = account.getAccountDetails().getImage();
 
-            //cant be null
-            var accountDetails = accountOptional.get().getAccountDetails();
-
-            var image = accountDetails.getImage();
-            if (image == null || image.getBytes() == null) {
-                log.info("Image of account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
-                return new UBoatResponse(UBoatStatus.SAILOR_PROFILE_PICTURE_NOT_SET, new byte[0]);
-            }
-
-            log.info("Found profile picture for sailor id " + sailorId);
-            return new UBoatResponse(UBoatStatus.SAILOR_DETAILS_RETRIEVED, image.getBytes());
+            return new UBoatResponse(UBoatStatus.PROFILE_PICTURE_RETRIEVED, image);
         } catch (Exception e) {
-            log.error("Exception occurred while retrieving sailor profile picture.", e);
+            log.error("An exception occurred while retrieving profile picture", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
@@ -112,6 +102,32 @@ public class ImagesService {
         } catch (Exception e) {
             log.error("An exception occurred while uploading a client profile picture", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
+        }
+    }
+
+    public UBoatResponse getSailorProfilePicture(String sailorId) {
+        try {
+            var sailor = entityService.findSailorBySailorId(sailorId);
+            if (sailor == null) return new UBoatResponse(UBoatStatus.SAILOR_NOT_FOUND);
+
+            var accountOptional = accountsRepository.findById(sailor.getAccountId());
+            if (accountOptional.isEmpty())
+                throw new RuntimeException("Warning: sailor has account id which does not belong to any account");
+
+            //cant be null
+            var accountDetails = accountOptional.get().getAccountDetails();
+
+            var image = accountDetails.getImage();
+            if (image == null || image.getBytes() == null) {
+                log.info("Image of account details is null. Sailor does not have a profile picture set yet. Returning empty profile pic.");
+                return new UBoatResponse(UBoatStatus.SAILOR_PROFILE_PICTURE_NOT_SET, new byte[0]);
+            }
+
+            log.info("Found profile picture for sailor id " + sailorId);
+            return new UBoatResponse(UBoatStatus.SAILOR_DETAILS_RETRIEVED, image.getBytes());
+        } catch (Exception e) {
+            log.error("Exception occurred while retrieving sailor profile picture.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
 
