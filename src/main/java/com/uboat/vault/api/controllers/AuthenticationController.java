@@ -32,7 +32,9 @@ public class AuthenticationController {
         this.jwtService = jwtService;
     }
 
-    @Operation(summary = "Check if the device from the request is already used or not. The API will search if any of the deviceInfo or the sim cards details present in the request are already present in the database.")
+    @Operation(summary = "Check if the device from the request is already used or not. " +
+            "The API will search if any of the deviceInfo or the sim cards details present in the request are already present in the database. " +
+            "It's primarily purpose is to check if user should be redirected to login or register routes.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Neither device info nor any sim card are present in the database.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "409", description = "Either the sim card or device info is already used. Check response body custom header for more details.", content = @Content(mediaType = "application/json"))
@@ -61,9 +63,10 @@ public class AuthenticationController {
         var uBoatResponse = authenticationService.requestRegistration(account);
 
         return switch (uBoatResponse.getHeader()) {
-            case ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS -> ResponseEntity.status(HttpStatus.CONFLICT).body(uBoatResponse);
-            case ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED,ACCOUNT_ALREADY_PENDING_REGISTRATION
-                    -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS ->
+                    ResponseEntity.status(HttpStatus.CONFLICT).body(uBoatResponse);
+            case ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED, ACCOUNT_ALREADY_PENDING_REGISTRATION ->
+                    ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };
     }
@@ -94,7 +97,8 @@ public class AuthenticationController {
         var uBoatResponse = authenticationService.register(account, registrationToken);
         return switch (uBoatResponse.getHeader()) {
             case RTOKEN_NOT_FOUND_IN_DATABASE -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(uBoatResponse);
-            case RTOKEN_AND_ACCOUNT_NOT_MATCHING, MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER -> ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(uBoatResponse);
+            case RTOKEN_AND_ACCOUNT_NOT_MATCHING, MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER ->
+                    ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(uBoatResponse);
             case REGISTRATION_SUCCESSFUL -> ResponseEntity.status(HttpStatus.CREATED).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };
@@ -138,7 +142,7 @@ public class AuthenticationController {
 
         return switch (uBoatResponse.getHeader()) {
             case LOGIN_SUCCESSFUL -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
-            case CREDENTIALS_NOT_FOUND ->ResponseEntity.status(HttpStatus.NOT_FOUND).body(uBoatResponse);
+            case CREDENTIALS_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(uBoatResponse);
             case INVALID_CREDENTIALS -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };

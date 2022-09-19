@@ -75,7 +75,7 @@ public class AccountsService {
             log.debug("JWT data extracted.");
 
             //accountDetails can't be null due to its initialization during registration
-            var accountDetails = new RequestAccountDetails(account.getAccountDetails());
+            var accountDetails = new RequestAccountDetails(account);
             log.info("Account details retrieved successfully.");
             return new UBoatResponse(UBoatStatus.ACCOUNT_DETAILS_RETRIEVED, accountDetails);
         } catch (UBoatJwtException e) {
