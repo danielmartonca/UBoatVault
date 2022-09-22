@@ -118,11 +118,11 @@ public class ImagesController {
     })
     @GetMapping(value = "/getBoatImage", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody
-    ResponseEntity<Object> getBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam String identifier) {
+    ResponseEntity<byte[]> getBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam String identifier) {
         var uBoatResponse = imagesService.getBoatImage(authorizationHeader, identifier);
 
         return switch (uBoatResponse.getHeader()) {
-            case BOAT_IMAGE_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse.getBody());
+            case BOAT_IMAGE_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body((byte[]) uBoatResponse.getBody());
             case BOAT_IMAGE_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };

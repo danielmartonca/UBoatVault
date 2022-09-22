@@ -3,6 +3,7 @@ package com.uboat.vault.api.services;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
+import com.uboat.vault.api.model.http.RequestImage;
 import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.persistence.sailing.sailor.BoatImage;
 import com.uboat.vault.api.repositories.AccountsRepository;
@@ -70,7 +71,7 @@ public class ImagesService {
             //can't be null because it is initialized when creating account
             var image = account.getAccountDetails().getImage();
 
-            return new UBoatResponse(UBoatStatus.PROFILE_PICTURE_RETRIEVED, image);
+            return new UBoatResponse(UBoatStatus.PROFILE_PICTURE_RETRIEVED, new RequestImage(image));
         } catch (Exception e) {
             log.error("An exception occurred while retrieving profile picture", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
