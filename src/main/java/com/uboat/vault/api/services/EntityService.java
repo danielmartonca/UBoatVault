@@ -3,6 +3,7 @@ package com.uboat.vault.api.services;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.http.RequestRegistrationData;
+import com.uboat.vault.api.model.http.UBoatResponse;
 import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.model.persistence.account.Account;
 import com.uboat.vault.api.model.persistence.account.info.PhoneNumber;
@@ -175,30 +176,35 @@ public class EntityService {
      * This method searches if any part of the registrationData exists in the database and returns true if any are found
      */
     @Transactional
-    public UBoatStatus checkDeviceRegistration(RequestRegistrationData registrationData) {
-        var foundRegistrationData = registrationDataRepository.findFirstByDeviceInfo(registrationData.getDeviceInfo());
-        if (foundRegistrationData != null) {
-            log.info("Found registration data by device info.");
-            if (foundRegistrationData.getAccounts().size() == 1)
-                log.info("There is only one account bound to this registration data.");
-            else
-                log.info("There are more than one account bound to this registration data.");
-            return UBoatStatus.DEVICE_INFO_ALREADY_USED;
-        }
-
-        for (var simCard : registrationData.getMobileNumbersInfoList()) {
-            SimCard extractedSimCard = simCardRepository.findFirstByNumberAndDisplayNameAndCountryIso(simCard.getNumber(), simCard.getDisplayName(), simCard.getCountryIso());
-            if (extractedSimCard != null) {
-                log.info("Found registration data by simCard.");
-                foundRegistrationData = extractedSimCard.getRegistrationData();
+    public UBoatResponse checkDeviceRegistration(RequestRegistrationData registrationData) {
+        try {
+            var foundRegistrationData = registrationDataRepository.findFirstByDeviceInfo(registrationData.getDeviceInfo());
+            if (foundRegistrationData != null) {
+                log.info("Found registration data by device info.");
                 if (foundRegistrationData.getAccounts().size() == 1)
                     log.info("There is only one account bound to this registration data.");
                 else
                     log.info("There are more than one account bound to this registration data.");
-                return UBoatStatus.SIM_ALREADY_USED;
+                return new UBoatResponse(UBoatStatus.DEVICE_INFO_ALREADY_USED, true);
             }
+
+            for (var simCard : registrationData.getMobileNumbersInfoList()) {
+                SimCard extractedSimCard = simCardRepository.findFirstByNumberAndDisplayNameAndCountryIso(simCard.getNumber(), simCard.getDisplayName(), simCard.getCountryIso());
+                if (extractedSimCard != null) {
+                    log.info("Found registration data by simCard.");
+                    foundRegistrationData = extractedSimCard.getRegistrationData();
+                    if (foundRegistrationData.getAccounts().size() == 1)
+                        log.info("There is only one account bound to this registration data.");
+                    else
+                        log.info("There are more than one account bound to this registration data.");
+                    return new UBoatResponse(UBoatStatus.SIM_ALREADY_USED, true);
+                }
+            }
+            log.info("Couldn't find any device by the given registration data.");
+            return new UBoatResponse(UBoatStatus.DEVICE_NOT_REGISTERED, false);
+        } catch (Exception e) {
+            log.error("An exception occurred during checkDeviceRegistration workflow.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
-        log.info("Couldn't find any device by the given registration data.");
-        return UBoatStatus.DEVICE_NOT_REGISTERED;
     }
 }

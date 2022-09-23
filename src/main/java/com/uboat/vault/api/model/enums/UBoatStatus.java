@@ -20,7 +20,7 @@ public enum UBoatStatus {
 
     // /api/checkPhoneNumber
     PHONE_NUMBER_ACCEPTED(1, "Phone number was not found in database", "Phone number is not used."),
-    PHONE_NUMBER_ALREADY_USED(1, "Phone number found in database", "Phone number is already used."),
+    PHONE_NUMBER_ALREADY_USED(2, "Phone number found in database", "Phone number is already used."),
     PHONE_NUMBER_INVALID_FORMAT(3, "Phone number has invalid format.", "Phone number not acceptable."),
 
 

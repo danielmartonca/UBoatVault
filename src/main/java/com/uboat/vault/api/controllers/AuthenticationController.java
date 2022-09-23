@@ -41,12 +41,13 @@ public class AuthenticationController {
     })
     @PostMapping(value = "/checkDeviceRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UBoatResponse> checkDeviceRegistration(@RequestBody RequestRegistrationData registrationData) {
-        var status = entityService.checkDeviceRegistration(registrationData);
+        var uBoatResponse = entityService.checkDeviceRegistration(registrationData);
 
-        if (status != UBoatStatus.DEVICE_NOT_REGISTERED)
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new UBoatResponse(status, true));
-
-        return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(status, false));
+        return switch (uBoatResponse.getHeader()) {
+            case DEVICE_INFO_ALREADY_USED, SIM_ALREADY_USED, DEVICE_NOT_REGISTERED ->
+                    ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
     }
 
     @Operation(summary = "Request a registration token for the account given in the request body. " +
