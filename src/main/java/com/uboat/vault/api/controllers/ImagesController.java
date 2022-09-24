@@ -34,13 +34,13 @@ public class ImagesController {
 
     @GetMapping(value = "/getProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody
-    ResponseEntity<UBoatResponse> getProfilePicture(@RequestHeader(value = "Authorization") String authorizationHeader) {
+    ResponseEntity<byte[]> getProfilePicture(@RequestHeader(value = "Authorization") String authorizationHeader) {
         var uBoatResponse = imagesService.getProfilePicture(authorizationHeader);
 
         if (uBoatResponse.getHeader() == UBoatStatus.PROFILE_PICTURE_RETRIEVED)
-            return ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            return ResponseEntity.status(HttpStatus.OK).body((byte[]) uBoatResponse.getBody());
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 
 
@@ -99,7 +99,7 @@ public class ImagesController {
     @GetMapping(value = "/getBoatImagesIdentifiers")
     public @ResponseBody
     ResponseEntity<UBoatResponse> getBoatImagesIdentifiers(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam(required = false) String sailorId) {
-        var uBoatResponse = imagesService.getBoatImagesIdentifiers(authorizationHeader,sailorId);
+        var uBoatResponse = imagesService.getBoatImagesIdentifiers(authorizationHeader, sailorId);
 
         return switch (uBoatResponse.getHeader()) {
             case BOAT_IMAGES_HASHES_EMPTY, BOAT_IMAGES_HASHES_RETRIEVED ->
