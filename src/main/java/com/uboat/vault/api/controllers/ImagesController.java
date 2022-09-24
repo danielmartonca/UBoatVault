@@ -98,8 +98,8 @@ public class ImagesController {
     })
     @GetMapping(value = "/getBoatImagesIdentifiers")
     public @ResponseBody
-    ResponseEntity<UBoatResponse> getBoatImagesIdentifiers(@RequestParam String sailorId) {
-        var uBoatResponse = imagesService.getBoatImagesIdentifiers(sailorId);
+    ResponseEntity<UBoatResponse> getBoatImagesIdentifiers(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam(required = false) String sailorId) {
+        var uBoatResponse = imagesService.getBoatImagesIdentifiers(authorizationHeader,sailorId);
 
         return switch (uBoatResponse.getHeader()) {
             case BOAT_IMAGES_HASHES_EMPTY, BOAT_IMAGES_HASHES_RETRIEVED ->

@@ -160,8 +160,7 @@ public class ImagesService {
         }
     }
 
-    @Transactional //has to be transactional due to blob images
-    public UBoatResponse getBoatImagesIdentifiers(String sailorId) {
+    private UBoatResponse clientGetBoatImagesIdentifiers(String sailorId) {
         try {
             //cant be null because the operation is already done in the filter before
             var sailor = entityService.findSailorBySailorId(sailorId);
@@ -175,9 +174,34 @@ public class ImagesService {
 
             return new UBoatResponse(UBoatStatus.BOAT_IMAGES_HASHES_RETRIEVED, list);
         } catch (Exception e) {
-            log.error("An exception occurred while retrieving boat images hashes.", e);
+            log.error("An exception occurred while retrieving boat images hashes for client.", e);
             return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
         }
+    }
+
+    private UBoatResponse sailorGetBoatImagesIdentifiers(String authorizationHeader) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByUsername(jwtData.username());
+            var sailor = entityService.findSailorByCredentials(account);
+
+            var boatImages = sailor.getBoat().getBoatImages();
+
+            var list = boatImages.stream().map(BoatImage::getHash).toList();
+            if (list.isEmpty()) return new UBoatResponse(UBoatStatus.BOAT_IMAGES_HASHES_EMPTY, list);
+
+            return new UBoatResponse(UBoatStatus.BOAT_IMAGES_HASHES_RETRIEVED, list);
+        } catch (Exception e) {
+            log.error("An exception occurred while retrieving boat images hashes for sailor.", e);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
+        }
+    }
+
+    @Transactional //has to be transactional due to blob images
+    public UBoatResponse getBoatImagesIdentifiers(String authorizationHeader, String sailorId) {
+        if (sailorId == null) return sailorGetBoatImagesIdentifiers(authorizationHeader);
+        return clientGetBoatImagesIdentifiers(sailorId);
     }
 
     @Transactional //has to be transactional due to blob images
