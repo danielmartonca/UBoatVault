@@ -144,7 +144,7 @@ public class ImagesService {
             var hash = HashUtils.calculateHash(imageBytes);
 
             if (boatImages.stream().map(BoatImage::getHash).anyMatch(hash::equals))
-                return new UBoatResponse(UBoatStatus.BOAT_IMAGE_ALREADY_EXISTING, true);
+                return new UBoatResponse(UBoatStatus.BOAT_IMAGE_ALREADY_EXISTING);
 
             var newBoatImage = new BoatImage(contentType, imageBytes, boat);
             boatImages.add(newBoatImage);
@@ -153,10 +153,10 @@ public class ImagesService {
             return new UBoatResponse(UBoatStatus.BOAT_IMAGE_UPLOADED, newBoatImage.getHash());
         } catch (UBoatJwtException e) {
             log.error("Exception occurred during Authorization Header/JWT processing.", e);
-            return new UBoatResponse(e.getStatus(), false);
+            return new UBoatResponse(e.getStatus());
         } catch (Exception e) {
             log.error("An exception occurred while uploading a boat image", e);
-            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
+            return new UBoatResponse(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
 

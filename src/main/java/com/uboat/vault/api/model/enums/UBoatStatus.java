@@ -111,7 +111,7 @@ public enum UBoatStatus {
     // /images/uploadProfileImage
 
     PROFILE_IMAGE_UPLOADED(1, "Profile image has been uploaded successfully.", "Profile picture updated"),
-    PROFILE_IMAGE_ALREADY_EXISTING(1, "Boat image has been uploaded successfully.", "Profile picture updated"),
+    PROFILE_IMAGE_ALREADY_EXISTING(0, "Boat image already existed.", "Profile picture updated"),
 
 
     // /images/uploadBoatImage
