@@ -180,6 +180,7 @@ public class AccountsService {
 
             for (var card : creditCards)
                 if (card.equalsRequestCard(creditCard)) {
+
                     creditCards.remove(card);
                     accountsRepository.save(account);
 

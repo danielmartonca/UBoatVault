@@ -64,7 +64,7 @@ public class Account {
 
     @Getter
     @Setter
-    @OneToMany(mappedBy = "account", cascade = {CascadeType.REMOVE, CascadeType.MERGE})
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CreditCard> creditCards;
 
     public Account(RequestAccount requestAccount) {
