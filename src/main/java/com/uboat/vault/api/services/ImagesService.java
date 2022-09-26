@@ -87,7 +87,7 @@ public class ImagesService {
             //can't be null because it is initialized when creating account
             var image = account.getAccountDetails().getImage();
             var hash = HashUtils.calculateHash(imageBytes);
-            if (image.getHash().equals(hash)) {
+            if (image.getHash() != null && image.getHash().equals(hash)) {
                 log.info("Profile image is already bound to the account.");
                 return new UBoatResponse(UBoatStatus.PROFILE_IMAGE_ALREADY_EXISTING, true);
             }

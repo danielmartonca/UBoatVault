@@ -107,7 +107,6 @@ public class LoggingUtils {
             var jsonObject = new JSONObject(string);
             return jsonObject.toString(4);
         } catch (JSONException e) {
-            log.error("Failed to pretty print object of type {}.", String.class);
             return string;
         }
     }

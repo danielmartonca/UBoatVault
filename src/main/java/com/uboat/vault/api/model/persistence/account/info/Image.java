@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,9 +26,10 @@ public class Image {
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
-    @Lob
     @Getter
-    @Basic(fetch = FetchType.EAGER)
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Type(type = "org.hibernate.type.ImageType")
     private byte[] bytes;
     @Getter
     private String hash;
