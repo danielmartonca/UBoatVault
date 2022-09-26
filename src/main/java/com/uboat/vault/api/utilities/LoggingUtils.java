@@ -27,10 +27,11 @@ public class LoggingUtils {
 
     private static String colorsBasedData(String suffix, HttpMethod requestMethod, String api, String queryParams, String body) {
         if (body == null || body.isEmpty()) body = " no body";
-        else if (body.startsWith("�PNG")) body = "\n[ bytes... ]";
+        else if (body.startsWith("�PNG")) body = "\n[ 'bytes...' ]";
         else
             body = '\n' + body;
-        if (body.contains("bytes")) body = body.replace("(\"bytes\":\".*\")", "\"bytes:\"[ bytes... ]");
+
+        if (body.contains("bytes")) body = body.replaceAll("(\"bytes\":\\s\".+\",)", "\"bytes:\"['bytes...']");
 
         if (queryParams != null && !queryParams.isBlank()) api = api + "?" + queryParams;
 

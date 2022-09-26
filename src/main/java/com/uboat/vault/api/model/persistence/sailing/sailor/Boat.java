@@ -56,6 +56,7 @@ public class Boat {
     @OneToOne(mappedBy = "boat", cascade = CascadeType.MERGE)
     private Sailor sailor;
 
+    @JsonIgnore
     @Getter
     @Setter
     @OneToMany(mappedBy = "boat", cascade = CascadeType.ALL, orphanRemoval = true)
