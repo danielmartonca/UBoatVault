@@ -16,6 +16,11 @@
       "description": "Describes how many sailors can be retrieved when requesting a new journey. The closest [max-active-sailors] will be retrieved."
     },
     {
+      "name": "uboat.apis-body-not-logged",
+      "type": "java.util.Arrays",
+      "description": "List of APIs for which the body will not be logged. Most useful when APIs return bytes."
+    },
+    {
       "name": "uboat.hs256_key",
       "type": "java.lang.String",
       "description": "Private key used in the creation of JWT."

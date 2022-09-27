@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
 
 @Component
 public class LoggingUtils {
@@ -19,7 +22,13 @@ public class LoggingUtils {
         LoggingUtils.PRETTY_PRINT_LOGS = prettyPrintLogs;
     }
 
+    @Value("${uboat.apis-body-not-logged}")
+    private void setApisNotLogged(String[] apisBodyNotLogged) {
+        LoggingUtils.APIS_NOT_LOGGED = apisBodyNotLogged;
+    }
+
     private static String PRETTY_PRINT_LOGS;
+    private static String[] APIS_NOT_LOGGED;
 
     public static String colorString(String string, TextColor color) {
         return color.getColorCode() + string + TextColor.RESET.getColorCode();
@@ -31,7 +40,12 @@ public class LoggingUtils {
         else
             body = '\n' + body;
 
-        if (body.contains("bytes")) body = body.replaceAll("(\"bytes\":\\s\".+\",)", "\"bytes:\"['bytes...']");
+        String finalApi = api;
+        if (Arrays.stream(LoggingUtils.APIS_NOT_LOGGED).anyMatch(notLoggedApi -> notLoggedApi.contains(finalApi)))
+            body = "\nbody logging ignored";
+
+        if (body.contains("bytes"))
+            body = body.replaceAll("(\"bytes\":\\s\".+\",)", "\"bytes:\"['bytes...']");
 
         if (queryParams != null && !queryParams.isBlank()) api = api + "?" + queryParams;
 
@@ -57,14 +71,14 @@ public class LoggingUtils {
         log.info(colorsBasedData(suffix, requestMethod, api, queryParams, body));
     }
 
-    public static void logResponse(HttpMethod requestMethod, String api, String queryParams, String body) {
+    public static void logResponse(HttpMethod requestMethod, int status, String api, String queryParams, String body) {
         if (api.contains("swagger") || api.contains("api-docs"))
             body = "";
 
         if (PRETTY_PRINT_LOGS != null && PRETTY_PRINT_LOGS.equalsIgnoreCase("true"))
             body = toStringFormatted(body);
 
-        String suffix = "       RESPONSE:";
+        String suffix = "       RESPONSE: status code <" + HttpStatus.valueOf(status) + ">";
         log.info(colorsBasedData(suffix, requestMethod, api, queryParams, body));
     }
 

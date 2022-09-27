@@ -32,3 +32,7 @@ spring:
 
 uboat:
   pretty-print-logs: false
+  apis-body-not-logged:
+    /images/getDefaultProfilePicture,
+    /images/getProfilePicture,
+    /images/getBoatImage

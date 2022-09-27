@@ -35,7 +35,7 @@ public class LogResponseFilter extends OncePerRequestFilter {
         // Get Cache
         byte[] responseBody = resp.getContentAsByteArray();
 
-        LoggingUtils.logResponse(HttpMethod.valueOf(request.getMethod()), request.getRequestURI(), request.getQueryString(), new String(responseBody, StandardCharsets.UTF_8));
+        LoggingUtils.logResponse(HttpMethod.valueOf(request.getMethod()),response.getStatus(), request.getRequestURI(), request.getQueryString(), new String(responseBody, StandardCharsets.UTF_8));
 
         resp.copyBodyToResponse();
     }
