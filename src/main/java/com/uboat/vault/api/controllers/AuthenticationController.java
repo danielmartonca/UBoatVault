@@ -123,10 +123,7 @@ public class AuthenticationController {
         var jwt = split[1];
         var isValid = jwtService.validateJsonWebToken(jwt);
 
-        if (!isValid)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new UBoatResponse(UBoatStatus.JWT_INVALID, false));
-
-        return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(UBoatStatus.JWT_VALID, true));
+        return ResponseEntity.status(HttpStatus.OK).body(new UBoatResponse(UBoatStatus.JWT_VALID, isValid));
     }
 
     @Operation(summary = "Login into UBoat with the given credentials and generate a new JWT. " +
