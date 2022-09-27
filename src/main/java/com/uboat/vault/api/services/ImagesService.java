@@ -144,7 +144,7 @@ public class ImagesService {
             var hash = HashUtils.calculateHash(imageBytes);
 
             if (boatImages.stream().map(BoatImage::getHash).anyMatch(hash::equals))
-                return new UBoatResponse(UBoatStatus.BOAT_IMAGE_ALREADY_EXISTING);
+                return new UBoatResponse(UBoatStatus.BOAT_IMAGE_ALREADY_EXISTING, boatImages.stream().filter(image -> image.getHash().equals(hash)).findFirst().orElseThrow().getHash());
 
             var newBoatImage = new BoatImage(contentType, imageBytes, boat);
             boatImages.add(newBoatImage);

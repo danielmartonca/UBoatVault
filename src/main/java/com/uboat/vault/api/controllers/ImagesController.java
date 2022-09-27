@@ -70,7 +70,7 @@ public class ImagesController {
 
         return switch (uBoatResponse.getHeader()) {
             case BOAT_IMAGE_UPLOADED, BOAT_IMAGE_ALREADY_EXISTING ->
-                    ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+                    ResponseEntity.status(HttpStatus.CREATED).body(uBoatResponse);
             case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
                     ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
