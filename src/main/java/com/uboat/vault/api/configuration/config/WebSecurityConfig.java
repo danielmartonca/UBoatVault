@@ -1,8 +1,8 @@
 package com.uboat.vault.api.configuration.config;
 
+import com.uboat.vault.api.business.services.JwtUserDetailsService;
 import com.uboat.vault.api.configuration.filter.JwtAuthenticationEntryPoint;
 import com.uboat.vault.api.configuration.filter.JwtRequestFilter;
-import com.uboat.vault.api.services.JwtUserDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,12 +49,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        log.warn("The fallowing urls are whitelisted for UBoat: {}", Arrays.stream(whitelist).map(Objects::toString).collect(Collectors.joining(", ")));
+        log.warn("The following urls are whitelisted for UBoat: {}", Arrays.stream(whitelist).map(Objects::toString).collect(Collectors.joining(", ")));
         http.csrf().disable()
                 .authorizeRequests()
                 .antMatchers(whitelist).permitAll()
-                .antMatchers(clientBlacklist).hasAuthority("SAILOR") //only SAILOR role can access apis in client blacklist
-                .antMatchers(sailorBlacklist).hasAuthority("CLIENT") //only CLIENT role can access apis in sailor blacklist
+                .antMatchers(clientBlacklist).hasAuthority("SAILOR") //only SAILOR authority can access apis in client blacklist
+                .antMatchers(sailorBlacklist).hasAuthority("CLIENT") //only CLIENT authority can access apis in sailor blacklist
                 .anyRequest().authenticated().and()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);

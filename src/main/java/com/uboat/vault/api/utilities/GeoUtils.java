@@ -1,17 +1,15 @@
 package com.uboat.vault.api.utilities;
 
-import com.uboat.vault.api.model.http.RequestLocationData;
+import com.uboat.vault.api.model.domain.sailing.LocationData;
+import com.uboat.vault.api.model.dto.LocationDataDTO;
 import com.uboat.vault.api.model.other.LatLng;
-import com.uboat.vault.api.model.persistence.sailing.LocationData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import static java.lang.Math.*;
 
+@Slf4j
 public class GeoUtils {
-    private static final Logger log = LoggerFactory.getLogger(GeoUtils.class);
-
-    public static LatLng getCoordinates(RequestLocationData locationData) {
+    public static LatLng getCoordinates(LocationDataDTO locationData) {
         try {
             double latitude = Double.parseDouble(locationData.getLatitude());
             double longitude = Double.parseDouble(locationData.getLongitude());
@@ -23,7 +21,7 @@ public class GeoUtils {
     }
 
     public static LatLng getCoordinates(LocationData locationData) {
-       return getCoordinates(new RequestLocationData(locationData));
+       return getCoordinates(new LocationDataDTO(locationData));
     }
 
     public static double distanceInMeters(LatLng x, LatLng y) {

@@ -2,8 +2,7 @@ package com.uboat.vault.api.utilities;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
@@ -14,9 +13,8 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 
 @Component
+@Slf4j
 public class LoggingUtils {
-    private static final Logger log = LoggerFactory.getLogger(LoggingUtils.class);
-
     @Value("${uboat.pretty-print-logs}")
     private void setPrettyPrintLogs(String prettyPrintLogs) {
         LoggingUtils.PRETTY_PRINT_LOGS = prettyPrintLogs;
@@ -55,6 +53,7 @@ public class LoggingUtils {
             case POST -> colorString(str, TextColor.PURPLE);
             case PUT -> colorString(str, TextColor.YELLOW);
             case DELETE -> colorString(str, TextColor.CYAN);
+            case PATCH -> colorString(str, TextColor.WHITE);
             default ->
                     colorString('[' + requestMethod.toString() + "]      " + api + suffix + body + "\n      HTTP METHOD NOT SUPPORTED BY REST API", TextColor.RED);
         };

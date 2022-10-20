@@ -1,7 +1,7 @@
 package com.uboat.vault.api.model.other;
 
-import com.uboat.vault.api.model.http.RequestAccount;
-import com.uboat.vault.api.model.persistence.account.Account;
+import com.uboat.vault.api.model.domain.account.Account;
+import com.uboat.vault.api.model.dto.AccountDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -12,7 +12,7 @@ public class Credentials {
     private final String username;
     private final String password;
 
-    private Credentials(RequestAccount account) {
+    private Credentials(AccountDTO account) {
         if (account.getPhoneNumber() != null)
             this.phoneNumber = account.getPhoneNumber().getPhoneNumber();
         else
@@ -44,7 +44,7 @@ public class Credentials {
         return new Credentials(account);
     }
 
-    public static Credentials fromRequest(RequestAccount account) {
+    public static Credentials fromRequest(AccountDTO account) {
         return new Credentials(account);
     }
 }

@@ -1,8 +1,8 @@
 package com.uboat.vault.api.configuration.filter;
 
+import com.uboat.vault.api.business.services.JwtService;
+import com.uboat.vault.api.business.services.JwtUserDetailsService;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
-import com.uboat.vault.api.services.JwtService;
-import com.uboat.vault.api.services.JwtUserDetailsService;
 import com.uboat.vault.api.utilities.LoggingUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
