@@ -1,0 +1,38 @@
+version: "3.9"
+
+networks:
+  uboat_devops:
+    name: uboat_devops
+
+volumes:
+  jenkins-data:
+    external: true
+    name: jenkins-data
+  sonarqube-data:
+  sock:
+
+services:
+  jenkins-with-docker:
+    container_name: "jenkins-with-docker"
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+    image: jenkins/jdk17-docker
+    volumes:
+      - "jenkins-data:/var/jenkins_home"
+      - "sock:/var/run/docker.sock"
+    networks:
+      - uboat_devops
+
+  sonarqube:
+    container_name: "sonarqube"
+    ports:
+      - "9000:9000"
+    expose:
+      - "9000"
+    image: sonarqube:9.6.1-community
+    volumes:
+      - "sonarqube-data:/var/sonarqube_home"
+    networks:
+      - uboat_devops

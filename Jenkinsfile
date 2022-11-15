@@ -66,26 +66,26 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                withCredentials([string(credentialsId: 'heroku-token', variable: 'authToken')]) {
-                    sh 'heroku container:login'
-                    sh 'heroku git:remote -a uboat-vault'
-                    sh 'heroku container:push web'
-                    sh 'heroku container:release web'
-                    echo 'Deployed Docker container on Heroku successfully. Testing if app is running...'
-                }
-            }
-        }
+//        stage('Deploy') {
+//            steps {
+//                withCredentials([string(credentialsId: 'heroku-token', variable: 'authToken')]) {
+//                    sh 'heroku container:login'
+//                    sh 'heroku git:remote -a uboat-vault'
+//                    sh 'heroku container:push web'
+//                    sh 'heroku container:release web'
+//                    echo 'Deployed Docker container on Heroku successfully. Testing if app is running...'
+//                }
+//            }
+//        }
 
-        stage('Test if Vault is running') {
-            steps {
-                script {
-                    final String response = sh(script: "curl -s $uboatUrl/api/isVaultActive", returnStdout: true).trim()
-                    echo response
-                }
-            }
-        }
+//        stage('Test if Vault is running') {
+//            steps {
+//                script {
+//                    final String response = sh(script: "curl -s $uboatUrl/api/isVaultActive", returnStdout: true).trim()
+//                    echo response
+//                }
+//            }
+//        }
     }
 
     post {
