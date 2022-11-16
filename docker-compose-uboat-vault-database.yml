@@ -1,0 +1,24 @@
+version: "3.9"
+
+networks:
+  uboat_vault:
+    name: uboat_vault
+
+volumes:
+  vault_data:
+
+services:
+  database:
+    container_name: "uboat-vault-db-postgresql"
+    environment:
+      POSTGRES_USER: uboat
+      POSTGRES_PASSWORD: uboat
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+    image: postgres:latest
+    volumes:
+      - "vault_data:/var/uboat_vault_data_postgresql"
+    networks:
+      - uboat_vault
