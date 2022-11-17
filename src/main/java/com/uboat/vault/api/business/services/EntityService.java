@@ -12,6 +12,7 @@ import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.persistence.repostiories.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,14 +26,29 @@ public class EntityService {
     private final SailorsRepository sailorsRepository;
     private final PhoneNumbersRepository phoneNumbersRepository;
 
+    public Account findAccountByJwtData(JwtService.Data jwtData) {
+        var account = findAccountByUsername(jwtData.username());
+        if (account == null) account = findAccountByPhoneNumber(jwtData.phoneNumber());
+        return account;
+    }
 
     public Account findAccountByUsername(String username) {
         Account foundAccount;
-        if ((username == null || username.isBlank()))
-            throw new RuntimeException("Both phone number and username are null/empty while retrieving account by credentials.");
+        if (Strings.isEmpty(username))
+            throw new RuntimeException("Username is null while trying to retrieve account.");
 
         foundAccount = accountsRepository.findFirstByUsername(username);
         log.debug("Account found by username.");
+        return foundAccount;
+    }
+
+    public Account findAccountByPhoneNumber(String phoneNumber) {
+        Account foundAccount;
+        if (Strings.isEmpty(phoneNumber))
+            throw new RuntimeException("Phone number is null/empty while trying to retrieve account.");
+
+        foundAccount = accountsRepository.findFirstByPhoneNumber_PhoneNumber(phoneNumber);
+        log.debug("Account found by phone number.");
         return foundAccount;
     }
 
@@ -135,7 +151,7 @@ public class EntityService {
     }
 
     public Sailor findSailorByJwt(JwtService.Data jwtData) {
-        var account = findAccountByUsername(jwtData.username());
+        var account = findAccountByJwtData(jwtData);
         //can't be null due to API being accessible only by sailors
         return sailorsRepository.findFirstByAccountId(account.getId());
     }

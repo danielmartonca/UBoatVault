@@ -84,7 +84,7 @@ public class JourneyService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
 
             List<Journey> foundJourneys = journeyRepository.findAllByClientAccount_IdAndStatus(account.getId(), Stage.FINISHED);
             if (foundJourneys == null || foundJourneys.isEmpty()) {
@@ -393,7 +393,7 @@ public class JourneyService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var clientAccount = entityService.findAccountByUsername(jwtData.username());
+            var clientAccount = entityService.findAccountByJwtData(jwtData);
 
             var sailor = sailorsRepository.findSailorByIdAndLookingForClientsIsTrue(sailorId);
             //if the sailor could not be found, or he has not updated his status for more than MAX_ACTIVE_SECONDS

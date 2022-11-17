@@ -55,7 +55,7 @@ public class ImagesService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
 
             //can't be null because it is initialized when creating account
             var image = account.getAccountDetails().getImage();
@@ -72,7 +72,7 @@ public class ImagesService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
 
             //can't be null because it is initialized when creating account
             var image = account.getAccountDetails().getImage();
@@ -126,7 +126,7 @@ public class ImagesService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
             var sailor = entityService.findSailorByCredentials(account);
             var boat = sailor.getBoat();
 
@@ -173,7 +173,7 @@ public class ImagesService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
             var sailor = entityService.findSailorByCredentials(account);
 
             var boatImages = sailor.getBoat().getBoatImages();
@@ -199,7 +199,7 @@ public class ImagesService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
 
             //sailors are not allowed to access other sailors images
             if (account.getType() == UserType.SAILOR) {
@@ -232,7 +232,7 @@ public class ImagesService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
             var sailor = entityService.findSailorByCredentials(account);
             var boat = sailor.getBoat();
             var sailorImages = boat.getBoatImages();

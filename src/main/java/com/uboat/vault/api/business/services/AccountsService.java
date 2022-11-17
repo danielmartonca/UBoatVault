@@ -25,7 +25,6 @@ public class AccountsService {
     private final SailorsRepository sailorsRepository;
 
 
-
     /**
      * This method returns full account information for the account in the request that is missing phone number/username.
      * If the account doesn't exist or the JWT is invalid/not matching the account information, a client error message is returned.
@@ -63,8 +62,8 @@ public class AccountsService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
             log.debug("JWT data extracted.");
+            var account = entityService.findAccountByJwtData(jwtData);
 
             //accountDetails can't be null due to its initialization during registration
             var accountDetails = new AccountDetailsDTO(account);
@@ -84,7 +83,7 @@ public class AccountsService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
 
             //accountDetails can't be null due to its initialization during registration
             var accountDetails = account.getAccountDetails();
@@ -107,7 +106,7 @@ public class AccountsService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
 
             //cards can't be null due to its initialization during registration
             var creditCards = account.getCreditCards().stream().map(CreditCardDTO::new).collect(Collectors.toSet());
@@ -128,7 +127,7 @@ public class AccountsService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
 
             var validationStatus = CreditCard.validate(newCreditCard);
             return switch (validationStatus) {
@@ -165,7 +164,7 @@ public class AccountsService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
 
             //cant be null because it is created during registration
             var creditCards = account.getCreditCards();
@@ -202,7 +201,7 @@ public class AccountsService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
 
             //cant be null because the API is accessible only to sailors which create the sailor upon registration
             var sailor = sailorsRepository.findFirstByAccountId(account.getId());
@@ -226,7 +225,7 @@ public class AccountsService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByUsername(jwtData.username());
+            var account = entityService.findAccountByJwtData(jwtData);
 
             //cant be null because the API is accessible only to sailors which create the sailor upon registration
             var sailor = sailorsRepository.findFirstByAccountId(account.getId());
