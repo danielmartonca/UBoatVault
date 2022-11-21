@@ -12,6 +12,7 @@ import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.persistence.repostiories.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,13 +33,35 @@ public class AuthenticationService {
     private final PhoneNumbersRepository phoneNumbersRepository;
     private final SailorsRepository sailorsRepository;
 
-    private final Pattern phoneNumberPattern = Pattern.compile("^\\s*(?:\\+?(\\d{1,3}))?[-. (]*(\\d{3})[-. )]*(\\d{3})[-. ]*(\\d{4})(?: *x(\\d+))?\\s*$");
-    private final Pattern usernamePattern = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_.-]*$");
-//    private final Pattern passwordPattern = Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$");
+    @Value("${uboat.regex.phone}")
+    private String phoneNumberPattern;
+    @Value("${uboat.regex.username}")
+    private String usernamePattern;
+    @Value("${uboat.regex.email}")
+    private String emailPattern;
 
+//    @Value("${uboat.regex.password}")
+//    private String passwordPattern;
+
+    public UBoatDTO checkEmail(String email) {
+        var matcher = Pattern.compile(emailPattern).matcher(email);
+        if (!matcher.matches()) {
+            log.info("Email doesn't match pattern.");
+            return new UBoatDTO(UBoatStatus.EMAIL_INVALID_FORMAT, null);
+        }
+
+        var isAlreadyUsed = entityService.isEmailUsed(email);
+        if (isAlreadyUsed) {
+            log.info("Email '" + email + "' is already used.");
+            return new UBoatDTO(UBoatStatus.EMAIL_ALREADY_USED, true);
+        }
+
+        log.info("Email '" + email + "' is not used.");
+        return new UBoatDTO(UBoatStatus.EMAIL_ACCEPTED, false);
+    }
 
     public UBoatDTO checkUsername(String username) {
-        var matcher = usernamePattern.matcher(username);
+        var matcher = Pattern.compile(usernamePattern).matcher(username);
         if (!matcher.matches()) {
             log.info("Username doesn't match pattern.");
             return new UBoatDTO(UBoatStatus.USERNAME_INVALID_FORMAT, null);
@@ -54,7 +77,7 @@ public class AuthenticationService {
     }
 
     public UBoatDTO checkPhoneNumber(String phoneNumber, String dialCode, String isoCode) {
-        var matcher = phoneNumberPattern.matcher(phoneNumber);
+        var matcher = Pattern.compile(phoneNumberPattern).matcher(phoneNumber);
         if (!matcher.matches()) {
             log.warn("Phone number doesn't match pattern.");
             return new UBoatDTO(UBoatStatus.PHONE_NUMBER_INVALID_FORMAT, null);
@@ -190,8 +213,7 @@ public class AuthenticationService {
 
             var registrationData = registrationDataRepository.findFirstByDeviceInfo(accountDTO.getRegistrationData().getDeviceInfo());
 
-            if (registrationData == null)
-                registrationData = new RegistrationData(accountDTO.getRegistrationData());
+            if (registrationData == null) registrationData = new RegistrationData(accountDTO.getRegistrationData());
             else
                 log.warn("Registration data is already used by another account. There will be two accounts bound to this device.");
             account.setRegistrationData(registrationData);
@@ -201,8 +223,7 @@ public class AuthenticationService {
             account = accountsRepository.save(account);
             pendingAccountsRepository.delete(pendingAccount);
 
-            if (account.getType() == UserType.SAILOR)
-                createSailor(account);
+            if (account.getType() == UserType.SAILOR) createSailor(account);
 
             log.info("Registration successful. Returning JWT.");
             return new UBoatDTO(UBoatStatus.REGISTRATION_SUCCESSFUL, jsonWebToken);
@@ -222,13 +243,11 @@ public class AuthenticationService {
             }
 
             for (var foundAccount : foundAccountsList) {
-                if (foundAccount.getUsername().equals(account.getUsername()) ||
-                        foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
+                if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
                     log.info("Credentials matched. Found account.");
                     var jwt = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
                     return new UBoatDTO(UBoatStatus.LOGIN_SUCCESSFUL, jwt);
-                } else
-                    log.warn("An account with given password found but neither username or phone number match.");
+                } else log.warn("An account with given password found but neither username or phone number match.");
             }
             log.warn("Invalid credentials. Login failed");
             return new UBoatDTO(UBoatStatus.INVALID_CREDENTIALS);

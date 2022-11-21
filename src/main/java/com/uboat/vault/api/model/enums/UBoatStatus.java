@@ -12,13 +12,19 @@ public enum UBoatStatus {
     ACCOUNT_NOT_FOUND(-2, "The credentials in the request don't match to any account from the database.", CommonStatus.UNEXPECTED_ERROR),
     INVALID_AUTHORIZATION_HEADER(-3, "Couldn't complete action because the authorization header format is invalid", CommonStatus.UNEXPECTED_ERROR),
     CREDENTIALS_NOT_MATCHING_JWT(-4, "Couldn't complete action because the credentials of the request are not matching the JWT token.", CommonStatus.UNEXPECTED_ERROR),
-    // /api/checkUsername
+
+    // /api/email
+    EMAIL_ACCEPTED(1, "Email not found in database", "Email is not used."),
+    EMAIL_ALREADY_USED(2, "Email found in database", "Email already used."),
+    EMAIL_INVALID_FORMAT(3, "Email has invalid format.", "Email not acceptable."),
+
+    // /api/username
     USERNAME_ACCEPTED(1, "Username not found in database", "Username is not used."),
     USERNAME_ALREADY_USED(2, "Username found in database", "Username is already used."),
     USERNAME_INVALID_FORMAT(3, "Username has invalid format.", "Username not acceptable."),
 
 
-    // /api/checkPhoneNumber
+    // /api/phoneNumber
     PHONE_NUMBER_ACCEPTED(1, "Phone number was not found in database", "Phone number is not used."),
     PHONE_NUMBER_ALREADY_USED(2, "Phone number found in database", "Phone number is already used."),
     PHONE_NUMBER_INVALID_FORMAT(3, "Phone number has invalid format.", "Phone number not acceptable."),

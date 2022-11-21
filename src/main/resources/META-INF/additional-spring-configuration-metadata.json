@@ -39,6 +39,26 @@
       "name": "sailor-blacklist",
       "type": "java.util.Arrays",
       "description": "List of ant patterns for which the UBoat Sailor does not have access."
+    },
+    {
+      "name": "uboat.regex.phone",
+      "type": "java.lang.String",
+      "description": "Regex for Phone number."
+    },
+    {
+      "name": "uboat.regex.username",
+      "type": "java.lang.String",
+      "description": "Regex for username."
+    },
+    {
+      "name": "uboat.regex.email",
+      "type": "java.lang.String",
+      "description": "Regex for emails."
+    },
+    {
+      "name": "uboat.regex.password",
+      "type": "java.lang.String",
+      "description": "Regex for passwords."
     }
   ]
 }

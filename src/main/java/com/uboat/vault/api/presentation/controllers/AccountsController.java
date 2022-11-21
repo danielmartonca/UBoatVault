@@ -20,29 +20,41 @@ public class AccountsController {
     private final AccountsService accountsService;
 
 
-    @Operation(summary = "Check if the username given as query parameter is already used.")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The username provided is not used.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "409", description = "The username provided is already used.", content = @Content(mediaType = "application/json"))})
-    @GetMapping(value = "/checkUsername")
-    public ResponseEntity<UBoatDTO> checkUsername(@RequestParam String username) {
-        var responseBody = authenticationService.checkUsername(username);
+    @Operation(summary = "Check if the email given as query parameter is already used.")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The email provided is not used.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "409", description = "The username provided is already used.", content = @Content(mediaType = "application/json"))})
+    @GetMapping(value = "/email")
+    public ResponseEntity<UBoatDTO> email(@RequestParam String value) {
+        var responseBody = authenticationService.checkEmail(value);
 
         return switch (responseBody.getHeader()) {
-            case USERNAME_ACCEPTED, USERNAME_ALREADY_USED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
-            case USERNAME_INVALID_FORMAT -> ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(responseBody);
+            case EMAIL_ACCEPTED, EMAIL_ALREADY_USED, EMAIL_INVALID_FORMAT ->
+                    ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
+    }
+
+    @Operation(summary = "Check if the username given as query parameter is already used.")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The username provided is not used.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "409", description = "The username provided is already used.", content = @Content(mediaType = "application/json"))})
+    @GetMapping(value = "/username")
+    public ResponseEntity<UBoatDTO> username(@RequestParam String value) {
+        var responseBody = authenticationService.checkUsername(value);
+
+        return switch (responseBody.getHeader()) {
+            case USERNAME_ACCEPTED, USERNAME_ALREADY_USED, USERNAME_INVALID_FORMAT ->
+                    ResponseEntity.status(HttpStatus.OK).body(responseBody);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
         };
     }
 
     @Operation(summary = "Check if the phone number composed of actual phone number dial code and iso code given as query parameter is already used.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The phone number provided is not used.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "409", description = "The phone number provided is already used.", content = @Content(mediaType = "application/json"))})
-    @GetMapping(value = "/checkPhoneNumber")
-    public ResponseEntity<UBoatDTO> checkPhoneNumber(@RequestParam String phoneNumber, @RequestParam String dialCode, @RequestParam String isoCode) {
+    @GetMapping(value = "/phoneNumber")
+    public ResponseEntity<UBoatDTO> phoneNumber(@RequestParam String phoneNumber, @RequestParam String dialCode, @RequestParam String isoCode) {
         var responseBody = authenticationService.checkPhoneNumber(phoneNumber, dialCode, isoCode);
 
         return switch (responseBody.getHeader()) {
-            case PHONE_NUMBER_ACCEPTED, PHONE_NUMBER_ALREADY_USED ->
+            case PHONE_NUMBER_ACCEPTED, PHONE_NUMBER_ALREADY_USED, PHONE_NUMBER_INVALID_FORMAT ->
                     ResponseEntity.status(HttpStatus.OK).body(responseBody);
-            case PHONE_NUMBER_INVALID_FORMAT -> ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(responseBody);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
         };
     }

@@ -10,6 +10,7 @@ import com.uboat.vault.api.model.enums.UserType;
 import lombok.*;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
@@ -41,6 +42,12 @@ public class Account {
     @NotNull
     @Setter
     private String password;
+
+//    @NotNull
+    @Getter
+    @Setter
+    @Email(regexp = "[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
+    private String email;
 
     @NotNull
     @Getter

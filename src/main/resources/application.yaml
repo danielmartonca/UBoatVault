@@ -5,9 +5,9 @@ whitelist:
   /swagger-ui/**,
   /swagger-ui,
   /favicon.ico,
-  /api/isVaultActive,
-  /api/checkUsername,
-  /api/checkPhoneNumber,
+  /api/phoneNumber,
+  /api/email,
+  /api/username,
   /api/checkDeviceRegistration,
   /api/verifyJsonWebToken,
   /api/requestRegistration,
@@ -36,3 +36,12 @@ uboat:
     /images/getDefaultProfilePicture,
     /images/getProfilePicture,
     /images/getBoatImage
+  regex: # place regex on the second row
+    phone: >-
+      ^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$
+    email: >-
+      ^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$$
+    username: >-
+      ^[a-zA-z][a-zA-z0-9]*$
+    password: >-
+      ^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$

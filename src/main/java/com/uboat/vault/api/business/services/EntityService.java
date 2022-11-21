@@ -156,6 +156,14 @@ public class EntityService {
         return sailorsRepository.findFirstByAccountId(account.getId());
     }
 
+    public boolean isEmailUsed(String email) {
+        boolean emailExists = true;
+        Account account = accountsRepository.findFirstByEmail(email);
+        if (account == null) emailExists = false;
+        log.info(emailExists ? "Email found in the database." : "Email not found in the database.");
+        return emailExists;
+    }
+
     /**
      * Checks if an account exists with the given username in the database.
      */

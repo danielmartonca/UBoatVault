@@ -25,7 +25,7 @@ class AccountsControllerTest extends ControllerTest {
     @ValueSource(strings = {" !\"#$%&'()*+,/:;<=>?@[]\\^`{|}~"})
     void checkUsernameInvalidCharacters(String specialCharactersNotAllowed) {
         for (var ch : specialCharactersNotAllowed.toCharArray()) {
-            var response = controller.checkUsername("test" + ch + "test");
+            var response = controller.username("test" + ch + "test");
             var body = response.getBody();
 
             assertEquals(HttpStatus.NOT_ACCEPTABLE, response.getStatusCode(), "Invalid status code returned.");
