@@ -76,10 +76,18 @@ public enum UBoatStatus {
     MISSING_BEARER(2, "The request contains 'Authorization' header but is missing the 'Bearer' value.", CommonStatus.UNEXPECTED_ERROR),
     INVALID_BEARER_FORMAT(3, "The request contains the 'Bearer' header but the format is invalid.", CommonStatus.UNEXPECTED_ERROR),
 
+    // /api/registrationSms
+    REGISTRATION_SMS_SENT(1, "The SMS was sent to the phone number.", "Phone number has been confirmed"),
+
+    // /api/emailVerification
+    EMAIL_VERIFIED(1, "The email has been verified by the user.", "Email has been confirmed"),
+    EMAIL_NOT_VERIFIED(0, "The email has NOT been verified by the user.", null),
+    EMAIl_NOT_BOUND_TO_RTOKEN(3, "The RToken is not bound to the email given.", null),
+
     // /api/requestRegistration
-    ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED(1, "A new registration token was created.", "Registration requested successfully"),
+    ACCOUNT_ALREADY_PENDING_REGISTRATION(0, "The given credentials have already requested a registration. Pending registration token returned.", null),
+    ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED(1, "A new registration token was created.", null),
     ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS(2, "The account cannot be registered because the credentials already exist in the database.", "Credentials already used"),
-    ACCOUNT_ALREADY_PENDING_REGISTRATION(0, "The given credentials have already requested a registration. Pending registration token returned.", "Already requested registration"),
 
 
     // /api/register

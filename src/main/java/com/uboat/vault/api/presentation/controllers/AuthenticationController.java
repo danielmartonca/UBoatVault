@@ -4,9 +4,11 @@ import com.uboat.vault.api.business.services.AuthenticationService;
 import com.uboat.vault.api.business.services.EntityService;
 import com.uboat.vault.api.business.services.JwtService;
 import com.uboat.vault.api.model.dto.AccountDTO;
+import com.uboat.vault.api.model.dto.PhoneNumberDTO;
 import com.uboat.vault.api.model.dto.RegistrationDataDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.utilities.HeadersUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,6 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.constraints.NotNull;
 
 
 @RestController
@@ -41,6 +45,45 @@ public class AuthenticationController {
             case DEVICE_INFO_ALREADY_USED, SIM_ALREADY_USED, DEVICE_NOT_REGISTERED ->
                     ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
+    }
+
+    @Operation(summary = "Calls the required service to send a SMS with the random number generated and given by the caller.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The SMS was sent successfully to the phone number.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "An exception occurred registration SMS sending workflow.", content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping(value = "/registrationSms", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UBoatDTO> registrationSms(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam @NotNull Integer smsInteger, @RequestBody PhoneNumberDTO phoneNumberDTO) {
+        var responseIfInvalid = HeadersUtils.parseAuthorizationHeaderForRToken(authorizationHeader);
+        if (responseIfInvalid != null) return responseIfInvalid;
+
+        var uBoatResponse = authenticationService.sendRegistrationSMS(phoneNumberDTO, HeadersUtils.extractRToken(authorizationHeader), smsInteger);
+
+        return switch (uBoatResponse.getHeader()) {
+            case REGISTRATION_SMS_SENT -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case RTOKEN_NOT_FOUND_IN_DATABASE -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+        };
+    }
+
+    @Operation(summary = "Checks if the given email has been confirmed by the user or not.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The email has either been confirmed or not. Read response custom header for more details.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "500", description = "An exception occurred while checking if the email was confirmed.", content = @Content(mediaType = "application/json"))
+    })
+    @GetMapping(value = "/emailVerification", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UBoatDTO> emailVerification(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam @NotNull String email) {
+        var responseIfInvalid = HeadersUtils.parseAuthorizationHeaderForRToken(authorizationHeader);
+        if (responseIfInvalid != null) return responseIfInvalid;
+
+        var uBoatResponse = authenticationService.emailVerification(email, HeadersUtils.extractRToken(authorizationHeader));
+
+        return switch (uBoatResponse.getHeader()) {
+            case EMAIL_VERIFIED, EMAIL_NOT_VERIFIED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case RTOKEN_NOT_FOUND_IN_DATABASE, EMAIl_NOT_BOUND_TO_RTOKEN ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };
     }
 
@@ -77,19 +120,10 @@ public class AuthenticationController {
     })
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UBoatDTO> register(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody AccountDTO account) {
-        if (!authorizationHeader.contains("RToken "))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatDTO(UBoatStatus.MISSING_RTOKEN, false));
+        var responseIfInvalid = HeadersUtils.parseAuthorizationHeaderForRToken(authorizationHeader);
+        if (responseIfInvalid != null) return responseIfInvalid;
 
-        var split = authorizationHeader.split(" ");
-        if (split.length != 2)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatDTO(UBoatStatus.INVALID_RTOKEN_FORMAT, false));
-
-        var registrationToken = split[1];
-
-        if (registrationToken.isEmpty())
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatDTO(UBoatStatus.INVALID_RTOKEN_FORMAT, false));
-
-        var uBoatResponse = authenticationService.register(account, registrationToken);
+        var uBoatResponse = authenticationService.register(account, HeadersUtils.extractRToken(authorizationHeader));
         return switch (uBoatResponse.getHeader()) {
             case RTOKEN_NOT_FOUND_IN_DATABASE -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(uBoatResponse);
             case RTOKEN_AND_ACCOUNT_NOT_MATCHING, MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER ->

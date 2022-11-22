@@ -22,6 +22,8 @@ public class AccountDTO {
     @NotNull
     private String password;
 
+    private String email;
+
     private PhoneNumberDTO phoneNumber;
 
     private RegistrationDataDTO registrationData;

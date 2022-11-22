@@ -11,6 +11,8 @@ whitelist:
   /api/checkDeviceRegistration,
   /api/verifyJsonWebToken,
   /api/requestRegistration,
+  /api/registrationSms,
+  /api/emailVerification,
   /api/register,
   /api/login
 

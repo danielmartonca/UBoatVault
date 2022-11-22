@@ -31,10 +31,20 @@ public class PendingAccount {
     @Setter
     private String username;
 
-    @Getter
     @NotNull
+    @Getter
     @Setter
     private String password;
+
+    @NotNull
+    @Getter
+    @Setter
+    private String email;
+
+    @Getter
+    @Setter
+    private boolean isEmailVerified = false;
+
 
     @JsonIgnore
     @Getter
@@ -43,9 +53,16 @@ public class PendingAccount {
     @JoinColumn(name = "pending_token_id")
     private PendingToken pendingToken;
 
-    public PendingAccount(AccountDTO account) {
+    /**
+     * Creates a new account entity and a new pending token entity for the given account from the request
+     * @param account account information from the request
+     * @param registrationToken the RToken value of the new pending token
+     */
+    public PendingAccount(AccountDTO account, String registrationToken) {
         this.type = account.getType();
         this.username = account.getUsername();
         this.password = account.getPassword();
+        this.email = account.getEmail();
+        this.pendingToken = new PendingToken(registrationToken, this);
     }
 }

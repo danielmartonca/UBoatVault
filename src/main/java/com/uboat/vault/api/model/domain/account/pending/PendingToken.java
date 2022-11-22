@@ -33,7 +33,9 @@ public class PendingToken {
     @JoinColumn(name = "pending_account_id")
     private PendingAccount account;
 
-    public PendingToken(String tokenValue) {
+    public PendingToken(String tokenValue, PendingAccount pendingAccount) {
         this.tokenValue = tokenValue;
+        this.account = pendingAccount;
+        this.account.setPendingToken(this);
     }
 }

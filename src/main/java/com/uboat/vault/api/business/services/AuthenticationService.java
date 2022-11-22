@@ -1,11 +1,13 @@
 package com.uboat.vault.api.business.services;
 
+import com.uboat.vault.api.business.services.mail.verification.MailVerificationService;
+import com.uboat.vault.api.business.services.sms.verification.SmsVerificationService;
 import com.uboat.vault.api.model.domain.account.Account;
 import com.uboat.vault.api.model.domain.account.info.RegistrationData;
 import com.uboat.vault.api.model.domain.account.pending.PendingAccount;
-import com.uboat.vault.api.model.domain.account.pending.PendingToken;
 import com.uboat.vault.api.model.domain.sailing.sailor.Sailor;
 import com.uboat.vault.api.model.dto.AccountDTO;
+import com.uboat.vault.api.model.dto.PhoneNumberDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
@@ -32,6 +34,8 @@ public class AuthenticationService {
     private final PendingAccountsRepository pendingAccountsRepository;
     private final PhoneNumbersRepository phoneNumbersRepository;
     private final SailorsRepository sailorsRepository;
+    private final SmsVerificationService smsVerificationService;
+    private final MailVerificationService mailVerificationService;
 
     @Value("${uboat.regex.phone}")
     private String phoneNumberPattern;
@@ -121,21 +125,6 @@ public class AuthenticationService {
         return false;
     }
 
-    private boolean isPendingAccountAlreadyExisting(AccountDTO account) {
-        try {
-            PendingAccount foundAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
-            return foundAccount != null;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private String getPendingAccountToken(AccountDTO account) {
-        var pendingToken = pendingTokenRepository.findFirstByAccount_UsernameAndAccount_Password(account.getUsername(), account.getPassword());
-        if (pendingToken == null) return null;
-        return pendingToken.getTokenValue();
-    }
-
     @Transactional
     public String generateRegistrationToken() {
         String token;
@@ -158,9 +147,14 @@ public class AuthenticationService {
                 return new UBoatDTO(UBoatStatus.ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS);
             }
 
-            if (isPendingAccountAlreadyExisting(account)) {
-                log.warn("Pending account already exists returning the registrationToken.");
-                var pendingRegistrationToken = getPendingAccountToken(account);
+            var pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
+            if (pendingAccount != null) {
+                var pendingRegistrationToken = pendingAccount.getPendingToken().getTokenValue();
+                if (account.getEmail().equals(pendingAccount.getEmail())) {
+                    pendingAccount.setEmail(account.getEmail());
+                    pendingAccountsRepository.save(pendingAccount);
+                }
+                mailVerificationService.sendRegistrationEmailConfirmationMail(pendingAccount.getEmail(), pendingAccount.getUsername(), pendingRegistrationToken);
                 return new UBoatDTO(UBoatStatus.ACCOUNT_ALREADY_PENDING_REGISTRATION, pendingRegistrationToken);
             }
 
@@ -169,16 +163,51 @@ public class AuthenticationService {
             //creating new pendingAccount and its pendingToken
             var registrationToken = generateRegistrationToken();
 
-            var newPendingAccount = new PendingAccount(account);
-            var newPendingToken = new PendingToken(registrationToken);
-            newPendingAccount.setPendingToken(newPendingToken);
-            newPendingToken.setAccount(newPendingAccount);
-
+            var newPendingAccount = new PendingAccount(account, registrationToken);
+            mailVerificationService.sendRegistrationEmailConfirmationMail(newPendingAccount.getEmail(), newPendingAccount.getUsername(), registrationToken);
             pendingAccountsRepository.save(newPendingAccount);
+
             log.info("Created new pending registration account and registrationToken. Returning registrationToken '" + registrationToken + "'.");
             return new UBoatDTO(UBoatStatus.ACCOUNT_REQUESTED_REGISTRATION_ACCEPTED, registrationToken);
         } catch (Exception e) {
             log.error("Error while requesting new registration.", e);
+            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public UBoatDTO sendRegistrationSMS(PhoneNumberDTO phoneNumber, String rtoken, Integer smsInteger) {
+        try {
+            if (pendingTokenRepository.findFirstByTokenValue(rtoken) == null)
+                return new UBoatDTO(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE, false);
+
+            smsVerificationService.sendRegistrationSms(phoneNumber, smsInteger);
+            return new UBoatDTO(UBoatStatus.REGISTRATION_SMS_SENT, true);
+        } catch (Exception e) {
+            log.error("Error while sending the registration SMS.", e);
+            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public UBoatDTO emailVerification(String email, String registrationToken) {
+        try {
+            var pendingToken = pendingTokenRepository.findFirstByTokenValue(registrationToken);
+            if (pendingToken == null) {
+                log.warn("There is no matching pending registrationToken to the provided registrationToken: " + registrationToken);
+                return new UBoatDTO(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE, false);
+            }
+
+            var pendingAccount = pendingToken.getAccount();
+            if (!pendingAccount.getEmail().equals(email)) {
+                log.warn("Registration token exists but the email is not bounded to it.");
+                return new UBoatDTO(UBoatStatus.EMAIl_NOT_BOUND_TO_RTOKEN, false);
+            }
+
+            if (!pendingAccount.isEmailVerified())
+                return new UBoatDTO(UBoatStatus.EMAIL_NOT_VERIFIED, false);
+
+            return new UBoatDTO(UBoatStatus.EMAIL_VERIFIED, true);
+        } catch (Exception e) {
+            log.error("Error while checking if the email is verified.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
