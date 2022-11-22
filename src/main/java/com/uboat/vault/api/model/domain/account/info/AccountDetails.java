@@ -3,6 +3,7 @@ package com.uboat.vault.api.model.domain.account.info;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.business.services.AccountsService;
 import com.uboat.vault.api.model.domain.account.Account;
+import com.uboat.vault.api.model.dto.AccountDTO;
 import com.uboat.vault.api.model.dto.AccountDetailsDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -49,9 +50,10 @@ public class AccountDetails {
     private Image image;
 
 
-    public AccountDetails(Account account) {
-        this.account = account;
+    public AccountDetails(AccountDTO accountDTO, Account accountRef) {
+        this.account = accountRef;
         this.image = new Image(this);
+        this.email=accountDTO.getEmail();
     }
 
     //the next methods control the behaviour of updates. This way adding email verification will be easier in the future

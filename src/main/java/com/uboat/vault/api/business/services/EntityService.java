@@ -158,7 +158,7 @@ public class EntityService {
 
     public boolean isEmailUsed(String email) {
         boolean emailExists = true;
-        Account account = accountsRepository.findFirstByEmail(email);
+        Account account = accountsRepository.findFirstByAccountDetails_Email(email);
         if (account == null) emailExists = false;
         log.info(emailExists ? "Email found in the database." : "Email not found in the database.");
         return emailExists;

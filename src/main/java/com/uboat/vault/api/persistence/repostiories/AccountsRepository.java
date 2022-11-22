@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface AccountsRepository extends JpaRepository<Account, Long> {
-    Account findFirstByEmail(String email);
+    Account findFirstByAccountDetails_Email(String email);
 
     Account findFirstByUsername(String username);
 

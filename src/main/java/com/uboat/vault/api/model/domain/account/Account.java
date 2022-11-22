@@ -7,15 +7,14 @@ import com.uboat.vault.api.model.domain.account.info.PhoneNumber;
 import com.uboat.vault.api.model.domain.account.info.RegistrationData;
 import com.uboat.vault.api.model.dto.AccountDTO;
 import com.uboat.vault.api.model.enums.UserType;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
-
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "Accounts")
@@ -41,11 +40,6 @@ public class Account {
     @NotNull
     @Setter
     private String password;
-
-    @Getter
-    @Setter
-    @NotNull
-    private String email;
 
     @NotNull
     @Getter
@@ -78,14 +72,9 @@ public class Account {
         this.username = accountDTO.getUsername();
         this.password = accountDTO.getPassword();
 
-        //create a new phone number object based on request data
-        this.phoneNumber = new PhoneNumber(accountDTO.getPhoneNumber());
-        //bind it to the newly created account
-        this.phoneNumber.setAccount(this);
+        this.phoneNumber = new PhoneNumber(accountDTO.getPhoneNumber(),this);
 
-        this.email = accountDTO.getEmail();
-
-        this.accountDetails = new AccountDetails(this);
+        this.accountDetails = new AccountDetails(accountDTO,this);
 
         this.creditCards = new HashSet<>();
     }

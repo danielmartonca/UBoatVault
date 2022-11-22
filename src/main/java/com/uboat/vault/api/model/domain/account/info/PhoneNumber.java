@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.domain.account.Account;
 import com.uboat.vault.api.model.dto.PhoneNumberDTO;
 import com.uboat.vault.api.utilities.LoggingUtils;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.Objects;
 
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Entity
@@ -43,10 +43,11 @@ public class PhoneNumber {
     @OneToOne(mappedBy = "phoneNumber", cascade = CascadeType.MERGE)
     private Account account;
 
-    public PhoneNumber(PhoneNumberDTO phoneNumber) {
+    public PhoneNumber(PhoneNumberDTO phoneNumber,Account accountRef) {
         this.phoneNumber = phoneNumber.getPhoneNumber();
         this.dialCode = phoneNumber.getDialCode();
         this.isoCode = phoneNumber.getIsoCode();
+        this.account=accountRef;
     }
 
     @Override
