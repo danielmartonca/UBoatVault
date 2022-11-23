@@ -4,7 +4,7 @@ server:
     include-message: always
     whitelabel:
       enabled: false
-  address: 192.168.100.8
+  address: 192.168.0.192
 
 spring:
   datasource:

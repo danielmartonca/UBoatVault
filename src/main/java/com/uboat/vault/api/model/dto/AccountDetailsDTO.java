@@ -13,11 +13,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AccountDetailsDTO {
     private UserType type;
+    private String username;
+    private String phoneNumber;
     private String fullName;
     private String email;
 
+
     public AccountDetailsDTO(Account account) {
         this.type = account.getType();
+        this.username = account.getUsername();
+        this.phoneNumber = account.getPhoneNumber().getPhoneNumber();
 
         this.fullName = account.getAccountDetails().getFullName();
         if (this.fullName == null)
