@@ -253,7 +253,7 @@ public class JourneyService {
 
             if (freeSailors.isEmpty()) {
                 log.info("There are no free active sailors in the last " + MAX_ACTIVE_SECONDS + " seconds.");
-                return new UBoatDTO(UBoatStatus.NO_FREE_SAILORS_FOUND);
+                return new UBoatDTO(UBoatStatus.NO_FREE_SAILORS_FOUND, new LinkedList<>());
             }
             log.info("{} free sailors were found. ", freeSailors.size());
 
