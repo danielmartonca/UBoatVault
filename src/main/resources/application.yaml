@@ -9,7 +9,7 @@ whitelist:
   /api/email,
   /api/username,
   /api/checkDeviceRegistration,
-  /api/verifyJsonWebToken,
+  /api/jwt,
   /api/requestRegistration,
   /api/registrationSms,
   /api/emailVerification,

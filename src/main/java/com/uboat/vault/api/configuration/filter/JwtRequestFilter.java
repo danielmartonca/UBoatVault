@@ -2,6 +2,7 @@ package com.uboat.vault.api.configuration.filter;
 
 import com.uboat.vault.api.business.services.JwtService;
 import com.uboat.vault.api.business.services.JwtUserDetailsService;
+import com.uboat.vault.api.model.enums.JwtStatus;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import com.uboat.vault.api.utilities.LoggingUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +57,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 var userDetails = jwtUserDetailsService.loadUserByUsername(jwtData.join());
 
-                if (jwtService.validateJsonWebToken(jwtToken)) {
+                if (jwtService.validateJsonWebToken(jwtToken) == JwtStatus.VALID) {
                     var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);

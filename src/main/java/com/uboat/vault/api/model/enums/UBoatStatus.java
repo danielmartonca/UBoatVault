@@ -73,6 +73,8 @@ public enum UBoatStatus {
 
     JWT_VALID(1, "The jwt token extracted from the header of the request is valid.", "You are authenticated"),
     JWT_INVALID(0, "The jwt token extracted from the header of the request is not valid.", "You are not authenticated"),
+    JWT_EXPIRED(-1, "The jwt token extracted from the header of the request is expired.", "You are not authenticated"),
+    JWT_ACCOUNT_NOT_FOUND(-2, "The jwt token extracted from the header of the request is valid but no account with the encrypted credentials was found.", "You are not authenticated"),
     MISSING_BEARER(2, "The request contains 'Authorization' header but is missing the 'Bearer' value.", CommonStatus.UNEXPECTED_ERROR),
     INVALID_BEARER_FORMAT(3, "The request contains the 'Bearer' header but the format is invalid.", CommonStatus.UNEXPECTED_ERROR),
 

@@ -1,5 +1,6 @@
 package com.uboat.vault.api.business.services;
 
+import com.uboat.vault.api.model.enums.JwtStatus;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import io.jsonwebtoken.Claims;
@@ -59,7 +60,7 @@ public class JwtService {
         return createToken(claims, phoneNumber + '\t' + username + '\t' + password);
     }
 
-    public boolean validateJsonWebToken(String jsonWebToken) {
+    public JwtStatus validateJsonWebToken(String jsonWebToken) {
         try {
             final var subject = extractClaim(jsonWebToken, Claims::getSubject);
             final var parts = subject.split("\t");
@@ -69,18 +70,18 @@ public class JwtService {
 
             var account = entityService.findAccountByCredentials(phoneNumber, username, password);
             if (account == null)
-                return false;
+                return JwtStatus.ACCOUNT_NOT_FOUND;
 
             final var expirationDate = extractClaim(jsonWebToken, Claims::getExpiration);
             if (expirationDate.before(new Date())) {
                 log.warn("Token is expired.");
-                return false;
+                return JwtStatus.EXPIRED;
             }
 
-            return true;
+            return JwtStatus.VALID;
         } catch (Exception e) {
             log.warn("Failed to verify JWT: " + jsonWebToken, e);
-            return false;
+            return JwtStatus.INVALID;
         }
     }
 

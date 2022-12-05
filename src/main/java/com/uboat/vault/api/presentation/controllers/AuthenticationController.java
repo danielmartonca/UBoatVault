@@ -139,8 +139,8 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "400", description = "Either the Authorization header does not contain 'Bearer ' or it contains it but the format is not valid. Check response body custom header for more details.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "401", description = "The JWT has been extracted successfully but it's not valid anymore. Either it can't be decrypted, credentials are missing or it has expired.", content = @Content(mediaType = "application/json"))
     })
-    @GetMapping(value = "/verifyJwt", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UBoatDTO> verifyJwt(@RequestHeader(value = "Authorization") String authorizationHeader) {
+    @GetMapping(value = "/jwt", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UBoatDTO> jwt(@RequestHeader(value = "Authorization") String authorizationHeader) {
         if (!authorizationHeader.contains("Bearer "))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatDTO(UBoatStatus.MISSING_BEARER, false));
 
@@ -149,9 +149,18 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UBoatDTO(UBoatStatus.INVALID_BEARER_FORMAT, false));
 
         var jwt = split[1];
-        var isValid = jwtService.validateJsonWebToken(jwt);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new UBoatDTO(UBoatStatus.JWT_VALID, isValid));
+        var jwtStatus = jwtService.validateJsonWebToken(jwt);
+
+        return switch (jwtStatus) {
+            case VALID -> ResponseEntity.status(HttpStatus.OK).body(new UBoatDTO(UBoatStatus.JWT_VALID, true));
+            case INVALID ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new UBoatDTO(UBoatStatus.JWT_INVALID, false));
+            case EXPIRED ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new UBoatDTO(UBoatStatus.JWT_EXPIRED, false));
+            case ACCOUNT_NOT_FOUND ->
+                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new UBoatDTO(UBoatStatus.JWT_ACCOUNT_NOT_FOUND, false));
+        };
     }
 
     @Operation(summary = "Login into UBoat with the given credentials and generate a new JWT. " +
