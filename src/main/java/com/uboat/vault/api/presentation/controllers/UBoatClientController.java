@@ -32,8 +32,8 @@ public class UBoatClientController {
 
     @Operation(summary = "Retrieves the last {ridesRequested} number of journeys for the client extracted from the JWT. ")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The journeys have been retrieved successfully", content = @Content(mediaType = "application/json")),})
-    @GetMapping(value = "/getMostRecentRides")
-    public ResponseEntity<UBoatDTO> getMostRecentRides(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam @Min(1) @Max(3) Integer ridesRequested) {
+    @GetMapping(value = "/mostRecentRides")
+    public ResponseEntity<UBoatDTO> mostRecentRides(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam @Min(1) @Max(3) Integer ridesRequested) {
         var uBoatResponse = journeyService.getMostRecentRides(authorizationHeader, ridesRequested);
 
         if (uBoatResponse.getHeader() == UBoatStatus.MOST_RECENT_RIDES_RETRIEVED)
