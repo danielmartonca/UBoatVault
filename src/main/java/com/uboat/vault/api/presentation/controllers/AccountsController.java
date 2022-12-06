@@ -76,7 +76,7 @@ public class AccountsController {
 
     @Operation(summary = "Returns the account details such as email and full name. Credentials and very sensitive data will not be displayed.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Account details of the account extracted from JWT  will be returned.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
-    @GetMapping(value = "/getAccountDetails")
+    @GetMapping(value = "/accountDetails")
     public ResponseEntity<UBoatDTO> getAccountDetails(@RequestHeader(value = "Authorization") String authorizationHeader) {
         var responseBody = accountsService.getAccountDetails(authorizationHeader);
 
@@ -90,7 +90,7 @@ public class AccountsController {
 
     @Operation(summary = "Updates details such as email and full name. Fields that are not empty/null will update their corresponding data in the database.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The response body will contain custom body 'true' meaning the data was updated successfully.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
-    @PatchMapping(value = "/updateAccountDetails")
+    @PatchMapping(value = "/accountDetails")
     public ResponseEntity<UBoatDTO> updateAccountDetails(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody AccountDetailsDTO accountDetails) {
         var responseBody = accountsService.updateAccountDetails(authorizationHeader, accountDetails);
 
@@ -104,7 +104,7 @@ public class AccountsController {
 
     @Operation(summary = "Gets the credit cards details (without CVC) of the user in the JWT.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The response body will contain custom body of credit cards information.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
-    @GetMapping(value = "/getCreditCards")
+    @GetMapping(value = "/creditCards")
     public ResponseEntity<UBoatDTO> getCreditCards(@RequestHeader(value = "Authorization") String authorizationHeader) {
         var responseBody = accountsService.getCreditCards(authorizationHeader);
 
@@ -118,7 +118,7 @@ public class AccountsController {
 
     @Operation(summary = "Adds a new credit card to the account from the JWT if the card is valid and it is not already existing by number and full owner name to the given account.")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "The credit card is bound to the account.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "406", description = "The credit card is not valid. For more details check the output of the response body custom header.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
-    @PostMapping(value = "/addCreditCard")
+    @PostMapping(value = "/creditCards")
     public ResponseEntity<UBoatDTO> addCreditCard(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody CreditCardDTO creditCard) {
         var responseBody = accountsService.addCreditCard(authorizationHeader, creditCard);
 
@@ -134,7 +134,7 @@ public class AccountsController {
 
     @Operation(summary = "Deletes credit card from the account of the JWT by Owner Name and Number if the card is bounded to the account.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The credit card was deleted from the account.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "404", description = "The account does not have the given credit card.", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The authorization header is missing 'Bearer',has a malformed format or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
-    @DeleteMapping(value = "/deleteCreditCard")
+    @DeleteMapping(value = "/creditCards")
     public ResponseEntity<UBoatDTO> deleteCreditCard(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody CreditCardDTO creditCardRequest) {
         var responseBody = accountsService.deleteCreditCard(authorizationHeader, creditCardRequest);
 
@@ -149,8 +149,8 @@ public class AccountsController {
 
     @Operation(summary = "Gets the boat details for the sailor account extracted from the JWT.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The boat was retrieved successfully", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " + "the authorization header is missing 'Bearer', " + "has a malformed format " + "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
-    @GetMapping(value = "/getMyBoat")
-    public ResponseEntity<UBoatDTO> getMyBoat(@RequestHeader(value = "Authorization") String authorizationHeader) {
+    @GetMapping(value = "/boat")
+    public ResponseEntity<UBoatDTO> getBoat(@RequestHeader(value = "Authorization") String authorizationHeader) {
         var responseBody = accountsService.getMyBoat(authorizationHeader);
 
         return switch (responseBody.getHeader()) {
@@ -163,8 +163,8 @@ public class AccountsController {
 
     @Operation(summary = "Updates boat details for the sailor account extracted from the JWT.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The boat was updated successfully", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " + "the authorization header is missing 'Bearer', " + "has a malformed format " + "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
-    @PatchMapping(value = "/updateMyBoat")
-    public ResponseEntity<UBoatDTO> updateMyBoat(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody BoatDTO boat) {
+    @PatchMapping(value = "/boat")
+    public ResponseEntity<UBoatDTO> updateBoat(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody BoatDTO boat) {
         var responseBody = accountsService.updateMyBoat(authorizationHeader, boat);
 
         return switch (responseBody.getHeader()) {
@@ -177,7 +177,7 @@ public class AccountsController {
 
     @Operation(summary = "Retrieves information regarding the sailor.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The boat was updated successfully", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " + "the authorization header is missing 'Bearer', " + "has a malformed format " + "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
-    @GetMapping(value = "/getSailorDetails")
+    @GetMapping(value = "/sailorDetails")
     public ResponseEntity<UBoatDTO> getSailorDetails(@RequestParam String sailorId) {
         var responseBody = accountsService.getSailorDetails(sailorId);
 

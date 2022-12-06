@@ -37,7 +37,7 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "200", description = "Neither device info nor any sim card are present in the database.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "409", description = "Either the sim card or device info is already used. Check response body custom header for more details.", content = @Content(mediaType = "application/json"))
     })
-    @PostMapping(value = "/checkDeviceRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/deviceRegistration", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UBoatDTO> checkDeviceRegistration(@RequestBody RegistrationDataDTO registrationData) {
         var uBoatResponse = entityService.checkDeviceRegistration(registrationData);
 

@@ -8,7 +8,7 @@ whitelist:
   /api/phoneNumber,
   /api/email,
   /api/username,
-  /api/checkDeviceRegistration,
+  /api/deviceRegistration,
   /api/jwt,
   /api/requestRegistration,
   /api/registrationSms,
@@ -17,14 +17,13 @@ whitelist:
   /api/login
 
 client-blacklist:
-  /api/getMyBoat,
-  /api/updateMyBoat,
-  /images/uploadBoatImage,
+  /api/boat,
+  /images/boatImage,
   /api/sailor/**
 
 sailor-blacklist:
-  /api/getSailorDetails,
-  /images/getSailorProfilePicture,
+  /api/sailorDetails,
+  /images/sailorProfilePicture,
   /api/client/**
 
 spring:
@@ -35,9 +34,9 @@ spring:
 uboat:
   pretty-print-logs: false
   apis-body-not-logged:
-    /images/getDefaultProfilePicture,
-    /images/getProfilePicture,
-    /images/getBoatImage
+    /images/defaultProfilePicture,
+    /images/profilePicture,
+    /images/boatImage
   regex: # place regex on the second row
     phone: >-
       ^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$

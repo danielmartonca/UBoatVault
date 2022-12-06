@@ -47,7 +47,7 @@ public class UBoatClientController {
             @ApiResponse(responseCode = "200", description = "The boat details have been retrieved.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "404", description = "The sailor could not be found by that id.", content = @Content(mediaType = "application/json"))
     })
-    @GetMapping(value = "/getSailorBoat")
+    @GetMapping(value = "/sailorBoat")
     public ResponseEntity<UBoatDTO> getSailorBoat(@RequestParam(name = "sailorId") String sailorId) {
         var uBoatResponse = accountsService.getSailorBoat(sailorId);
 

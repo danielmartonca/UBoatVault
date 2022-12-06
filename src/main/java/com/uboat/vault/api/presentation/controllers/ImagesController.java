@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class ImagesController {
     private final ImagesService imagesService;
 
-    @GetMapping(value = "/getDefaultProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/defaultProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody
     ResponseEntity<byte[]> getDefaultProfilePicture() {
         var uBoatResponse = imagesService.getDefaultProfilePicture();
@@ -30,9 +30,9 @@ public class ImagesController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 
-    @GetMapping(value = "/getProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/profileImage", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody
-    ResponseEntity<byte[]> getProfilePicture(@RequestHeader(value = "Authorization") String authorizationHeader) {
+    ResponseEntity<byte[]> getProfileImage(@RequestHeader(value = "Authorization") String authorizationHeader) {
         var uBoatResponse = imagesService.getProfilePicture(authorizationHeader);
 
         if (uBoatResponse.getHeader() == UBoatStatus.PROFILE_PICTURE_RETRIEVED)
@@ -43,7 +43,7 @@ public class ImagesController {
 
 
     // @ApiResponse(responseCode = "415", description = "The format of the image is not supported. Only png and jpeg are accepted.", content = @Content(mediaType = "application/json")),
-    @PostMapping(value = "/uploadProfileImage", consumes = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    @PostMapping(value = "/profileImage", consumes = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     public @ResponseBody
     ResponseEntity<UBoatDTO> uploadProfileImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody byte[] imageBytes) {
         var uBoatResponse = imagesService.uploadProfileImage(authorizationHeader, imageBytes);
@@ -59,7 +59,7 @@ public class ImagesController {
 
     // @ApiResponse(responseCode = "200", description = "Body will contain the hash of the image", content = @Content(mediaType = "application/json")),
     // @ApiResponse(responseCode = "415", description = "The format of the image is not supported. Only png and jpeg are accepted.", content = @Content(mediaType = "application/json")),
-    @PostMapping(value = "/uploadBoatImage", consumes = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    @PostMapping(value = "/boatImage", consumes = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     public @ResponseBody
     ResponseEntity<UBoatDTO> uploadBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader,
                                              @RequestHeader(value = "Content-Type") String contentType,
@@ -75,7 +75,7 @@ public class ImagesController {
         };
     }
 
-    @GetMapping(value = "/getSailorProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/sailorProfilePicture", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody
     ResponseEntity<byte[]> getSailorProfilePicture(@RequestParam(name = "sailorId") String sailorId) {
         var uBoatResponse = imagesService.getSailorProfilePicture(sailorId);
@@ -94,7 +94,7 @@ public class ImagesController {
             @ApiResponse(responseCode = "200", description = "The boat images hashes have been retrieved.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "404", description = "There is no sailor with the given sailorID as request parameter.", content = @Content(mediaType = "application/json")),
     })
-    @GetMapping(value = "/getBoatImagesIdentifiers")
+    @GetMapping(value = "/boatImagesIdentifiers")
     public @ResponseBody
     ResponseEntity<UBoatDTO> getBoatImagesIdentifiers(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam(required = false) String sailorId) {
         var uBoatResponse = imagesService.getBoatImagesIdentifiers(authorizationHeader, sailorId);
@@ -114,7 +114,7 @@ public class ImagesController {
             @ApiResponse(responseCode = "404", description = "No image matching the request parameter hash was found for any sailor(if client accesses the api)" +
                     " or personal boat(if sailor accesses the API).", content = @Content(mediaType = "application/json")),
     })
-    @GetMapping(value = "/getBoatImage", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/boatImage", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody
     ResponseEntity<byte[]> getBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam String identifier) {
         var uBoatResponse = imagesService.getBoatImage(authorizationHeader, identifier);
@@ -131,7 +131,7 @@ public class ImagesController {
             @ApiResponse(responseCode = "200", description = "The boat image was deleted.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "404", description = "There is not boat image with the given hash bound to the sailor account.", content = @Content(mediaType = "application/json")),
     })
-    @DeleteMapping(value = "/deleteBoatImage")
+    @DeleteMapping(value = "/boatImage")
     public @ResponseBody
     ResponseEntity<UBoatDTO> deleteBoatImage(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam String identifier) {
         var uBoatResponse = imagesService.deleteBoatImage(authorizationHeader, identifier);
