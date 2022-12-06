@@ -1,6 +1,6 @@
 package com.uboat.vault.api.model.dto;
 
-import com.uboat.vault.api.model.domain.account.info.SimCard;
+import com.uboat.vault.api.model.domain.account.account.SimCard;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -1,7 +1,6 @@
-package com.uboat.vault.api.model.domain.account.info;
+package com.uboat.vault.api.model.domain.account.account;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.uboat.vault.api.model.domain.account.Account;
 import com.uboat.vault.api.model.dto.CreditCardDTO;
 import com.uboat.vault.api.utilities.LoggingUtils;
 import lombok.AllArgsConstructor;
@@ -16,8 +15,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.uboat.vault.api.model.domain.account.info.CreditCard.ValidationStatus.EXPIRED;
-import static com.uboat.vault.api.model.domain.account.info.CreditCard.ValidationStatus.VALID;
+import static com.uboat.vault.api.model.domain.account.account.CreditCard.ValidationStatus.EXPIRED;
+import static com.uboat.vault.api.model.domain.account.account.CreditCard.ValidationStatus.VALID;
 
 @AllArgsConstructor
 @NoArgsConstructor

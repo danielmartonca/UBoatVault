@@ -1,6 +1,6 @@
 package com.uboat.vault.api.model.other;
 
-import com.uboat.vault.api.model.domain.account.Account;
+import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.dto.AccountDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,16 +27,8 @@ public class Credentials {
     }
 
     private Credentials(Account account) {
-        if (account.getPhoneNumber() != null)
-            this.phoneNumber = account.getPhoneNumber().getPhoneNumber();
-        else
-            this.phoneNumber = "";
-
-        if (account.getUsername() != null)
-            this.username = account.getUsername();
-        else
-            this.username = "";
-
+        this.phoneNumber = account.getPhone().getNumber();
+        this.username = account.getUsername();
         this.password = account.getPassword();
     }
 

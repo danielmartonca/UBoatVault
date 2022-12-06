@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.domain.account.info;
+package com.uboat.vault.api.model.domain.account.account;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.dto.RequestSimCard;

@@ -1,6 +1,6 @@
 package com.uboat.vault.api.business.services;
 
-import com.uboat.vault.api.model.domain.account.Account;
+import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.persistence.repostiories.AccountsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ public class JwtUserDetailsService implements UserDetailsService {
         Account account = null;
 
         if (!phoneNumber.equals("null"))
-            account = accountsRepository.findFirstByPhoneNumber_PhoneNumber(phoneNumber);
+            account = accountsRepository.findFirstByPhoneNumber(phoneNumber);
 
         if (account == null && !username.equals("null"))
             account = accountsRepository.findFirstByUsername(username);

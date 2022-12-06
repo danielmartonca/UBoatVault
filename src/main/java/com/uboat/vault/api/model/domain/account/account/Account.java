@@ -1,10 +1,6 @@
-package com.uboat.vault.api.model.domain.account;
+package com.uboat.vault.api.model.domain.account.account;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.uboat.vault.api.model.domain.account.info.AccountDetails;
-import com.uboat.vault.api.model.domain.account.info.CreditCard;
-import com.uboat.vault.api.model.domain.account.info.PhoneNumber;
-import com.uboat.vault.api.model.domain.account.info.RegistrationData;
 import com.uboat.vault.api.model.dto.AccountDTO;
 import com.uboat.vault.api.model.enums.UserType;
 import lombok.Getter;
@@ -15,6 +11,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
+
 @NoArgsConstructor
 @Entity
 @Table(name = "Accounts")
@@ -44,9 +41,8 @@ public class Account {
     @NotNull
     @Getter
     @Setter
-    @OneToOne(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "phone_number_id")
-    private PhoneNumber phoneNumber;
+    @Embedded
+    private Phone phone;
 
     @NotNull
     @Getter
@@ -72,9 +68,10 @@ public class Account {
         this.username = accountDTO.getUsername();
         this.password = accountDTO.getPassword();
 
-        this.phoneNumber = new PhoneNumber(accountDTO.getPhoneNumber(),this);
+        var dtoPhoneNumber = accountDTO.getPhoneNumber();
+        this.phone = new Phone(dtoPhoneNumber.getPhoneNumber(), dtoPhoneNumber.getDialCode(), dtoPhoneNumber.getIsoCode());
 
-        this.accountDetails = new AccountDetails(accountDTO,this);
+        this.accountDetails = new AccountDetails(accountDTO, this);
 
         this.creditCards = new HashSet<>();
     }

@@ -1,6 +1,6 @@
 package com.uboat.vault.api.model.domain.sailing.sailor;
 
-import com.uboat.vault.api.model.domain.account.Account;
+import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.sailing.LocationData;
 import com.uboat.vault.api.model.dto.LocationDataDTO;
 import com.uboat.vault.api.model.enums.UserType;

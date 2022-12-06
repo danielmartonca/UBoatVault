@@ -1,8 +1,7 @@
-package com.uboat.vault.api.model.domain.account.info;
+package com.uboat.vault.api.model.domain.account.account;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.business.services.AccountsService;
-import com.uboat.vault.api.model.domain.account.Account;
 import com.uboat.vault.api.model.dto.AccountDTO;
 import com.uboat.vault.api.model.dto.AccountDetailsDTO;
 import lombok.AllArgsConstructor;

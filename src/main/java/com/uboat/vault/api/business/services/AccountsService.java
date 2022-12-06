@@ -1,6 +1,6 @@
 package com.uboat.vault.api.business.services;
 
-import com.uboat.vault.api.model.domain.account.info.CreditCard;
+import com.uboat.vault.api.model.domain.account.account.CreditCard;
 import com.uboat.vault.api.model.dto.*;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
@@ -41,7 +41,7 @@ public class AccountsService {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
 
-            if (foundAccount.getUsername().equals(jwtData.username()) || foundAccount.getPhoneNumber().getPhoneNumber().equals(jwtData.phoneNumber()))
+            if (foundAccount.getUsername().equals(jwtData.username()) || foundAccount.getPhone().getNumber().equals(jwtData.phoneNumber()))
                 return new UBoatDTO(UBoatStatus.MISSING_ACCOUNT_INFORMATION_RETRIEVED, new MissingAccountInformationDTO(foundAccount));
 
             return new UBoatDTO(UBoatStatus.CREDENTIALS_NOT_MATCHING_JWT);
@@ -261,7 +261,7 @@ public class AccountsService {
 
             var sailorDetails = SailorDetailsDTO.builder()
                     .fullName(sailorAccount.getAccountDetails().getFullName())
-                    .phoneNumber(sailorAccount.getPhoneNumber().getPhoneNumber())
+                    .phoneNumber(sailorAccount.getPhone().getNumber())
                     .build();
 
             log.info("Retrieved sailor details successfully.");

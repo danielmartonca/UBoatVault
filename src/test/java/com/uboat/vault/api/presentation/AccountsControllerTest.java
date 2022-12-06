@@ -1,13 +1,10 @@
 package com.uboat.vault.api.presentation;
 
 import com.uboat.vault.api.model.enums.UBoatStatus;
-import com.uboat.vault.api.persistence.repostiories.AccountsRepository;
-import com.uboat.vault.api.persistence.repostiories.PhoneNumbersRepository;
 import com.uboat.vault.api.presentation.controllers.AccountsController;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,11 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class AccountsControllerTest extends ControllerTest {
     @Autowired
     private AccountsController controller;
-
-    @MockBean
-    private AccountsRepository accountsRepository;
-    @MockBean
-    private PhoneNumbersRepository phoneNumbersRepository;
 
     @ParameterizedTest
     @ValueSource(strings = {" !\"#$%&'()*+,/:;<=>?@[]\\^`{|}~"})

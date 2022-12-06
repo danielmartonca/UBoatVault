@@ -1,6 +1,6 @@
 package com.uboat.vault.api.model.dto;
 
-import com.uboat.vault.api.model.domain.account.info.RegistrationData;
+import com.uboat.vault.api.model.domain.account.account.RegistrationData;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

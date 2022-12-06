@@ -73,11 +73,11 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "500", description = "An exception occurred while checking if the email was confirmed.", content = @Content(mediaType = "application/json"))
     })
     @GetMapping(value = "/emailVerification", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UBoatDTO> emailVerification(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam @NotNull String email) {
+    public ResponseEntity<UBoatDTO> emailVerification(@RequestHeader(value = "Authorization") String authorizationHeader) {
         var responseIfInvalid = HeadersUtils.parseAuthorizationHeaderForRToken(authorizationHeader);
         if (responseIfInvalid != null) return responseIfInvalid;
 
-        var uBoatResponse = authenticationService.emailVerification(email, HeadersUtils.extractRToken(authorizationHeader));
+        var uBoatResponse = authenticationService.emailVerification(HeadersUtils.extractRToken(authorizationHeader));
 
         return switch (uBoatResponse.getHeader()) {
             case EMAIL_VERIFIED, EMAIL_NOT_VERIFIED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);

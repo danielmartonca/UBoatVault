@@ -1,6 +1,6 @@
 package com.uboat.vault.api.model.dto;
 
-import com.uboat.vault.api.model.domain.account.Account;
+import com.uboat.vault.api.model.domain.account.account.Account;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +20,7 @@ public class MissingAccountInformationDTO {
 
     public MissingAccountInformationDTO(Account account) {
         this.username = account.getUsername();
-        var accountPhoneNumber = account.getPhoneNumber();
-        this.phoneNumber = new PhoneNumberDTO(accountPhoneNumber.getPhoneNumber(), accountPhoneNumber.getDialCode(), accountPhoneNumber.getIsoCode());
+        var accountPhoneNumber = account.getPhone();
+        this.phoneNumber = new PhoneNumberDTO(accountPhoneNumber.getNumber(), accountPhoneNumber.getDialCode(), accountPhoneNumber.getIsoCode());
     }
 }

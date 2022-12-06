@@ -1,15 +1,17 @@
 package com.uboat.vault.api.business.services;
 
-import com.uboat.vault.api.model.domain.account.Account;
-import com.uboat.vault.api.model.domain.account.info.PhoneNumber;
-import com.uboat.vault.api.model.domain.account.info.SimCard;
+import com.uboat.vault.api.model.domain.account.account.Account;
+import com.uboat.vault.api.model.domain.account.account.SimCard;
 import com.uboat.vault.api.model.domain.sailing.sailor.Sailor;
 import com.uboat.vault.api.model.dto.RegistrationDataDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.other.Credentials;
-import com.uboat.vault.api.persistence.repostiories.*;
+import com.uboat.vault.api.persistence.repostiories.AccountsRepository;
+import com.uboat.vault.api.persistence.repostiories.RegistrationDataRepository;
+import com.uboat.vault.api.persistence.repostiories.SailorsRepository;
+import com.uboat.vault.api.persistence.repostiories.SimCardRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -24,7 +26,6 @@ public class EntityService {
     private final RegistrationDataRepository registrationDataRepository;
     private final SimCardRepository simCardRepository;
     private final SailorsRepository sailorsRepository;
-    private final PhoneNumbersRepository phoneNumbersRepository;
 
     public Account findAccountByJwtData(JwtService.Data jwtData) {
         var account = findAccountByUsername(jwtData.username());
@@ -47,7 +48,7 @@ public class EntityService {
         if (Strings.isEmpty(phoneNumber))
             throw new RuntimeException("Phone number is null/empty while trying to retrieve account.");
 
-        foundAccount = accountsRepository.findFirstByPhoneNumber_PhoneNumber(phoneNumber);
+        foundAccount = accountsRepository.findFirstByPhoneNumber(phoneNumber);
         log.debug("Account found by phone number.");
         return foundAccount;
     }
@@ -62,27 +63,27 @@ public class EntityService {
      * @return the account if found,null otherwise
      */
     public Account findAccountByCredentials(String phoneNumber, String username, String password) {
-        Account foundAccount = null;
-        if ((username == null || username.isBlank()) && (phoneNumber == null || phoneNumber.isBlank()))
+        Account foundAccount;
+
+        if (Strings.isEmpty(username) && Strings.isEmpty(phoneNumber))
             throw new RuntimeException("Both phone number and username are null/empty while retrieving account by credentials.");
 
-        if (username != null && !username.isBlank())
+        if (Strings.isNotEmpty(username)) {
             foundAccount = accountsRepository.findFirstByUsernameAndPassword(username, password);
-
-        if (foundAccount == null) {
-            log.warn("Couldn't find account by username and password. Searching by phone number and password.");
-            if (phoneNumber != null && !phoneNumber.isBlank()) {
-                foundAccount = accountsRepository.findFirstByPhoneNumber_PhoneNumberAndPassword(phoneNumber, password);
-                if (foundAccount == null) {
-                    log.warn("Couldn't find account by phone number and password.");
-                    return null;
-                }
-                log.info("Found account by phone number and password.");
+            if (foundAccount != null) {
+                log.info("Found account by username and password.");
+                return foundAccount;
             }
-
+            log.warn("Couldn't find account by username and password. Searching by phone number and password.");
         }
 
-        log.info("Credentials are ok. Account retrieved from database.");
+        foundAccount = accountsRepository.findFirstByPhoneNumberAndPassword(phoneNumber, password);
+        if (foundAccount == null) {
+            log.warn("Couldn't find account by phone number and password.");
+            return null;
+        }
+
+        log.info("Found account by phone number and password.");
         return foundAccount;
     }
 
@@ -180,9 +181,8 @@ public class EntityService {
      */
     public boolean isPhoneNumberUsed(String phoneNumber, String dialCode, String isoCode) {
         boolean phoneNumberAlreadyUsed = true;
-        PhoneNumber phoneNumberFound = phoneNumbersRepository.findFirstByPhoneNumberAndDialCodeAndIsoCode(phoneNumber, dialCode, isoCode);
-        if (phoneNumberFound == null) phoneNumberAlreadyUsed = false;
-        else if (phoneNumberFound.getAccount() == null) phoneNumberAlreadyUsed = false;
+        var account = accountsRepository.findFirstByPhoneNumberAndPhoneDialCodeAndPhoneIsoCode(phoneNumber, dialCode, isoCode);
+        if (account == null) phoneNumberAlreadyUsed = false;
         log.info(phoneNumberAlreadyUsed ? "Phone number is already used." : "Phone number is not used.");
         return phoneNumberAlreadyUsed;
     }

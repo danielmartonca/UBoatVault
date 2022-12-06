@@ -2,8 +2,9 @@ package com.uboat.vault.api.business.services;
 
 import com.uboat.vault.api.business.services.mail.verification.MailVerificationService;
 import com.uboat.vault.api.business.services.sms.verification.SmsVerificationService;
-import com.uboat.vault.api.model.domain.account.Account;
-import com.uboat.vault.api.model.domain.account.info.RegistrationData;
+import com.uboat.vault.api.model.domain.account.account.Account;
+import com.uboat.vault.api.model.domain.account.account.Phone;
+import com.uboat.vault.api.model.domain.account.account.RegistrationData;
 import com.uboat.vault.api.model.domain.account.pending.PendingAccount;
 import com.uboat.vault.api.model.domain.sailing.sailor.Sailor;
 import com.uboat.vault.api.model.dto.AccountDTO;
@@ -11,7 +12,10 @@ import com.uboat.vault.api.model.dto.PhoneNumberDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
-import com.uboat.vault.api.persistence.repostiories.*;
+import com.uboat.vault.api.persistence.repostiories.AccountsRepository;
+import com.uboat.vault.api.persistence.repostiories.PendingAccountsRepository;
+import com.uboat.vault.api.persistence.repostiories.RegistrationDataRepository;
+import com.uboat.vault.api.persistence.repostiories.SailorsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +35,6 @@ public class AuthenticationService {
     private final AccountsRepository accountsRepository;
     private final RegistrationDataRepository registrationDataRepository;
     private final PendingAccountsRepository pendingAccountsRepository;
-    private final PhoneNumbersRepository phoneNumbersRepository;
     private final SailorsRepository sailorsRepository;
     private final SmsVerificationService smsVerificationService;
     private final MailVerificationService mailVerificationService;
@@ -97,27 +100,27 @@ public class AuthenticationService {
         return new UBoatDTO(UBoatStatus.PHONE_NUMBER_ACCEPTED, false);
     }
 
-    private boolean isAccountAlreadyExisting(AccountDTO account) {
-        Account foundAccount;
-        foundAccount = accountsRepository.findFirstByUsername(account.getUsername());
+    private boolean isAccountAlreadyExisting(AccountDTO accountDto) {
+        var foundAccount = accountsRepository.findFirstByUsername(accountDto.getUsername());
         if (foundAccount != null) {
             log.warn("Account with the given username already exists.");
             return true;
         }
 
-        foundAccount = accountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
+        var phoneNumber = accountDto.getPhoneNumber();
+        foundAccount = accountsRepository.findFirstByPhoneNumberAndPhoneDialCodeAndPhoneIsoCode(phoneNumber.getPhoneNumber(), phoneNumber.getDialCode(), phoneNumber.getIsoCode());
+        if (foundAccount != null) {
+            log.warn("Account with the given phone number already exists.");
+            return true;
+        }
+
+        foundAccount = accountsRepository.findFirstByUsernameAndPassword(accountDto.getUsername(), accountDto.getPassword());
         if (foundAccount != null) {
             log.warn("Account with the given username and password already exist.");
             return true;
         }
 
-        var phoneNumber = account.getPhoneNumber();
-        var foundPhoneNumber = phoneNumbersRepository.findFirstByPhoneNumberAndDialCodeAndIsoCode(phoneNumber.getPhoneNumber(), phoneNumber.getDialCode(), phoneNumber.getIsoCode());
-        if (foundPhoneNumber != null) {
-            log.warn("Account with the given phone number already exists.");
-            return true;
-        }
-        log.info("No account in the database with the given credentials found. Check passed.");
+        log.info("No account in the database with the given credentials found.");
         return false;
     }
 
@@ -184,7 +187,7 @@ public class AuthenticationService {
         }
     }
 
-    public UBoatDTO emailVerification(String email, String registrationToken) {
+    public UBoatDTO emailVerification(String registrationToken) {
         try {
             var pendingAccount = pendingAccountsRepository.findFirstByToken(registrationToken);
             if (pendingAccount == null) {
@@ -237,7 +240,7 @@ public class AuthenticationService {
                 log.warn("Registration data is already used by another account. There will be two accounts bound to this device.");
             account.setRegistrationData(registrationData);
 
-            var jsonWebToken = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
+            var jsonWebToken = jwtService.generateJwt(account.getPhone().getNumber(), account.getUsername(), account.getPassword());
 
             account = accountsRepository.save(account);
             pendingAccountsRepository.delete(pendingAccount);
@@ -262,12 +265,13 @@ public class AuthenticationService {
             }
 
             for (var foundAccount : foundAccountsList) {
-                if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhoneNumber().equals(account.getPhoneNumber())) {
+                if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhone().equals(new Phone(account.getPhoneNumber()))) {
                     log.info("Credentials matched. Found account.");
                     var jwt = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
                     return new UBoatDTO(UBoatStatus.LOGIN_SUCCESSFUL, jwt);
                 } else log.warn("An account with given password found but neither username or phone number match.");
             }
+
             log.warn("Invalid credentials. Login failed");
             return new UBoatDTO(UBoatStatus.INVALID_CREDENTIALS);
         } catch (Exception e) {

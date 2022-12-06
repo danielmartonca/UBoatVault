@@ -1,6 +1,6 @@
 package com.uboat.vault.api.model.dto;
 
-import com.uboat.vault.api.model.domain.account.Account;
+import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.enums.UserType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +22,7 @@ public class AccountDetailsDTO {
     public AccountDetailsDTO(Account account) {
         this.type = account.getType();
         this.username = account.getUsername();
-        this.phoneNumber = account.getPhoneNumber().getPhoneNumber();
+        this.phoneNumber = account.getPhone().getNumber();
 
         this.fullName = account.getAccountDetails().getFullName();
         if (this.fullName == null)
