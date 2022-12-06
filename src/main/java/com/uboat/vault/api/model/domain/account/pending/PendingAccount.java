@@ -46,16 +46,14 @@ public class PendingAccount {
     private boolean isEmailVerified = false;
 
 
-    @JsonIgnore
     @Getter
     @Setter
-    @OneToOne(cascade = {CascadeType.ALL})
-    @JoinColumn(name = "pending_token_id")
-    private PendingToken pendingToken;
+    private String token;
 
     /**
      * Creates a new account entity and a new pending token entity for the given account from the request
-     * @param account account information from the request
+     *
+     * @param account           account information from the request
      * @param registrationToken the RToken value of the new pending token
      */
     public PendingAccount(AccountDTO account, String registrationToken) {
@@ -63,6 +61,6 @@ public class PendingAccount {
         this.username = account.getUsername();
         this.password = account.getPassword();
         this.email = account.getEmail();
-        this.pendingToken = new PendingToken(registrationToken, this);
+        this.token = registrationToken;
     }
 }

@@ -1,7 +1,6 @@
 package com.uboat.vault.api.business.services.mail.verification;
 
 import com.uboat.vault.api.persistence.repostiories.PendingAccountsRepository;
-import com.uboat.vault.api.persistence.repostiories.PendingTokenRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 @AllArgsConstructor
 public class MockMailVerificationService implements MailVerificationService {
 
-    private final PendingTokenRepository pendingTokenRepository;
     private final PendingAccountsRepository pendingAccountsRepository;
 
     /**
@@ -30,10 +28,7 @@ public class MockMailVerificationService implements MailVerificationService {
 
             TimeUnit.SECONDS.sleep((long) (Math.random() * (20 - 10) + 10));
 
-            var pendingToken = pendingTokenRepository.findFirstByTokenValue(registrationToken);
-            if (pendingToken == null) return;
-
-            var account = pendingToken.getAccount();
+            var account = pendingAccountsRepository.findFirstByToken(registrationToken);
             if (account == null) return;
 
             if (!account.isEmailVerified()) {

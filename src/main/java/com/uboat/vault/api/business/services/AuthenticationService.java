@@ -30,7 +30,6 @@ public class AuthenticationService {
 
     private final AccountsRepository accountsRepository;
     private final RegistrationDataRepository registrationDataRepository;
-    private final PendingTokenRepository pendingTokenRepository;
     private final PendingAccountsRepository pendingAccountsRepository;
     private final PhoneNumbersRepository phoneNumbersRepository;
     private final SailorsRepository sailorsRepository;
@@ -43,9 +42,6 @@ public class AuthenticationService {
     private String usernamePattern;
     @Value("${uboat.regex.email}")
     private String emailPattern;
-
-//    @Value("${uboat.regex.password}")
-//    private String passwordPattern;
 
     public UBoatDTO checkEmail(String email) {
         var matcher = Pattern.compile(emailPattern).matcher(email);
@@ -131,7 +127,7 @@ public class AuthenticationService {
         do {
             UUID uuid = UUID.randomUUID();
             token = uuid.toString();
-            if (pendingTokenRepository.findFirstByTokenValue(token) != null) token = "";
+            if (pendingAccountsRepository.findFirstByToken(token) != null) token = "";
         } while (token.equals(""));
         return token;
     }
@@ -149,7 +145,7 @@ public class AuthenticationService {
 
             var pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
             if (pendingAccount != null) {
-                var pendingRegistrationToken = pendingAccount.getPendingToken().getTokenValue();
+                var pendingRegistrationToken = pendingAccount.getToken();
                 if (account.getEmail().equals(pendingAccount.getEmail())) {
                     pendingAccount.setEmail(account.getEmail());
                     pendingAccountsRepository.save(pendingAccount);
@@ -177,7 +173,7 @@ public class AuthenticationService {
 
     public UBoatDTO sendRegistrationSMS(PhoneNumberDTO phoneNumber, String rtoken, Integer smsInteger) {
         try {
-            if (pendingTokenRepository.findFirstByTokenValue(rtoken) == null)
+            if (pendingAccountsRepository.findFirstByToken(rtoken) == null)
                 return new UBoatDTO(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE, false);
 
             smsVerificationService.sendRegistrationSms(phoneNumber, smsInteger);
@@ -190,16 +186,10 @@ public class AuthenticationService {
 
     public UBoatDTO emailVerification(String email, String registrationToken) {
         try {
-            var pendingToken = pendingTokenRepository.findFirstByTokenValue(registrationToken);
-            if (pendingToken == null) {
+            var pendingAccount = pendingAccountsRepository.findFirstByToken(registrationToken);
+            if (pendingAccount == null) {
                 log.warn("There is no matching pending registrationToken to the provided registrationToken: " + registrationToken);
                 return new UBoatDTO(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE, false);
-            }
-
-            var pendingAccount = pendingToken.getAccount();
-            if (!pendingAccount.getEmail().equals(email)) {
-                log.warn("Registration token exists but the email is not bounded to it.");
-                return new UBoatDTO(UBoatStatus.EMAIl_NOT_BOUND_TO_RTOKEN, false);
             }
 
             if (!pendingAccount.isEmailVerified())
@@ -221,13 +211,13 @@ public class AuthenticationService {
     @Transactional
     public UBoatDTO register(AccountDTO accountDTO, String registrationToken) {
         try {
-            var pendingToken = pendingTokenRepository.findFirstByTokenValue(registrationToken);
-            if (pendingToken == null) {
+            var pendingAccount = pendingAccountsRepository.findFirstByToken(registrationToken);
+            if (pendingAccount == null) {
                 log.warn("There is no matching pending registrationToken to the provided registrationToken: " + registrationToken);
                 return new UBoatDTO(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE);
             }
 
-            var pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(accountDTO.getUsername(), accountDTO.getPassword());
+            pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(accountDTO.getUsername(), accountDTO.getPassword());
             if (pendingAccount == null || !accountDTO.equalsPendingAccount(pendingAccount)) {
                 log.warn("Token found but credentials don't match.");
                 return new UBoatDTO(UBoatStatus.RTOKEN_AND_ACCOUNT_NOT_MATCHING);

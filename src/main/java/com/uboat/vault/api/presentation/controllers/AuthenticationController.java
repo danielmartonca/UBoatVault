@@ -81,8 +81,7 @@ public class AuthenticationController {
 
         return switch (uBoatResponse.getHeader()) {
             case EMAIL_VERIFIED, EMAIL_NOT_VERIFIED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
-            case RTOKEN_NOT_FOUND_IN_DATABASE, EMAIl_NOT_BOUND_TO_RTOKEN ->
-                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
+            case RTOKEN_NOT_FOUND_IN_DATABASE -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
         };
     }

@@ -84,7 +84,6 @@ public enum UBoatStatus {
     // /api/emailVerification
     EMAIL_VERIFIED(1, "The email has been verified by the user.", "Email has been confirmed"),
     EMAIL_NOT_VERIFIED(0, "The email has NOT been verified by the user.", null),
-    EMAIl_NOT_BOUND_TO_RTOKEN(3, "The RToken is not bound to the email given.", null),
 
     // /api/requestRegistration
     ACCOUNT_ALREADY_PENDING_REGISTRATION(0, "The given credentials have already requested a registration. Pending registration token returned.", null),
