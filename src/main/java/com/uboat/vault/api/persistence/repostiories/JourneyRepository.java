@@ -9,13 +9,14 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface JourneyRepository extends JpaRepository<Journey, Long> {
     List<Journey> findAllByClientAccount_IdAndState(Long clientAccountId, JourneyState state);
 
     List<Journey> findAllByStateAndSailorAccount_Id(JourneyState state, Long sailorAccountId);
 
-    void deleteAllByClientAccountAndState(Account clientAccount, JourneyState state);
+    void deleteAllByClientAccountAndStateIn(Account clientAccount, Set<JourneyState> state);
 
     Optional<Journey> findBySailorAndState(Sailor sailor, JourneyState state);
     @Query("SELECT j from Journey  j where j.state=?1 and j.sailor.account.id=?2 and j.route.source.coordinates.latitude=?3 and j.route.source.coordinates.longitude=?4 and j.route.destination.coordinates.latitude=?5 and j.route.destination.coordinates.longitude=?6")

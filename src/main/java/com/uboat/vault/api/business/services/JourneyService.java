@@ -21,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -110,10 +107,11 @@ public class JourneyService {
     private Journey buildJourney(JourneyRequestDTO journeyRequestDTO, Sailor sailor, Account clientAccount) {
         var source = new Location(journeyRequestDTO.getCurrentCoordinates(), journeyRequestDTO.getCurrentAddress());
         var destination = new Location(journeyRequestDTO.getDestinationCoordinates(), journeyRequestDTO.getDestinationAddress());
+        var sailorLocation = new Location(sailor.getCurrentLocation());
 
-        var route = new Route(source, destination);
+        var route = new Route(source, destination, sailorLocation);
         try {
-            route.calculateRoute(geoService, new LatLng(sailor.getCurrentLocation()));
+            route.calculateRoute(geoService);
         } catch (NoRouteFoundException exception) {
             log.warn("No possible route on water was found for the sailor's position, client and destination coordinates.");
             return null;
@@ -141,15 +139,15 @@ public class JourneyService {
     /**
      * For the given sailor updates its lookingForClients status to false if the sailor has not been active in the last MAX_ACTIVE_SECONDS seconds.
      *
-     * @return true if sailor is active after check/update
+     * @return true if sailor is NOT active after check/update
      */
     private boolean checkAndUpdateSailorActiveStatus(Sailor sailor) {
         if (DateUtils.getSecondsPassed(sailor.getLastUpdate()) >= MAX_ACTIVE_SECONDS) {
             sailor.setLookingForClients(false);
             sailorsRepository.save(sailor);
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
@@ -174,7 +172,7 @@ public class JourneyService {
             var clientAccount = entityService.findAccountByJwtData(jwtData);
 
             //  dismiss all current CLIENT_ACCEPTED journeys
-            journeyRepository.deleteAllByClientAccountAndState(clientAccount, JourneyState.CLIENT_ACCEPTED);
+            journeyRepository.deleteAllByClientAccountAndStateIn(clientAccount, Set.of(JourneyState.INITIATED, JourneyState.CLIENT_ACCEPTED));
 
             var activeSailors = sailorsRepository.findAllByLookingForClients(true);
 
@@ -182,7 +180,7 @@ public class JourneyService {
             //  - removes sailors that are not in at least MAX_ACCEPTED_DISTANCE meters between them and the client's location
             var sailors = activeSailors.stream()
                     .filter(this::checkAndUpdateSailorActiveStatus)
-                    .filter(sailor -> geoService.calculateDistanceBetweenCoordinates(new LatLng(sailor.getCurrentLocation()), request.getCurrentCoordinates()) > MAX_ACCEPTED_DISTANCE)
+                    .filter(sailor -> geoService.calculateDistanceBetweenCoordinates(new LatLng(sailor.getCurrentLocation()), request.getCurrentCoordinates()) < MAX_ACCEPTED_DISTANCE)
                     .toList();
 
             if (sailors.isEmpty()) {
@@ -282,7 +280,7 @@ public class JourneyService {
                 sailorsRepository.save(sailor);
             }
 
-            var journeys = journeyRepository.findAllByStateAndSailorAccount_Id(JourneyState.CLIENT_ACCEPTED, sailor.getAccount().getId());
+            var journeys = journeyRepository.findAllByStateAndSailorAccount_Id(JourneyState.INITIATED, sailor.getAccount().getId());
 
             if (CollectionUtils.isEmpty(journeys))
                 return new UBoatDTO(UBoatStatus.NO_CLIENTS_FOUND);

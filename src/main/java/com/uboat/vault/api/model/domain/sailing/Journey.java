@@ -59,7 +59,7 @@ public class Journey {
     @JsonIgnore
     @Getter
     @Setter
-    @OneToOne(mappedBy = "journey")
+    @OneToOne(mappedBy = "journey", cascade = CascadeType.ALL)
     @JoinColumn(name = "payment_id", nullable = false, updatable = false, insertable = false)
     private Payment payment;
 

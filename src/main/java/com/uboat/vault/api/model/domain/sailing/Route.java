@@ -35,23 +35,36 @@ public class Route {
     @Setter
     private Location destination;
 
+    @AttributeOverrides({
+            @AttributeOverride(name = "coordinates.latitude", column = @Column(name = "sailorLatitude")),
+            @AttributeOverride(name = "coordinates.longitude", column = @Column(name = "sailorLongitude")),
+            @AttributeOverride(name = "address", column = @Column(name = "sailorAddress"))
+    })
+    @Embedded
+    @Getter
+    @Setter
+    private Location sailorLocation;
+
+    @Getter
+    @Setter
     @ElementCollection(fetch = FetchType.LAZY)
     private List<LatLng> routePolylinePoints;
 
     @Setter
     private double totalDistance = 0;
 
-    public Route(Location source, Location destination) {
+    public Route(Location source, Location destination, Location sailorLocation) {
         this.source = source;
         this.destination = destination;
+        this.sailorLocation = sailorLocation;
 
         this.routePolylinePoints = new LinkedList<>();
 
         this.totalDistance = 0;
     }
 
-    public void calculateRoute(GeoService geoService, LatLng sailorLocation) throws NoRouteFoundException {
-        this.routePolylinePoints.addAll(geoService.calculateOnWaterRouteBetweenCoordinates(sailorLocation, source.getCoordinates(), destination.getCoordinates()));
+    public void calculateRoute(GeoService geoService) throws NoRouteFoundException {
+        this.routePolylinePoints.addAll(geoService.calculateOnWaterRouteBetweenCoordinates(sailorLocation.getCoordinates(), source.getCoordinates(), destination.getCoordinates()));
     }
 
     public double getTotalDistance() {

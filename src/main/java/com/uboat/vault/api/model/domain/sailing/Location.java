@@ -18,4 +18,12 @@ public class Location {
     @Getter
     @Setter
     private String address;
+
+    public Location(LatLng coordinates) {
+        this.coordinates = coordinates;
+    }
+
+    public Location(LocationData locationData) {
+        this(new LatLng(locationData));
+    }
 }
