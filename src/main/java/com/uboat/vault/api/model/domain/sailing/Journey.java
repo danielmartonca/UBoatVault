@@ -44,7 +44,7 @@ public class Journey {
     @Setter
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private JourneyState status;
+    private JourneyState state;
 
     @Getter
     @Setter

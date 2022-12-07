@@ -35,6 +35,9 @@ public class JourneyService {
     @Value("${uboat.max-active-sailors}")
     private int MAX_ACTIVE_SAILORS;
 
+    @Value("${uboat.max-accepted-distance}")
+    private int MAX_ACCEPTED_DISTANCE;
+
     private final EntityService entityService;
     private final GeoService geoService;
     private final JwtService jwtService;
@@ -49,7 +52,7 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var account = entityService.findAccountByJwtData(jwtData);
 
-            List<Journey> foundJourneys = journeyRepository.findAllByClientAccount_IdAndStatus(account.getId(), JourneyState.SUCCESSFULLY_FINISHED);
+            List<Journey> foundJourneys = journeyRepository.findAllByClientAccount_IdAndState(account.getId(), JourneyState.SUCCESSFULLY_FINISHED);
             if (foundJourneys == null || foundJourneys.isEmpty()) {
                 log.info("User has no completed journeys.");
                 return new UBoatDTO(UBoatStatus.MOST_RECENT_RIDES_RETRIEVED, new LinkedList<>());
@@ -124,7 +127,7 @@ public class JourneyService {
         var journey = Journey.builder()
                 .clientAccount(clientAccount)
                 .sailor(sailor)
-                .status(JourneyState.INITIATED)
+                .state(JourneyState.INITIATED)
                 .route(route)
                 .journeyTemporalData(new JourneyTemporalData(estimatedDuration))
                 .build();
@@ -164,23 +167,30 @@ public class JourneyService {
         try {
             log.info("Searching for sailors...");
 
-            var activeSailors = sailorsRepository.findAllByLookingForClients(true);
-
-            //removed sailors who are not active in the last accepted time frame
-            var sailors = activeSailors.stream().filter(this::checkAndUpdateSailorActiveStatus).toList();
-
-            if (sailors.isEmpty()) {
-                log.info("There are no free active sailors in the last {} seconds.", MAX_ACTIVE_SECONDS);
-                return new UBoatDTO(UBoatStatus.NO_FREE_SAILORS_FOUND, new LinkedList<>());
-            }
-
-            log.info("{} free sailors were found. ", sailors.size());
-
-            //cant be null because the operation is already done in the filter before
+            //  cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             log.debug("JWT data extracted.");
 
             var clientAccount = entityService.findAccountByJwtData(jwtData);
+
+            //  dismiss all current CLIENT_ACCEPTED journeys
+            journeyRepository.deleteAllByClientAccountAndState(clientAccount, JourneyState.CLIENT_ACCEPTED);
+
+            var activeSailors = sailorsRepository.findAllByLookingForClients(true);
+
+            //  - removed sailors who are not active in the last accepted time frame
+            //  - removes sailors that are not in at least MAX_ACCEPTED_DISTANCE meters between them and the client's location
+            var sailors = activeSailors.stream()
+                    .filter(this::checkAndUpdateSailorActiveStatus)
+                    .filter(sailor -> geoService.calculateDistanceBetweenCoordinates(new LatLng(sailor.getCurrentLocation()), request.getCurrentCoordinates()) > MAX_ACCEPTED_DISTANCE)
+                    .toList();
+
+            if (sailors.isEmpty()) {
+                log.info("There are no free active sailors in the last {} seconds, withing distance, were found.", MAX_ACTIVE_SECONDS);
+                return new UBoatDTO(UBoatStatus.NO_FREE_SAILORS_FOUND, new LinkedList<>());
+            }
+
+            log.info("{} free sailors within distance were found. ", sailors.size());
 
             var journeys = sailors.stream()
                     .map(sailor -> this.buildJourney(request, sailor, clientAccount))  //build Journey entities
@@ -205,10 +215,9 @@ public class JourneyService {
     }
 
     /**
-     * This method establishes the connection between the client and the sailor after the client has chosen the sailorId sent from the request body.
-     * - it finds the free sailor in the database active in the last MAX_ACTIVE_SECONDS seconds and has lookingForClients = true.
-     * If the account is not found, returns message notifying user that the sailor may be busy or has gone offline.
-     * - if the active sailor was found, a new journey with status CLIENT_ACCEPTED will be created with the given data by the client
+     * This method establishes the connection between the client and the sailor after the client has chosen the sailorId sent from the request body.<br>
+     * It validates that the data in the request (the sailor is online, and it is not already having another journey) then puts the Journey in
+     * stage CLIENT_ACCEPTED, dismissing all the other journeys he has in stage INITIATED into CLIENT_CANCELED.
      */
     @Transactional
     public UBoatDTO chooseJourney(String authorizationHeader, JourneyDTO journeyDTO) {
@@ -225,7 +234,7 @@ public class JourneyService {
                 return new UBoatDTO(UBoatStatus.SAILOR_NOT_FOUND);
             }
 
-            var journeys = journeyRepository.findAllByClientAccount_IdAndStatus(clientAccount.getId(), JourneyState.INITIATED);
+            var journeys = journeyRepository.findAllByClientAccount_IdAndState(clientAccount.getId(), JourneyState.INITIATED);
 
             var journeyOptional = journeys.stream()
                     .filter(j -> j.getSailor().getId().equals(journeyDTO.getSailorDetails().getSailorId()) && j.getClientAccount().getId().equals(clientAccount.getId()))
@@ -242,12 +251,12 @@ public class JourneyService {
             journeys.stream()
                     .filter(otherJourney -> !otherJourney.equals(journey))
                     .forEach(journeyToBeCanceled -> {
-                        journeyToBeCanceled.setStatus(JourneyState.CLIENT_CANCELED);
+                        journeyToBeCanceled.setState(JourneyState.CLIENT_CANCELED);
                         journeyRepository.save(journeyToBeCanceled);
                         log.info("Journey with ID {} was canceled by the user.", journeyToBeCanceled.getId());
                     });
 
-            journey.setStatus(JourneyState.CLIENT_ACCEPTED);
+            journey.setState(JourneyState.CLIENT_ACCEPTED);
             journeyRepository.save(journey);
 
             return new UBoatDTO(UBoatStatus.CLIENT_ACCEPTED_JOURNEY, true);
@@ -258,7 +267,7 @@ public class JourneyService {
     }
 
     /**
-     * This method searches for journey objects that have status CLIENT_ACCEPTED for the sailor from request and returns the journeys.
+     * This method searches for journey objects that have status CLIENT_ACCEPTED for the sailor from request and returns their JourneysDTO.
      */
     @Transactional
     public UBoatDTO findClients(String authorizationHeader) {
@@ -273,7 +282,7 @@ public class JourneyService {
                 sailorsRepository.save(sailor);
             }
 
-            var journeys = journeyRepository.findAllByStatusAndSailorAccount_Id(JourneyState.CLIENT_ACCEPTED, sailor.getAccount().getId());
+            var journeys = journeyRepository.findAllByStateAndSailorAccount_Id(JourneyState.CLIENT_ACCEPTED, sailor.getAccount().getId());
 
             if (CollectionUtils.isEmpty(journeys))
                 return new UBoatDTO(UBoatStatus.NO_CLIENTS_FOUND);
@@ -299,7 +308,13 @@ public class JourneyService {
             var source = journeyDTO.getRoute().getSource().getCoordinates();
             var destination = journeyDTO.getRoute().getDestination().getCoordinates();
 
-            var journey = journeyRepository.findNewJourneyOfSailorMatchingSourceAndDestination(
+            var journeyOptional = journeyRepository.findBySailorAndState(sailor, JourneyState.SAILOR_ACCEPTED);
+            if (journeyOptional.isPresent()) {
+                log.warn("Another journey has already been selected");
+                return new UBoatDTO(UBoatStatus.JOURNEY_SELECTED, false);
+            }
+
+            var journey = journeyRepository.findJourneyOfSailorMatchingStateSourceAndDestination(
                     JourneyState.CLIENT_ACCEPTED,
                     sailor.getAccount().getId(),
                     source.getLatitude(), source.getLongitude(),
@@ -310,19 +325,19 @@ public class JourneyService {
             log.info("Found journey from the request with status CLIENT_ACCEPTED. Journey id: {}", journey.getId());
 
             //dismiss any other journey for the current sailor - set all the other CLIENT_ACCEPTED journeys for this sailor to SAILOR_CANCELED
-            var otherJourneys = journeyRepository.findAllByStatusAndSailorAccount_Id(JourneyState.CLIENT_ACCEPTED, sailor.getAccount().getId());
+            var otherJourneys = journeyRepository.findAllByStateAndSailorAccount_Id(JourneyState.CLIENT_ACCEPTED, sailor.getAccount().getId());
             if (!CollectionUtils.isEmpty(otherJourneys)) {
                 log.info("Canceling other journeys.");
                 otherJourneys.stream()
                         .filter(otherJourney -> !otherJourney.getId().equals(journey.getId()))
                         .forEach(otherJourney -> {
-                            otherJourney.setStatus(JourneyState.SAILOR_CANCELED);
+                            otherJourney.setState(JourneyState.SAILOR_CANCELED);
                             journeyRepository.save(otherJourney);
                             log.info("Canceled journey with id {}.", otherJourney.getId());
                         });
             }
 
-            journey.setStatus(JourneyState.SAILOR_ACCEPTED);
+            journey.setState(JourneyState.SAILOR_ACCEPTED);
             journeyRepository.save(journey);
             log.info("Status of journey changed from CLIENT_ACCEPTED to SAILOR_ACCEPTED. Journey id: {}", journey.getId());
 

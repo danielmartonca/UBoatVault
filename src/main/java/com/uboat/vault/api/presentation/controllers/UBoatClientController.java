@@ -53,10 +53,9 @@ public class UBoatClientController {
         };
     }
 
-    @Operation(summary = "This API retrieves information about possible journeys. " +
-            "It fetches all active sailors and calls all services to calculate details about the journey such as: " +
-            "sailor id, sailor name, estimated cost, duration, quality etc. " +
-            "This API just fetches and calculates data for each possible free sailor. Connection to the sailor can only be established by calling /chooseJourney API.")
+    @Operation(summary = "This API creates Journies which are possible to be selected by the client and the sailor. " +
+            "It fetches all active sailors, calls all services to calculate details about the journey and creates them in status INITIATED for each free active sailor found withing the limit distance that has a possible route between him, the client and the destination. " +
+            "Connection to the sailor can only be established by calling /chooseJourney API.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Details about each journey are returned or empty list if no free sailors could be detected.", content = @Content(mediaType = "application/json")),
     })
@@ -70,11 +69,8 @@ public class UBoatClientController {
         };
     }
 
-    @Operation(summary = "After fetching data with /requestJourney, this API uses that data to establish a possible new Journey request with the sailor: " +
-            "A new Journey is created with a status indicating that the client has chosen this Journey. The sailor must confirm this action too by calling: " +
-            "/findClients (to fetch all available Journeys selected by the clients) and " +
-            "/selectClient (to select the new Journey/or he might choose another one in which case the other journeys with that specific status will be canceled). " +
-            "This there is already an ongoing journey request for the client, the old journey request will be canceled.")
+    @Operation(summary = "This method establishes the connection between the client and the sailor after the client has chosen the sailor's journey sent in the request body." +
+            "It validates that the data in the request (the sailor is online, and it is not already having another journey) then puts the Journey in stage CLIENT_ACCEPTED, dismissing all the other journeys he has in stage INITIATED into CLIENT_CANCELED.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "A new journey was created and the other ones with status CLIENT_ACCEPTED(due to app restart/error etc) are canceled.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "404", description = "Could not find the sailor by sailor ID.", content = @Content(mediaType = "application/json"))

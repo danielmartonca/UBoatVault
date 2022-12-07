@@ -8,7 +8,6 @@ import lombok.Getter;
 @AllArgsConstructor
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum UBoatStatus {
-    VAULT_INTERNAL_SERVER_ERROR(-1, "UBoat vault has encountered an internal exception. Please report to administration.", CommonStatus.UNEXPECTED_ERROR),
     ACCOUNT_NOT_FOUND(-2, "The credentials in the request don't match to any account from the database.", CommonStatus.UNEXPECTED_ERROR),
     INVALID_AUTHORIZATION_HEADER(-3, "Couldn't complete action because the authorization header format is invalid", CommonStatus.UNEXPECTED_ERROR),
     CREDENTIALS_NOT_MATCHING_JWT(-4, "Couldn't complete action because the credentials of the request are not matching the JWT token.", CommonStatus.UNEXPECTED_ERROR),
@@ -33,33 +32,33 @@ public enum UBoatStatus {
     // /api/getMissingAccountInformation
     MISSING_ACCOUNT_INFORMATION_RETRIEVED(1, "Retrieved the account in the request missing information.", CommonStatus.SUCCESS),
 
-    // /api/getAccountDetails
+    // /api/accountDetails
     ACCOUNT_DETAILS_RETRIEVED(1, "Account details were extracted successfully using JWT data.", CommonStatus.SUCCESS),
 
-    // /api/updateAccountDetails
+    // /api/accountDetails
     ACCOUNT_DETAILS_UPDATED(1, "Updated account details with information that was not empty in the request.", "Updated successfully"),
 
-    // /api/getCreditCards
+    // /api/creditCards
     CREDIT_CARDS_RETRIEVED(1, "Credit cards were extracted successfully using JWT data.", CommonStatus.SUCCESS),
 
-    // /api/addCreditCard
+    // /api/creditCard
 
     CREDIT_CARD_EXPIRED(2, "Credit card has an expiration date in the past.", "Credit card is expired."),
     CREDIT_CARD_DUPLICATE(0, "Credit card already exists for the account.", "Credit card is already set to your account"),
     CREDIT_CARD_ADDED(1, "Credit card was added to the account.", "Credit card added successfully"),
 
-    // /api/deleteCreditCard
+    // /api/creditCard
 
     CREDIT_CARD_NOT_FOUND(0, "The credit card is not bounded to the account.", "Credit card is not used"),
     CREDIT_CARD_DELETED(1, "Credit card was deleted from the account.", "Credit card deleted"),
 
-    // /api/getMyBoat
+    // /api/boat
     BOAT_RETRIEVED(1, "The boat has been returned by the sailor", CommonStatus.SUCCESS),
 
-    // /api/updateMyBoat
+    // /api/boat
     BOAT_UPDATED(1, "The boat details have been updated", "Updated your boat details"),
 
-    // /api/getSailorDetails
+    // /api/sailorDetails
     SAILOR_DETAILS_RETRIEVED(1, "The sailor name has been retrieved", CommonStatus.SUCCESS),
     SAILOR_NOT_FOUND(0, "The sailor couldn't be found by ID", null),
     JOURNEY_FOR_SAILOR_NOT_FOUND(2, "The sailor is valid but no journey could be found for him matching the client.", null),
@@ -70,7 +69,7 @@ public enum UBoatStatus {
     DEVICE_INFO_ALREADY_USED(2, "Device info unique identifier code already present in the database.", "Your phone is already used by another account."),
     SIM_ALREADY_USED(3, "Sim card already found in the database.", "Your sim card is already used."),
 
-    // /api/verifyJwt
+    // /api/jwt
 
     JWT_VALID(1, "The jwt token extracted from the header of the request is valid.", "You are authenticated"),
     JWT_INVALID(0, "The jwt token extracted from the header of the request is not valid.", "You are not authenticated"),
@@ -107,45 +106,45 @@ public enum UBoatStatus {
     LOGIN_SUCCESSFUL(1, "The credentials match. Login was successful", "Logged in successfully"),
 
 
-    // /images/getDefaultProfilePicture
+    // /images/defaultProfilePicture
     DEFAULT_PROFILE_PICTURE_RETRIEVED(1, "Default profile picture retrieved successfully.", CommonStatus.SUCCESS),
 
 
-    // /images/getDefaultProfilePicture
+    // /images/defaultProfilePicture
     PROFILE_PICTURE_RETRIEVED(1, "Profile picture has been retrieved.", null),
 
 
-    // /images/getSailorProfilePicture
+    // /images/sailorProfilePicture
     SAILOR_PROFILE_PICTURE_RETRIEVED(1, "Sailor profile picture retrieved successfully.", CommonStatus.SUCCESS),
     SAILOR_PROFILE_PICTURE_NOT_SET(0, "Sailor has not set a profile picture.", CommonStatus.SUCCESS),
 
 
-    // /images/getSailorBoatImages
+    // /images/boatImages
     SAILOR_BOAT_IMAGES_RETRIEVED(1, "Sailor boat images retrieved successfully.", CommonStatus.SUCCESS),
 
 
-    // /images/uploadProfileImage
+    // /images/profileImage
 
     PROFILE_IMAGE_UPLOADED(1, "Profile image has been uploaded successfully.", "Profile picture updated"),
     PROFILE_IMAGE_ALREADY_EXISTING(0, "Boat image already existed.", "Profile picture updated"),
 
 
-    // /images/uploadBoatImage
+    // /images/boatImage
     BOAT_IMAGE_UPLOADED(1, "Boat image has been uploaded successfully.", "Boat image uploaded"),
     BOAT_IMAGE_ALREADY_EXISTING(0, "Boat image was already existing for the sailor.", "Image was already uploaded"),
 
-    // /images/getBoatImagesIdentifiers
+    // /images/boatImagesIdentifiers
 
     BOAT_IMAGES_HASHES_RETRIEVED(1, "All boat images hash values have been retrieved.", CommonStatus.SUCCESS),
 
     BOAT_IMAGES_HASHES_EMPTY(0, "Boat does not have any pictures set.", "Boat does not have images"),
 
-    // /images/getBoatImage
+    // /images/boatImage
 
     BOAT_IMAGE_RETRIEVED(1, "Boat image bytes retrieved successfully.", CommonStatus.SUCCESS),
     BOAT_IMAGE_NOT_FOUND(0, "Boat image could not be found by identifier.", "Failed to retrieve image"),
 
-    // /images/getBoatImage
+    // /images/boatImage
     BOAT_IMAGE_DELETED(1, "Boat image deleted successfully.", "Boat image deleted"),
 
     // /api/sailor/pulse
@@ -155,12 +154,9 @@ public enum UBoatStatus {
     NO_CLIENTS_FOUND(0, "No new client were found.", "No new clients for the moment..."),
     CLIENTS_FOUND(1, "Found new clients for the sailor", "New clients"),
 
-    // /api/sailor/connectToSailor
+    // /api/sailor/selectClient
     CLIENT_ACCEPTED_JOURNEY(1, "The status of Journey has been updated. The sailor must now accept the client.", null),
 
-    // /api/client/requestJourney
-    JOURNEY_NOT_FOUND(2, "The journey could not be found", CommonStatus.UNEXPECTED_ERROR),
-    JOURNEY_SELECTED(1, "Sailor has selected a journey and canceled all the others.", "Journey accepted"),
 
     // /api/client/getMostRecentRides
     MOST_RECENT_RIDES_RETRIEVED(1, "Retrieved most recent rides for the client.", null),
@@ -168,11 +164,18 @@ public enum UBoatStatus {
     // /api/client/getSailorBoat
     SAILOR_BOAT_RETRIEVED(1, "Sailor boat details have been retrieved successfully.", null),
 
+
     // /api/client/requestJourney
     NO_ROUTE_FOUND(0, "Free sailors were found but no possible route could be found.", "No route could be determined. Please advise your location and destination choice or try again in a few moments"),
     JOURNEYS_INITIATED(1, "Free sailors have been found and new journeys have been initiated. ", "Found sailor(s) and route(s)!"),
-    NO_FREE_SAILORS_FOUND(2, "No free sailors were found by backend.", "No free sailors were found. Please try again in a few moments");
+    NO_FREE_SAILORS_FOUND(2, "No free sailors were found by backend.", "No free sailors were found. Please try again in a few moments"),
 
+    // /api/client/selectClient
+    JOURNEY_NOT_FOUND(2, "The journey could not be found", CommonStatus.UNEXPECTED_ERROR),
+    JOURNEY_SELECTED(1, "Sailor has selected a journey and canceled all the others.", "Journey accepted"),
+    ANOTHER_JOURNEY_ALREADY_SELECTED(3, "Sailor has already selected another journey. ", "You have already selected another ride. Please wait for the client to cancel it or the journey to expire."),
+
+    VAULT_INTERNAL_SERVER_ERROR(-1, "UBoat vault has encountered an internal exception. Please report to administration.", CommonStatus.UNEXPECTED_ERROR);
 
     private final int code;
     private final String serverMessage;

@@ -35,9 +35,8 @@ public class UBoatSailorController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
     }
 
-    @Operation(summary = "Queries the database for journeys that have the status CLIENT_ACCEPTED and the sailor id the current sailor's id extracted from JWT. " +
-            "When the users call the API /connectToSailor, a new Journey is created with status CLIENT_ACCEPTED and the sailor id of the chosen sailor. " +
-            "Then the sailor has to call the /selectClient API in order to proceed with the Journey.")
+    @Operation(summary = "This API is called by sailors to find possible new journeys. After the clients have created journeys by calling /requestJourney and /chooseJourney APIs," +
+            " the sailor can call this API to retrieve all journies matching this criteria. However, in order to establish a connection between him and the client, the sailor also has to call /selectClient with the data retrieved using this API.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Api was processed correctly. A list of available journeys is returned if existing, null otherwise.", content = @Content(mediaType = "application/json")),
     })
@@ -51,8 +50,7 @@ public class UBoatSailorController {
         };
     }
 
-    @Operation(summary = "Queries the database for journeys that have the status CLIENT_ACCEPTED and the sailor id the current sailor's id extracted from JWT. " +
-            "This API is called by the sailor only after he has called /findClients to query all available journeys.")
+    @Operation(summary = "This API establishes a Journey between the caller and the Journey entity. The request journey must be fetched using /findClients API.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Api was processed correctly. True will be returned if a journey was selected by the client " +
                     "and all the other requested journeys are canceled or false if journey from the request could not be found in the database.", content = @Content(mediaType = "application/json")),

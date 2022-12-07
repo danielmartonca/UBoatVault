@@ -23,4 +23,5 @@ uboat:
   pretty-print-logs: true
   max-active-seconds: 300
   max-active-sailors: 5
+  max-accepted-distances: 100000
   hs256_key: key1234

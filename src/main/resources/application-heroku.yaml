@@ -25,4 +25,5 @@ uboat:
   pretty-print-logs: false
   max-active-seconds: ${MAX_ACTIVE_SECONDS}
   max-active-sailors: ${MAX_ACTIVE_SAILORS}
+  max-accepted-distances: ${MAX_ACCEPTED_DISTANCES}
   hs256_key: ${HS256_KEY}
