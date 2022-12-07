@@ -15,10 +15,10 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class RegistrationDataDTO {
     private String deviceInfo;
-    private Set<RequestSimCard> mobileNumbersInfoList;
+    private Set<SimCardDTO> mobileNumbersInfoList;
 
     public RegistrationDataDTO(RegistrationData registrationData) {
         this.deviceInfo = registrationData.getDeviceInfo();
-        this.mobileNumbersInfoList = registrationData.getMobileNumbersInfoList().stream().map(RequestSimCard::new).collect(Collectors.toSet());
+        this.mobileNumbersInfoList = registrationData.getMobileNumbersInfoList().stream().map(SimCardDTO::new).collect(Collectors.toSet());
     }
 }

@@ -16,7 +16,7 @@
       "description": "Describes how many sailors can be retrieved when requesting a new journey. The closest [max-active-sailors] will be retrieved."
     },
     {
-      "name": "uboat.max-accepted-distances",
+      "name": "uboat.max-accepted-distance",
       "type": "java.lang.String",
       "description": "Describes the maximum distance in meters allowed between the sailor and the client when before creating new Journeys."
     },

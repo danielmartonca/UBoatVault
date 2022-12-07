@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RequestSimCard {
+public class SimCardDTO {
     private String carrierName;
     private String displayName;
     private Integer slotIndex;
@@ -18,7 +18,7 @@ public class RequestSimCard {
     private String countryIso;
     private String countryPhonePrefix;
 
-    public RequestSimCard(SimCard simCard) {
+    public SimCardDTO(SimCard simCard) {
         this.carrierName = simCard.getCarrierName();
         this.displayName = simCard.getDisplayName();
         this.slotIndex = simCard.getSlotIndex();

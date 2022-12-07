@@ -1,7 +1,7 @@
 package com.uboat.vault.api.model.domain.account.account;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.uboat.vault.api.model.dto.RequestSimCard;
+import com.uboat.vault.api.model.dto.SimCardDTO;
 import com.uboat.vault.api.utilities.LoggingUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -51,7 +51,7 @@ public class SimCard {
     @JoinColumn(name = "registration_data_id", nullable = false)
     private RegistrationData registrationData;
 
-    public SimCard(RequestSimCard simCard) {
+    public SimCard(SimCardDTO simCard) {
         this.carrierName = simCard.getCarrierName();
         this.displayName = simCard.getDisplayName();
         this.slotIndex = simCard.getSlotIndex();
