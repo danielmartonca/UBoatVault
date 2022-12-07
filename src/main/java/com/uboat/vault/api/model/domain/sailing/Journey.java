@@ -2,13 +2,14 @@ package com.uboat.vault.api.model.domain.sailing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.domain.account.account.Account;
-import com.uboat.vault.api.model.enums.Stage;
+import com.uboat.vault.api.model.domain.account.sailor.Sailor;
+import com.uboat.vault.api.model.enums.JourneyState;
 import lombok.*;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "Journeys")
@@ -27,67 +28,6 @@ public class Journey {
     @JsonIgnore
     @Getter
     @Setter
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Stage status;
-
-    @Getter
-    @Setter
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date dateBooking;
-
-    @Getter
-    @Setter
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date dateArrival;
-
-    @Getter
-    @Setter
-    @NotNull
-    private double sourceLatitude;
-
-    @Getter
-    @Setter
-    @NotNull
-    private double sourceLongitude;
-
-    @Getter
-    @Setter
-    @NotNull
-    private String sourceAddress;
-
-    @Getter
-    @Setter
-    @NotNull
-    private double destinationLatitude;
-
-    @Getter
-    @Setter
-    @NotNull
-    private double destinationLongitude;
-
-    @Getter
-    @Setter
-    private String destinationAddress;
-
-    @Getter
-    @Setter
-    private String payment;
-
-    @Getter
-    @Setter
-    @JoinTable(name = "journeys_location_data")
-    @OneToMany(cascade = {CascadeType.ALL})
-    private List<LocationData> locationDataList;
-
-    @Transient
-    @Getter
-    @Setter
-    private String duration;
-
-    @JsonIgnore
-    @Getter
-    @Setter
     @ManyToOne()
     @JoinColumn(name = "client_account_id")
     private Account clientAccount;
@@ -96,6 +36,47 @@ public class Journey {
     @Getter
     @Setter
     @ManyToOne
-    @JoinColumn(name = "sailor_account_id")
-    private Account sailorAccount;
+    @JoinColumn(name = "sailor_id")
+    private Sailor sailor;
+
+    @JsonIgnore
+    @Getter
+    @Setter
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private JourneyState status;
+
+    @Getter
+    @Setter
+    @Embedded
+    private Route route;
+
+    @Embedded
+    @Getter
+    @Setter
+    private JourneyTemporalData journeyTemporalData;
+
+    @JsonIgnore
+    @Getter
+    @Setter
+    @OneToOne(mappedBy = "journey")
+    @JoinColumn(name = "payment_id", nullable = false, updatable = false, insertable = false)
+    private Payment payment;
+
+    @Getter
+    @Setter
+    @OneToMany(mappedBy = "journey", cascade = CascadeType.ALL)
+    private List<JourneyLocationInfo> recordedLocationInfos = new LinkedList<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Journey journey)) return false;
+        return getId().equals(journey.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
+    }
 }

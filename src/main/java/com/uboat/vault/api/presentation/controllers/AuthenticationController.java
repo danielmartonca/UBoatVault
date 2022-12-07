@@ -58,7 +58,7 @@ public class AuthenticationController {
         var responseIfInvalid = HeadersUtils.parseAuthorizationHeaderForRToken(authorizationHeader);
         if (responseIfInvalid != null) return responseIfInvalid;
 
-        var uBoatResponse = authenticationService.sendRegistrationSMS(phoneNumberDTO, HeadersUtils.extractRToken(authorizationHeader), smsInteger);
+        var uBoatResponse = authenticationService.sendRegistrationSMS(phoneNumberDTO, HeadersUtils.extractSecret(authorizationHeader), smsInteger);
 
         return switch (uBoatResponse.getHeader()) {
             case REGISTRATION_SMS_SENT -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
@@ -77,7 +77,7 @@ public class AuthenticationController {
         var responseIfInvalid = HeadersUtils.parseAuthorizationHeaderForRToken(authorizationHeader);
         if (responseIfInvalid != null) return responseIfInvalid;
 
-        var uBoatResponse = authenticationService.emailVerification(HeadersUtils.extractRToken(authorizationHeader));
+        var uBoatResponse = authenticationService.emailVerification(HeadersUtils.extractSecret(authorizationHeader));
 
         return switch (uBoatResponse.getHeader()) {
             case EMAIL_VERIFIED, EMAIL_NOT_VERIFIED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
@@ -122,7 +122,7 @@ public class AuthenticationController {
         var responseIfInvalid = HeadersUtils.parseAuthorizationHeaderForRToken(authorizationHeader);
         if (responseIfInvalid != null) return responseIfInvalid;
 
-        var uBoatResponse = authenticationService.register(account, HeadersUtils.extractRToken(authorizationHeader));
+        var uBoatResponse = authenticationService.register(account, HeadersUtils.extractSecret(authorizationHeader));
         return switch (uBoatResponse.getHeader()) {
             case RTOKEN_NOT_FOUND_IN_DATABASE -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(uBoatResponse);
             case RTOKEN_AND_ACCOUNT_NOT_MATCHING, MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER ->

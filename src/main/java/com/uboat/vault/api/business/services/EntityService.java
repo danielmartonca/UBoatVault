@@ -2,7 +2,7 @@ package com.uboat.vault.api.business.services;
 
 import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.account.account.SimCard;
-import com.uboat.vault.api.model.domain.sailing.sailor.Sailor;
+import com.uboat.vault.api.model.domain.account.sailor.Sailor;
 import com.uboat.vault.api.model.dto.RegistrationDataDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.UBoatStatus;

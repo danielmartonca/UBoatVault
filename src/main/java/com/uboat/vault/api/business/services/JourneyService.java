@@ -1,27 +1,30 @@
 package com.uboat.vault.api.business.services;
 
-import com.uboat.vault.api.model.domain.sailing.Journey;
-import com.uboat.vault.api.model.domain.sailing.LocationData;
-import com.uboat.vault.api.model.domain.sailing.sailor.Sailor;
-import com.uboat.vault.api.model.dto.*;
-import com.uboat.vault.api.model.enums.Stage;
+import com.uboat.vault.api.model.domain.account.account.Account;
+import com.uboat.vault.api.model.domain.account.sailor.Sailor;
+import com.uboat.vault.api.model.domain.sailing.*;
+import com.uboat.vault.api.model.dto.JourneyDTO;
+import com.uboat.vault.api.model.dto.JourneyRequestDTO;
+import com.uboat.vault.api.model.dto.PulseDTO;
+import com.uboat.vault.api.model.dto.UBoatDTO;
+import com.uboat.vault.api.model.enums.JourneyState;
 import com.uboat.vault.api.model.enums.UBoatStatus;
-import com.uboat.vault.api.model.enums.UserType;
-import com.uboat.vault.api.model.other.LatLng;
-import com.uboat.vault.api.persistence.repostiories.AccountsRepository;
+import com.uboat.vault.api.model.exceptions.NoRouteFoundException;
 import com.uboat.vault.api.persistence.repostiories.JourneyRepository;
 import com.uboat.vault.api.persistence.repostiories.LocationDataRepository;
 import com.uboat.vault.api.persistence.repostiories.SailorsRepository;
 import com.uboat.vault.api.utilities.DateUtils;
-import com.uboat.vault.api.utilities.GeoUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -36,49 +39,9 @@ public class JourneyService {
     private final GeoService geoService;
     private final JwtService jwtService;
 
-    private final AccountsRepository accountsRepository;
     private final JourneyRepository journeyRepository;
     private final SailorsRepository sailorsRepository;
     private final LocationDataRepository locationDataRepository;
-
-    @Transactional
-    public boolean addFakeJourney(String clientId, String sailorId) {
-        var clientAccount = accountsRepository.findById(Long.parseLong(clientId));
-        var sailorAccount = accountsRepository.findById(Long.parseLong(sailorId));
-
-        if (clientAccount.isPresent() && sailorAccount.isPresent()) {
-            if (clientAccount.get().getType() != UserType.CLIENT || sailorAccount.get().getType() != UserType.SAILOR) {
-                log.info("Invalid clientId or sailorId");
-                return false;
-            }
-
-            List<LocationData> locationDataSet = new LinkedList<>();
-            var locationData = LocationData.createRandomLocationData();
-            locationDataSet.add(locationData);
-            Journey journey = Journey.builder()
-                    .clientAccount(clientAccount.get())
-                    .sailorAccount(sailorAccount.get())
-                    .status(Stage.FINISHED)
-                    .dateBooking(new Date())
-                    .dateArrival(new Date())
-                    .sourceLatitude(37.430857)
-                    .sourceLongitude(-122.091288)
-                    .sourceAddress("CWJ5+ 79 Mountain View,CA,USA")
-                    .destinationLatitude(37.434588)
-                    .destinationLongitude(-122.093799)
-                    .destinationAddress("CWM4+RFP Mountain View,CA,USA")
-                    .payment("10 EUR")
-                    .duration("10 minutes")
-                    .build();
-            journey.setLocationDataList(locationDataSet);
-            journeyRepository.save(journey);
-            log.info("Added mock data with success.");
-            return true;
-        }
-        log.info("Client account or sailor account don't exist");
-        return false;
-    }
-
 
     public UBoatDTO getMostRecentRides(String authorizationHeader, Integer ridesRequested) {
         try {
@@ -86,7 +49,7 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var account = entityService.findAccountByJwtData(jwtData);
 
-            List<Journey> foundJourneys = journeyRepository.findAllByClientAccount_IdAndStatus(account.getId(), Stage.FINISHED);
+            List<Journey> foundJourneys = journeyRepository.findAllByClientAccount_IdAndStatus(account.getId(), JourneyState.SUCCESSFULLY_FINISHED);
             if (foundJourneys == null || foundJourneys.isEmpty()) {
                 log.info("User has no completed journeys.");
                 return new UBoatDTO(UBoatStatus.MOST_RECENT_RIDES_RETRIEVED, new LinkedList<>());
@@ -97,7 +60,7 @@ public class JourneyService {
             List<JourneyDTO> journeys = new LinkedList<>();
             for (var journey : foundJourneys) {
                 if (ridesRequested == 0) break;
-                journeys.add(new JourneyDTO(journey));
+                journeys.add(JourneyDTO.buildDTOForClients(journey));
                 ridesRequested--;
             }
 
@@ -108,177 +71,8 @@ public class JourneyService {
         }
     }
 
-    //request journey
-
     /**
-     * This method returns a list of Pairs < ActiveSailor, distance > where each pair represents
-     * the distance from the ActiveSailor's coordinates to the destinationCoordinates given as parameter
-     */
-    private List<Pair<Sailor, Double>> getDistanceToCoordinatesList(List<Sailor> sailors, LatLng destinationCoordinates) {
-        List<Pair<Sailor, Double>> sailorsDistancesList = new LinkedList<>();
-        for (var sailor : sailors) {
-            try {
-                LatLng sailorCoordinates = GeoUtils.getCoordinates(sailor.getCurrentLocation());
-
-                double distanceToDestination = geoService.calculateDistanceBetweenCoordinates(sailorCoordinates, destinationCoordinates);
-
-                var pair = Pair.of(sailor, distanceToDestination);
-                sailorsDistancesList.add(pair);
-            } catch (Exception e) {
-                log.error("Exception during distance calculation workflow for active sailor:\n" + sailor);
-            }
-        }
-        sailorsDistancesList.sort(Comparator.comparingLong(pair -> pair.getFirst().getAccountId()));
-        return sailorsDistancesList;
-    }
-
-    /**
-     * This method takes two lists of pairs calculated with {@link #getDistanceToCoordinatesList(List, LatLng)}
-     * and sums pairs that match Sailor objects by accountId.
-     * <br>If there are pairs in any of the two lists where the ActiveSailor does not have a correspondence in the other list, they will be completely ignored by the algorithm.
-     * <p><br>
-     * This method returns a list of pairs sorted by Sailor id!
-     * TODO - merge lists using merge sort technique
-     */
-    private List<Pair<Sailor, Double>> sumListsOfDistances(List<Pair<Sailor, Double>> list1, List<Pair<Sailor, Double>> list2) {
-        List<Pair<Sailor, Double>> totalDistanceList = new LinkedList<>();
-
-        for (int i = 0; i < Math.min(list1.size(), list2.size()); i++) {
-            var pair1 = list1.get(i);
-            var pair2 = list2.get(i);
-
-            if (pair1.getFirst().getAccountId().equals(pair2.getFirst().getAccountId())) {
-                totalDistanceList.add(Pair.of(pair1.getFirst(), pair1.getSecond() + pair2.getSecond()));
-            } else {
-                Pair<Sailor, Double> pair;
-                List<Pair<Sailor, Double>> searchList;
-                if (pair1.getFirst().getAccountId() >= pair2.getFirst().getAccountId()) {
-                    pair = pair1;
-                    searchList = list2;
-                } else {
-                    pair = pair2;
-                    searchList = list1;
-                }
-                Long sailorAccountId = pair.getFirst().getAccountId();
-
-                searchList.stream()
-                        .filter(activeSailorPair -> sailorAccountId.equals(activeSailorPair.getFirst().getAccountId()))
-                        .findFirst()
-                        .ifPresent(activeSailorDoublePair -> totalDistanceList.add(Pair.of(pair.getFirst(), pair.getSecond() + activeSailorDoublePair.getSecond())));
-            }
-        }
-
-        return totalDistanceList;
-    }
-
-    /**
-     * This method finds the total distance between each active sailor given as parameter to the client's destination.<br>
-     * The calculation is done by summing the distance calculated by the algorithm between the sailor boat to the client plus the distance between the client to the destination.
-     */
-    private List<Pair<Sailor, Double>> findSailorsJourneyTotalDistancesList(List<Sailor> freeSailorList, LatLng clientCoordinates, LatLng destinationCoordinates) {
-        try {
-            var distanceToClientList = getDistanceToCoordinatesList(freeSailorList, clientCoordinates);
-            var distanceToDestinationList = getDistanceToCoordinatesList(freeSailorList, destinationCoordinates);
-
-            var totalDistanceList = sumListsOfDistances(distanceToClientList, distanceToDestinationList);
-
-            log.debug("Calculated the fallowing list for client coordinates: " + clientCoordinates + " and destination coordinates: " + destinationCoordinates + ":\n" + totalDistanceList);
-            log.info("Calculated the sum of distances list.");
-            return totalDistanceList;
-        } catch (Exception e) {
-            log.error("Exception occurred while searching for sailors.", e);
-            throw e;
-        }
-    }
-
-    /**
-     * This method calls all the required services in order to build the response given the data calculated earlier.
-     */
-    private NewJourneyDetailsDTO buildNewJourneyDetails(Pair<Sailor, Double> sailorDoublePair) {
-        try {
-            var sailor = sailorDoublePair.getFirst();
-            var distance = sailorDoublePair.getSecond();
-
-            //retrieve sailor name from the account details if existing or account username otherwise
-            var accountOptional = accountsRepository.findById(sailor.getAccountId());
-            if (accountOptional.isEmpty())
-                throw new RuntimeException("Warning: sailor has account id which does not belong to any account");
-
-            var account = accountOptional.get();
-            var sailorName = account.getUsername();
-            if (account.getAccountDetails().getFullName() != null)
-                sailorName = account.getAccountDetails().getFullName();
-
-            var costPair = geoService.estimateCost(distance, sailor.getBoat());
-            var estimatedDuration = geoService.estimateDuration(distance, sailor.getBoat());
-
-            return NewJourneyDetailsDTO.builder()
-                    .sailorId(String.valueOf(sailor.getId()))
-                    .sailorName(sailorName)
-                    .sailorCurrentLocation(new LocationDataDTO(sailor.getCurrentLocation()))
-                    .distance(distance)
-                    .estimatedCost(String.valueOf(costPair.getSecond()))
-                    .estimatedCostCurrency(costPair.getFirst())
-                    .estimatedDuration(estimatedDuration)
-                    .estimatedTimeOfArrival(geoService.estimateTimeOfArrival(estimatedDuration))
-                    .build();
-        } catch (RuntimeException e) {
-            log.error("Exception while building response");
-            return null;
-        }
-    }
-
-    /**
-     * This method returns to the client all the available sailors that will be rendered on his map after clicking find sailor
-     */
-    @Transactional
-    public UBoatDTO requestJourney(NewJourneyDTO request) {
-        try {
-            log.info("Searching for sailors...");
-
-            //queried all active sailors
-            var activeSailors = sailorsRepository.findAllByLookingForClients(true);
-
-            //removed active sailors who are not active in the last  MAX_ACTIVE_SECONDS seconds and set their status as not looking for clients
-            var freeSailors = activeSailors.stream()
-                    .filter(sailor -> {
-                        if (DateUtils.getSecondsPassed(sailor.getLastUpdate()) >= MAX_ACTIVE_SECONDS) {
-                            sailor.setLookingForClients(false);
-                            sailorsRepository.save(sailor);
-                            return false;
-                        }
-                        return true;
-                    })
-                    .toList();
-
-            if (freeSailors.isEmpty()) {
-                log.info("There are no free active sailors in the last " + MAX_ACTIVE_SECONDS + " seconds.");
-                return new UBoatDTO(UBoatStatus.NO_FREE_SAILORS_FOUND, new LinkedList<>());
-            }
-            log.info("{} free sailors were found. ", freeSailors.size());
-
-            var totalDistancesList = findSailorsJourneyTotalDistancesList(freeSailors, request.getCurrentCoordinates(), request.getDestinationCoordinates());
-
-            //sort the list by the shortest distance
-            totalDistancesList.sort(Comparator.comparingDouble(Pair::getSecond));
-            //only return the last MAX_ACTIVE_SAILORS
-            totalDistancesList = totalDistancesList.subList(0, Math.min(MAX_ACTIVE_SAILORS, totalDistancesList.size()));
-
-            //build data that will be sent to the user
-            var responseList = totalDistancesList.stream()
-                    .map(this::buildNewJourneyDetails)
-                    .filter(Objects::nonNull)
-                    .toList();
-            return new UBoatDTO(UBoatStatus.FREE_SAILORS_FOUND, responseList);
-        } catch (Exception e) {
-            log.error("An exception occurred during requestJourney workflow.", e);
-            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-
-    /**
-     * This method updates the sailor account locationData and lastUpdate to the current system time in order to mark this sailor as active
+     * This method updates the sailor account locationData and lastUpdate to the current system time in order to mark this sailor as active.
      */
     @Transactional
     public UBoatDTO pulse(String authorizationHeader, PulseDTO pulseRequest) {
@@ -307,6 +101,163 @@ public class JourneyService {
     }
 
     /**
+     * This method build a Route object for each<br>
+     * The calculation is done by summing the distance calculated by the algorithm between the sailor boat to the client plus the distance between the client to the destination.
+     */
+    private Journey buildJourney(JourneyRequestDTO journeyRequestDTO, Sailor sailor, Account clientAccount) {
+        var source = new Location(journeyRequestDTO.getCurrentCoordinates(), journeyRequestDTO.getCurrentAddress());
+        var destination = new Location(journeyRequestDTO.getDestinationCoordinates(), journeyRequestDTO.getDestinationAddress());
+
+        var route = new Route(source, destination);
+        try {
+            route.calculateRoute(geoService, new LatLng(sailor.getCurrentLocation()));
+        } catch (NoRouteFoundException exception) {
+            log.warn("No possible route on water was found for the sailor's position, client and destination coordinates.");
+            return null;
+        } catch (Exception e) {
+            log.error("Failed to create route for sailor.", e);
+            return null;
+        }
+
+        var estimatedDuration = geoService.estimateRideDurationInSeconds(route.getTotalDistance(geoService), sailor.getBoat());
+
+        var journey = Journey.builder()
+                .clientAccount(clientAccount)
+                .sailor(sailor)
+                .status(JourneyState.INITIATED)
+                .route(route)
+                .journeyTemporalData(new JourneyTemporalData(estimatedDuration))
+                .build();
+
+        journey.setPayment(new Payment(journey, geoService.estimateRideCost(route.getTotalDistance(), sailor.getBoat())));
+        log.info("Possible journey found.");
+        return journey;
+    }
+
+
+    /**
+     * For the given sailor updates its lookingForClients status to false if the sailor has not been active in the last MAX_ACTIVE_SECONDS seconds.
+     *
+     * @return true if sailor is active after check/update
+     */
+    private boolean checkAndUpdateSailorActiveStatus(Sailor sailor) {
+        if (DateUtils.getSecondsPassed(sailor.getLastUpdate()) >= MAX_ACTIVE_SECONDS) {
+            sailor.setLookingForClients(false);
+            sailorsRepository.save(sailor);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * This method creates new journeys in state INITIATED if:
+     * <ol>
+     *     <li>There were free active sailors found. A sailor is active if he has sent a pulse to set his last update field. This method also triggers a check and update(if necessary) for the isLookingForClients field of the sailors.</li>
+     *     <li>For each of the sailors extracted at the previous step, this method will call GeoService to create routes and do the cost/distance calculation for each sailor found based on the request source/destination coordinates.
+     *     Any errors encountered during this process will just ignore the sailor and continue with the next one. However, if no errors occurred, a new Journey object will be created.</li>
+     * </ol>
+     *
+     * @return If no route could be determined or there are no free sailors, an empty list will be returned, otherwise a JourneyDTO containing all the required information about the journey (including Polyline coordinates) will be returned
+     */
+    @Transactional
+    public UBoatDTO requestJourney(String authorizationHeader, JourneyRequestDTO request) {
+        try {
+            log.info("Searching for sailors...");
+
+            var activeSailors = sailorsRepository.findAllByLookingForClients(true);
+
+            //removed sailors who are not active in the last accepted time frame
+            var sailors = activeSailors.stream().filter(this::checkAndUpdateSailorActiveStatus).toList();
+
+            if (sailors.isEmpty()) {
+                log.info("There are no free active sailors in the last {} seconds.", MAX_ACTIVE_SECONDS);
+                return new UBoatDTO(UBoatStatus.NO_FREE_SAILORS_FOUND, new LinkedList<>());
+            }
+
+            log.info("{} free sailors were found. ", sailors.size());
+
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            log.debug("JWT data extracted.");
+
+            var clientAccount = entityService.findAccountByJwtData(jwtData);
+
+            var journeys = sailors.stream()
+                    .map(sailor -> this.buildJourney(request, sailor, clientAccount))  //build Journey entities
+                    .filter(Objects::nonNull)   //remove error journeys
+                    .sorted((j1, j2) -> (int) (j1.getRoute().getTotalDistance() - j2.getRoute().getTotalDistance()))    //sort by total distance ascending
+                    .limit(MAX_ACTIVE_SAILORS)  //create only MAX_ACTIVE_SAILORS journeys
+                    .toList();
+
+            if (journeys.isEmpty()) {
+                log.warn("{} free sailors were found but failed to create any journey for them and the client's location->destination route.", sailors.size());
+                return new UBoatDTO(UBoatStatus.NO_ROUTE_FOUND, new LinkedList<>());
+            }
+
+            journeyRepository.saveAll(journeys);
+            log.info("Created {} new INITIATED journeys.", journeys.size());
+
+            return new UBoatDTO(UBoatStatus.JOURNEYS_INITIATED, journeys.stream().map(JourneyDTO::buildDTOForClients).toList());
+        } catch (Exception e) {
+            log.error("An exception occurred during requestJourney workflow.", e);
+            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * This method establishes the connection between the client and the sailor after the client has chosen the sailorId sent from the request body.
+     * - it finds the free sailor in the database active in the last MAX_ACTIVE_SECONDS seconds and has lookingForClients = true.
+     * If the account is not found, returns message notifying user that the sailor may be busy or has gone offline.
+     * - if the active sailor was found, a new journey with status CLIENT_ACCEPTED will be created with the given data by the client
+     */
+    @Transactional
+    public UBoatDTO chooseJourney(String authorizationHeader, JourneyDTO journeyDTO) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var clientAccount = entityService.findAccountByJwtData(jwtData);
+
+            var sailor = sailorsRepository.findSailorByIdAndLookingForClientsIsTrue(journeyDTO.getSailorDetails().getSailorId());
+
+            //if the sailor could not be found, or he has not updated his status for more than MAX_ACTIVE_SECONDS
+            if (sailor == null || DateUtils.getSecondsPassed(sailor.getLastUpdate()) >= MAX_ACTIVE_SECONDS) {
+                log.warn("Couldn't find the sailor. Either the sailor is busy, not active or the client request is wrong.");
+                return new UBoatDTO(UBoatStatus.SAILOR_NOT_FOUND);
+            }
+
+            var journeys = journeyRepository.findAllByClientAccount_IdAndStatus(clientAccount.getId(), JourneyState.INITIATED);
+
+            var journeyOptional = journeys.stream()
+                    .filter(j -> j.getSailor().getId().equals(journeyDTO.getSailorDetails().getSailorId()) && j.getClientAccount().getId().equals(clientAccount.getId()))
+                    .findFirst();
+
+            if (journeyOptional.isEmpty()) {
+                log.warn("No journey could be found with the request's journey sailor ID for the authenticated client.");
+                return new UBoatDTO(UBoatStatus.JOURNEY_FOR_SAILOR_NOT_FOUND, false);
+            }
+
+            var journey = journeyOptional.get();
+
+            //cancel other journeys
+            journeys.stream()
+                    .filter(otherJourney -> !otherJourney.equals(journey))
+                    .forEach(journeyToBeCanceled -> {
+                        journeyToBeCanceled.setStatus(JourneyState.CLIENT_CANCELED);
+                        journeyRepository.save(journeyToBeCanceled);
+                        log.info("Journey with ID {} was canceled by the user.", journeyToBeCanceled.getId());
+                    });
+
+            journey.setStatus(JourneyState.CLIENT_ACCEPTED);
+            journeyRepository.save(journey);
+
+            return new UBoatDTO(UBoatStatus.CLIENT_ACCEPTED_JOURNEY, true);
+        } catch (Exception e) {
+            log.error("Exception occurred during selectClient workflow.", e);
+            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * This method searches for journey objects that have status CLIENT_ACCEPTED for the sailor from request and returns the journeys.
      */
     @Transactional
@@ -322,11 +273,12 @@ public class JourneyService {
                 sailorsRepository.save(sailor);
             }
 
-            var journeys = journeyRepository.findAllByStatusAndSailorAccount_Id(Stage.CLIENT_ACCEPTED, sailor.getAccountId());
-            if (journeys == null || journeys.isEmpty())
+            var journeys = journeyRepository.findAllByStatusAndSailorAccount_Id(JourneyState.CLIENT_ACCEPTED, sailor.getAccount().getId());
+
+            if (CollectionUtils.isEmpty(journeys))
                 return new UBoatDTO(UBoatStatus.NO_CLIENTS_FOUND);
 
-            var responseJourneys = journeys.stream().map(JourneyDTO::new).toList();
+            var responseJourneys = journeys.stream().map(JourneyDTO::buildDTOForSailors).toList();
             return new UBoatDTO(UBoatStatus.CLIENTS_FOUND, responseJourneys);
         } catch (Exception e) {
             log.error("Exception occurred during findClients workflow. Returning null.", e);
@@ -335,7 +287,7 @@ public class JourneyService {
     }
 
     /**
-     * This method queries all journeys that have status CLIENT_ACCEPTED for the sailor extracted from the JWT then searches for a match of RequestJourney
+     * This method changed the state of the request's client journey to SAILOR_ACCEPTED and dismisses the other Journeys with state CLIENT_ACCEPTED into SAILOR_CANCELED.
      */
     @Transactional
     public UBoatDTO selectClient(String authorizationHeader, JourneyDTO journeyDTO) {
@@ -344,94 +296,37 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var sailor = entityService.findSailorByJwt(jwtData);
 
-            if (!sailor.isLookingForClients()) {
-                log.info("Setting status of sailor of lookingForClients to true.");
-                sailor.setLookingForClients(true);
-                sailorsRepository.save(sailor);
-            }
+            var source = journeyDTO.getRoute().getSource().getCoordinates();
+            var destination = journeyDTO.getRoute().getDestination().getCoordinates();
 
             var journey = journeyRepository.findNewJourneyOfSailorMatchingSourceAndDestination(
-                    Stage.CLIENT_ACCEPTED,
-                    sailor.getAccountId(),
-                    journeyDTO.getSourceLatitude(), journeyDTO.getSourceLongitude(),
-                    journeyDTO.getDestinationLatitude(), journeyDTO.getDestinationLongitude());
+                    JourneyState.CLIENT_ACCEPTED,
+                    sailor.getAccount().getId(),
+                    source.getLatitude(), source.getLongitude(),
+                    destination.getLatitude(), destination.getLongitude());
 
-            if (journey == null)
-                return new UBoatDTO(UBoatStatus.JOURNEY_NOT_FOUND, false);
+            if (journey == null) return new UBoatDTO(UBoatStatus.JOURNEY_NOT_FOUND, false);
 
             log.info("Found journey from the request with status CLIENT_ACCEPTED. Journey id: {}", journey.getId());
 
             //dismiss any other journey for the current sailor - set all the other CLIENT_ACCEPTED journeys for this sailor to SAILOR_CANCELED
-            var otherJourneys = journeyRepository.findAllByStatusAndSailorAccount_Id(Stage.CLIENT_ACCEPTED, sailor.getAccountId());
-            if (otherJourneys != null && otherJourneys.size() > 1) {
-                otherJourneys.removeIf(j -> j.getId().equals(journey.getId()));
-                for (var otherJourney : otherJourneys) {
-                    otherJourney.setStatus(Stage.SAILOR_CANCELED);
-                    journeyRepository.save(otherJourney);
-                    log.info("Canceled journey by id {}", otherJourney.getId());
-                }
+            var otherJourneys = journeyRepository.findAllByStatusAndSailorAccount_Id(JourneyState.CLIENT_ACCEPTED, sailor.getAccount().getId());
+            if (!CollectionUtils.isEmpty(otherJourneys)) {
+                log.info("Canceling other journeys.");
+                otherJourneys.stream()
+                        .filter(otherJourney -> !otherJourney.getId().equals(journey.getId()))
+                        .forEach(otherJourney -> {
+                            otherJourney.setStatus(JourneyState.SAILOR_CANCELED);
+                            journeyRepository.save(otherJourney);
+                            log.info("Canceled journey with id {}.", otherJourney.getId());
+                        });
             }
 
-            journey.setStatus(Stage.SAILOR_ACCEPTED);
+            journey.setStatus(JourneyState.SAILOR_ACCEPTED);
             journeyRepository.save(journey);
-            log.info("Set status of journey from CLIENT_ACCEPTED to SAILOR_ACCEPTED. Journey id: {}", journey.getId());
+            log.info("Status of journey changed from CLIENT_ACCEPTED to SAILOR_ACCEPTED. Journey id: {}", journey.getId());
+
             return new UBoatDTO(UBoatStatus.JOURNEY_SELECTED, true);
-        } catch (Exception e) {
-            log.error("Exception occurred during selectClient workflow.", e);
-            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * This method establishes the connection between the client and the sailor after the client has chosen the sailorId sent from the request body.
-     * - it finds the free sailor in the database active in the last MAX_ACTIVE_SECONDS seconds and has lookingForClients = true.
-     * If the account is not found, returns message notifying user that the sailor may be busy or has gone offline.
-     * - if the active sailor was found, a new journey with status CLIENT_ACCEPTED will be created with the given data by the client
-     */
-    @Transactional
-    public UBoatDTO chooseJourney(String authorizationHeader, NewJourneyDTO request, Long sailorId) {
-        try {
-            //cant be null because the operation is already done in the filter before
-            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var clientAccount = entityService.findAccountByJwtData(jwtData);
-
-            var sailor = sailorsRepository.findSailorByIdAndLookingForClientsIsTrue(sailorId);
-            //if the sailor could not be found, or he has not updated his status for more than MAX_ACTIVE_SECONDS
-            if (sailor == null || DateUtils.getSecondsPassed(sailor.getLastUpdate()) >= MAX_ACTIVE_SECONDS) {
-                log.warn("Couldn't find the sailor. Either the sailor is busy, not active or the client request is wrong.");
-                return new UBoatDTO(UBoatStatus.SAILOR_NOT_FOUND);
-            }
-
-            var sailorAccountOptional = accountsRepository.findById(sailor.getAccountId());
-            if (sailorAccountOptional.isEmpty())
-                throw new RuntimeException("Warning: sailor has account id which does not belong to any account");
-
-            //cancel old journeys
-            var journeys = journeyRepository.findAllByClientAccount_IdAndStatus(clientAccount.getId(), Stage.CLIENT_ACCEPTED);
-            for (var oldJourney : journeys) {
-                log.info("Journey with ID {} was canceled by the user.", oldJourney.getId());
-                oldJourney.setStatus(Stage.CLIENT_CANCELED);
-            }
-
-            var sourceCoordinates = request.getCurrentCoordinates();
-            var destinationCoordinates = request.getDestinationCoordinates();
-
-            var journey = Journey.builder()
-                    .status(Stage.CLIENT_ACCEPTED)
-                    .clientAccount(clientAccount)
-                    .sailorAccount(sailorAccountOptional.get())
-                    .dateBooking(new Date())
-                    .sourceLatitude(sourceCoordinates.getLatitude())
-                    .sourceLongitude(sourceCoordinates.getLongitude())
-                    .sourceAddress(request.getCurrentAddress())
-                    .destinationLatitude(destinationCoordinates.getLatitude())
-                    .destinationLongitude(destinationCoordinates.getLongitude())
-                    .destinationAddress(request.getDestinationAddress())
-                    .build();
-
-            journeyRepository.save(journey);
-
-            return new UBoatDTO(UBoatStatus.NEW_JOURNEY_CREATED, new JourneyDTO(journey));
         } catch (Exception e) {
             log.error("Exception occurred during selectClient workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);

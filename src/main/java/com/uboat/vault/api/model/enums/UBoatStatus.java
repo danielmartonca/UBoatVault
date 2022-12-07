@@ -61,7 +61,8 @@ public enum UBoatStatus {
 
     // /api/getSailorDetails
     SAILOR_DETAILS_RETRIEVED(1, "The sailor name has been retrieved", CommonStatus.SUCCESS),
-    SAILOR_NOT_FOUND(0, "The sailor couldn't be found by ID", "Sailor not found"),
+    SAILOR_NOT_FOUND(0, "The sailor couldn't be found by ID", null),
+    JOURNEY_FOR_SAILOR_NOT_FOUND(2, "The sailor is valid but no journey could be found for him matching the client.", null),
 
 
     // /api/checkDeviceRegistration
@@ -155,7 +156,7 @@ public enum UBoatStatus {
     CLIENTS_FOUND(1, "Found new clients for the sailor", "New clients"),
 
     // /api/sailor/connectToSailor
-    NEW_JOURNEY_CREATED(1, "A new journey was created. The sailor has to accept it too in order to continue", "Sailor received your call"),
+    CLIENT_ACCEPTED_JOURNEY(1, "The status of Journey has been updated. The sailor must now accept the client.", null),
 
     // /api/client/requestJourney
     JOURNEY_NOT_FOUND(2, "The journey could not be found", CommonStatus.UNEXPECTED_ERROR),
@@ -168,8 +169,9 @@ public enum UBoatStatus {
     SAILOR_BOAT_RETRIEVED(1, "Sailor boat details have been retrieved successfully.", null),
 
     // /api/client/requestJourney
-    NO_FREE_SAILORS_FOUND(2, "No free sailors were found by backend.", "No free sailors were found. Please try again in a few moments"),
-    FREE_SAILORS_FOUND(1, "Free sailors have been found. ", "Found sailors");
+    NO_ROUTE_FOUND(0, "Free sailors were found but no possible route could be found.", "No route could be determined. Please advise your location and destination choice or try again in a few moments"),
+    JOURNEYS_INITIATED(1, "Free sailors have been found and new journeys have been initiated. ", "Found sailor(s) and route(s)!"),
+    NO_FREE_SAILORS_FOUND(2, "No free sailors were found by backend.", "No free sailors were found. Please try again in a few moments");
 
 
     private final int code;

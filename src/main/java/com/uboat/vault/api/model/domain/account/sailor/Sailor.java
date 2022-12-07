@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.domain.sailing.sailor;
+package com.uboat.vault.api.model.domain.account.sailor;
 
 import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.sailing.LocationData;
@@ -25,9 +25,9 @@ public class Sailor {
     private Long id;
 
     @Getter
-    @Setter
-    @Column(nullable = false, unique = true)
-    private Long accountId;
+    @OneToOne
+    @JoinColumn(name = "account_id", nullable = false, updatable = false, unique = true)
+    private Account account;
 
     @Getter
     @Setter
@@ -42,7 +42,6 @@ public class Sailor {
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "location_data_id")
     private LocationData currentLocation;
-
     @NotNull
     @Getter
     @Setter
@@ -58,7 +57,7 @@ public class Sailor {
         if (account.getType() != UserType.SAILOR)
             throw new RuntimeException("Account given as parameter is not a sailor account");
 
-        this.accountId = account.getId();
+        this.account = account;
         this.boat = new Boat(this);
         this.lookingForClients = false;
         this.lastUpdate = null;

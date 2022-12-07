@@ -22,7 +22,7 @@ public class HeadersUtils {
         return null;
     }
 
-    public static String extractRToken(String authorizationHeader) {
+    public static String extractSecret(String authorizationHeader) {
         return authorizationHeader.split(" ")[1];
     }
 }

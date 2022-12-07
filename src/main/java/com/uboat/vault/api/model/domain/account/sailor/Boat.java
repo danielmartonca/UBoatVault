@@ -1,4 +1,4 @@
-package com.uboat.vault.api.model.domain.sailing.sailor;
+package com.uboat.vault.api.model.domain.account.sailor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.dto.BoatDTO;

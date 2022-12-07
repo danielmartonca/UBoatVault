@@ -1,63 +1,65 @@
 package com.uboat.vault.api.model.dto;
 
+import com.uboat.vault.api.model.domain.account.account.Phone;
+import com.uboat.vault.api.model.domain.account.sailor.Sailor;
 import com.uboat.vault.api.model.domain.sailing.Journey;
-import com.uboat.vault.api.model.enums.Stage;
+import com.uboat.vault.api.model.domain.sailing.JourneyTemporalData;
+import com.uboat.vault.api.model.domain.sailing.Route;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class JourneyDTO {
-    private Stage status;
-    private Date dateBooking;
-    private Date dateArrival;
-    private double sourceLatitude;
-    private double sourceLongitude;
-    private String sourceAddress;
-    private double destinationLatitude;
-    private double destinationLongitude;
-    private String destinationAddress;
-    private String payment;
-    private String duration;
-    private Long sailorId;
+    private JourneySailorDetailsDTO sailorDetails;
+    private JourneyTemporalData temporalData;
+    private PaymentDTO payment;
+    private Route route;
 
-    public JourneyDTO(Journey journey) {
-        this.status = journey.getStatus();
+    private JourneyDTO(Journey journey, Sailor sailor) {
+        this.sailorDetails = JourneySailorDetailsDTO.builder()
+                .sailorId(sailor.getId())
+                .username(sailor.getAccount().getUsername())
+                .fullName(sailor.getAccount().getAccountDetails().getFullName())
+                .phone(sailor.getAccount().getPhone())
+                .boat(new BoatDTO(sailor.getBoat()))
+                .build();
 
-        this.dateBooking = journey.getDateBooking();
-        this.dateArrival = journey.getDateArrival();
-        calculateDuration();
-
-        this.sourceLatitude = journey.getSourceLatitude();
-        this.sourceLongitude = journey.getSourceLongitude();
-        this.sourceAddress = journey.getSourceAddress();
-
-        this.destinationLatitude = journey.getDestinationLatitude();
-        this.destinationLongitude = journey.getDestinationLongitude();
-        this.destinationAddress = journey.getDestinationAddress();
-
-        this.payment = journey.getPayment();
-        this.sailorId = journey.getSailorAccount().getId();
+        this.temporalData = journey.getJourneyTemporalData();
+        this.payment = new PaymentDTO(journey.getPayment());
+        this.route = journey.getRoute();
     }
 
-    public void calculateDuration() {
-        if (this.dateBooking != null && this.dateArrival != null) {
-            long diffInMilliseconds = Math.abs(dateArrival.getTime() - dateBooking.getTime());
-            long minutes = TimeUnit.MILLISECONDS.toMinutes(diffInMilliseconds);
-            diffInMilliseconds -= TimeUnit.MINUTES.toMillis(minutes);
-            long seconds = TimeUnit.MILLISECONDS.toSeconds(diffInMilliseconds);
-            this.duration = "";
-            if (minutes != 0) this.duration = this.duration + minutes + " minutes";
-            if (minutes != 0 && seconds != 0) this.duration = this.duration + " and ";
-            if (seconds != 0) this.duration = this.duration + seconds + " seconds";
-        } else
-            this.duration = "has not arrived yet";
+    private JourneyDTO(Journey journey) {
+        this.temporalData = journey.getJourneyTemporalData();
+        this.payment = new PaymentDTO(journey.getPayment());
+        this.route = journey.getRoute();
+    }
+
+    public static JourneyDTO buildDTOForClients(Journey journey) {
+        return new JourneyDTO(journey, journey.getSailor());
+    }
+
+    public static JourneyDTO buildDTOForSailors(Journey journey) {
+        return new JourneyDTO(journey);
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class JourneySailorDetailsDTO {
+        private Long sailorId;
+
+        private String username;
+        private String fullName;
+
+        private Phone phone;
+
+        private BoatDTO boat;
     }
 }

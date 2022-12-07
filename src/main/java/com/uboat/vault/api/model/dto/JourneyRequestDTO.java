@@ -1,7 +1,7 @@
 package com.uboat.vault.api.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.uboat.vault.api.model.other.LatLng;
+import com.uboat.vault.api.model.domain.sailing.LatLng;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class NewJourneyDTO {
+public class JourneyRequestDTO {
     private LatLng currentCoordinates;
     private LatLng destinationCoordinates;
 

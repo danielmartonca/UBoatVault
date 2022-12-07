@@ -2,7 +2,8 @@ package com.uboat.vault.api.presentation.controllers;
 
 import com.uboat.vault.api.business.services.AccountsService;
 import com.uboat.vault.api.business.services.JourneyService;
-import com.uboat.vault.api.model.dto.NewJourneyDTO;
+import com.uboat.vault.api.model.dto.JourneyDTO;
+import com.uboat.vault.api.model.dto.JourneyRequestDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,12 +24,6 @@ import javax.validation.constraints.Min;
 public class UBoatClientController {
     private final JourneyService journeyService;
     private final AccountsService accountsService;
-
-    //TODO delete this after it's use cases are gone
-    @GetMapping(value = "/test/addFakeJourney")
-    public ResponseEntity<Boolean> addFakeJourney(@RequestParam String clientId, @RequestParam String sailorId) {
-        return new ResponseEntity<>(journeyService.addFakeJourney(clientId, sailorId), HttpStatus.CREATED);
-    }
 
     @Operation(summary = "Retrieves the last {ridesRequested} number of journeys for the client extracted from the JWT. ")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The journeys have been retrieved successfully", content = @Content(mediaType = "application/json")),})
@@ -66,11 +61,11 @@ public class UBoatClientController {
             @ApiResponse(responseCode = "200", description = "Details about each journey are returned or empty list if no free sailors could be detected.", content = @Content(mediaType = "application/json")),
     })
     @PostMapping(value = "/requestJourney")
-    public ResponseEntity<UBoatDTO> requestJourney(@RequestBody NewJourneyDTO request) {
-        var uBoatResponse = journeyService.requestJourney(request);
+    public ResponseEntity<UBoatDTO> requestJourney(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody JourneyRequestDTO request) {
+        var uBoatResponse = journeyService.requestJourney(authorizationHeader, request);
 
         return switch (uBoatResponse.getHeader()) {
-            case FREE_SAILORS_FOUND, NO_FREE_SAILORS_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case JOURNEYS_INITIATED, NO_FREE_SAILORS_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
     }
@@ -86,12 +81,11 @@ public class UBoatClientController {
     })
     @PostMapping(value = "/chooseJourney")
     public ResponseEntity<UBoatDTO> chooseJourney(@RequestHeader(value = "Authorization") String authorizationHeader,
-                                                  @RequestBody NewJourneyDTO journeyRequest,
-                                                  @RequestParam Long sailorId) {
-        var uBoatResponse = journeyService.chooseJourney(authorizationHeader, journeyRequest, sailorId);
+                                                  @RequestBody JourneyDTO request) {
+        var uBoatResponse = journeyService.chooseJourney(authorizationHeader, request);
 
         return switch (uBoatResponse.getHeader()) {
-            case NEW_JOURNEY_CREATED -> ResponseEntity.status(HttpStatus.CREATED).body(uBoatResponse);
+            case CLIENT_ACCEPTED_JOURNEY -> ResponseEntity.status(HttpStatus.CREATED).body(uBoatResponse);
             case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };

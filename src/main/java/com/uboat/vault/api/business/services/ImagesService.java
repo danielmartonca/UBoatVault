@@ -1,6 +1,6 @@
 package com.uboat.vault.api.business.services;
 
-import com.uboat.vault.api.model.domain.sailing.sailor.BoatImage;
+import com.uboat.vault.api.model.domain.account.sailor.BoatImage;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
@@ -100,12 +100,7 @@ public class ImagesService {
             var sailor = entityService.findSailorBySailorId(sailorId);
             if (sailor == null) return new UBoatDTO(UBoatStatus.SAILOR_NOT_FOUND);
 
-            var accountOptional = accountsRepository.findById(sailor.getAccountId());
-            if (accountOptional.isEmpty())
-                throw new RuntimeException("Warning: sailor has account id which does not belong to any account");
-
-            //cant be null
-            var accountDetails = accountOptional.get().getAccountDetails();
+            var accountDetails = sailor.getAccount().getAccountDetails();
 
             var image = accountDetails.getImage();
             if (image == null || image.getBytes() == null) {

@@ -1,28 +1,12 @@
 package com.uboat.vault.api.utilities;
 
-import com.uboat.vault.api.model.domain.sailing.LocationData;
-import com.uboat.vault.api.model.dto.LocationDataDTO;
-import com.uboat.vault.api.model.other.LatLng;
+import com.uboat.vault.api.model.domain.sailing.LatLng;
 import lombok.extern.slf4j.Slf4j;
 
 import static java.lang.Math.*;
 
 @Slf4j
 public class GeoUtils {
-    public static LatLng getCoordinates(LocationDataDTO locationData) {
-        try {
-            double latitude = Double.parseDouble(locationData.getLatitude());
-            double longitude = Double.parseDouble(locationData.getLongitude());
-            return LatLng.builder().latitude(latitude).longitude(longitude).build();
-        } catch (Exception e) {
-            log.error("Exception while converting LocationData to LatLng.", e);
-            throw e;
-        }
-    }
-
-    public static LatLng getCoordinates(LocationData locationData) {
-       return getCoordinates(new LocationDataDTO(locationData));
-    }
 
     public static double distanceInMeters(LatLng x, LatLng y) {
         var lon1 = toRadians(x.getLongitude());

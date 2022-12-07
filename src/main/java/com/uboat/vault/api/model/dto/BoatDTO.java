@@ -1,6 +1,6 @@
 package com.uboat.vault.api.model.dto;
 
-import com.uboat.vault.api.model.domain.sailing.sailor.Boat;
+import com.uboat.vault.api.model.domain.account.sailor.Boat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

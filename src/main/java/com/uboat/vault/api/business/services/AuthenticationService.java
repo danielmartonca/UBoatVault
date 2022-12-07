@@ -6,7 +6,7 @@ import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.account.account.Phone;
 import com.uboat.vault.api.model.domain.account.account.RegistrationData;
 import com.uboat.vault.api.model.domain.account.pending.PendingAccount;
-import com.uboat.vault.api.model.domain.sailing.sailor.Sailor;
+import com.uboat.vault.api.model.domain.account.sailor.Sailor;
 import com.uboat.vault.api.model.dto.AccountDTO;
 import com.uboat.vault.api.model.dto.PhoneNumberDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
