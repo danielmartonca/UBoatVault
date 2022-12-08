@@ -18,15 +18,13 @@ public class SailorScheduler {
     private final SailorsRepository sailorsRepository;
 
     @Async
-    @Scheduled(cron = "*/30 * * * * *")
+    @Scheduled(cron = "${uboat.schedulersCron.sailorScheduler.assertSailorsAreActive}")
     @Transactional
     public void assertSailorsAreActive() {
         try {
-            log.info("SailorScheduler assertSailorsAreActive task started. ");
             sailorsRepository.findAllByLookingForClients(true).forEach(journeyService::checkAndUpdateSailorActiveStatus);
-            log.info("SailorScheduler assertSailorsAreActive task finished.");
         } catch (Exception e) {
-            log.error("Exception occurred during assertSailorsAreActive sheduled task.", e);
+            log.error("Exception occurred during assertSailorsAreActive scheduled task.", e);
         }
     }
 }

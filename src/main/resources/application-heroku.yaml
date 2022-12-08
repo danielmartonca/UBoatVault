@@ -26,4 +26,9 @@ uboat:
   max-active-seconds: ${MAX_ACTIVE_SECONDS}
   max-active-sailors: ${MAX_ACTIVE_SAILORS}
   max-accepted-distance: ${MAX_ACCEPTED_DISTANCES}
+  
+  schedulersCron:
+    sailorScheduler:
+      assertSailorsAreActive: "*/30 * * * * *"
+      
   hs256_key: ${HS256_KEY}

@@ -24,4 +24,9 @@ uboat:
   max-active-seconds: 300
   max-active-sailors: 5
   max-accepted-distance: 100000
+  
+  schedulersCron:
+    sailorScheduler:
+      assertSailorsAreActive: "*/30 * * * * *"
+        
   hs256_key: key1234
