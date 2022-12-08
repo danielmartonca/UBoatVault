@@ -141,11 +141,14 @@ public class JourneyService {
     /**
      * For the given sailor updates its lookingForClients status to false if the sailor has not been active in the last MAX_ACTIVE_SECONDS seconds.
      */
-    private void checkAndUpdateSailorActiveStatus(Sailor sailor) {
-        if (DateUtils.getSecondsPassed(sailor.getLastUpdate()) >= MAX_ACTIVE_SECONDS) {
-            sailor.setLookingForClients(false);
-            sailorsRepository.save(sailor);
-        }
+    @Transactional
+    public void checkAndUpdateSailorActiveStatus(Sailor sailor) {
+        if (!sailor.isLookingForClients()) return;
+
+        if (DateUtils.getSecondsPassed(sailor.getLastUpdate()) < MAX_ACTIVE_SECONDS) return;
+
+        sailor.setLookingForClients(false, false);
+        log.info("Sailor '{}' has not been active in the last {} seconds. Updating lookingForClient flag to false.", sailor.getAccount().getUsername(), MAX_ACTIVE_SECONDS);
     }
 
     /**

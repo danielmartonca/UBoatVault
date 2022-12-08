@@ -32,9 +32,16 @@ public class Sailor {
     @Getter
     private boolean lookingForClients;
 
-    public void setLookingForClients(boolean lookingForClients) {
-        this.lastUpdate = new Date();
+    /**
+     * Should be called with updateDate=false when the change is not done by the sailor (but by the vault).
+     */
+    public void setLookingForClients(boolean lookingForClients, boolean updateDate) {
         this.lookingForClients = lookingForClients;
+        if (updateDate) this.lastUpdate = new Date();
+    }
+
+    public void setLookingForClients(boolean lookingForClients) {
+        setLookingForClients(lookingForClients, true);
     }
 
     @Getter
