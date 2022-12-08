@@ -21,7 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -84,7 +87,6 @@ public class JourneyService {
             var oldLocationData = sailor.getCurrentLocation();
             sailor.setCurrentLocation(pulseRequest.getLocationData());
             sailor.setLookingForClients(pulseRequest.isLookingForClients());
-            sailor.setLastUpdate(new Date());
 
             sailorsRepository.save(sailor);
             log.info("Updated sailor location data and status via pulse.");
@@ -138,16 +140,12 @@ public class JourneyService {
 
     /**
      * For the given sailor updates its lookingForClients status to false if the sailor has not been active in the last MAX_ACTIVE_SECONDS seconds.
-     *
-     * @return true if sailor is NOT active after check/update
      */
-    private boolean checkAndUpdateSailorActiveStatus(Sailor sailor) {
+    private void checkAndUpdateSailorActiveStatus(Sailor sailor) {
         if (DateUtils.getSecondsPassed(sailor.getLastUpdate()) >= MAX_ACTIVE_SECONDS) {
             sailor.setLookingForClients(false);
             sailorsRepository.save(sailor);
-            return true;
         }
-        return false;
     }
 
     /**
@@ -175,16 +173,15 @@ public class JourneyService {
             journeyRepository.deleteAllByClientAccountAndStateIn(clientAccount, Set.of(JourneyState.INITIATED, JourneyState.CLIENT_ACCEPTED));
 
             var activeSailors = sailorsRepository.findAllByLookingForClients(true);
+            activeSailors.forEach(this::checkAndUpdateSailorActiveStatus);
 
-            //  - removed sailors who are not active in the last accepted time frame
-            //  - removes sailors that are not in at least MAX_ACCEPTED_DISTANCE meters between them and the client's location
             var sailors = activeSailors.stream()
-                    .filter(this::checkAndUpdateSailorActiveStatus)
-                    .filter(sailor -> geoService.calculateDistanceBetweenCoordinates(new LatLng(sailor.getCurrentLocation()), request.getCurrentCoordinates()) < MAX_ACCEPTED_DISTANCE)
+                    .filter(Sailor::isLookingForClients)//  - removed sailors who are not active in the last accepted time frame
+                    .filter(sailor -> geoService.calculateDistanceBetweenCoordinates(new LatLng(sailor.getCurrentLocation()), request.getCurrentCoordinates()) < MAX_ACCEPTED_DISTANCE)//  - removes sailors that are not in at least MAX_ACCEPTED_DISTANCE meters between them and the client's location
                     .toList();
 
             if (sailors.isEmpty()) {
-                log.info("There are no free active sailors in the last {} seconds, withing distance, were found.", MAX_ACTIVE_SECONDS);
+                log.info("There are no free sailors, withing distance, active in the last {} seconds.", MAX_ACTIVE_SECONDS);
                 return new UBoatDTO(UBoatStatus.NO_FREE_SAILORS_FOUND, new LinkedList<>());
             }
 
@@ -274,11 +271,8 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var sailor = entityService.findSailorByJwt(jwtData);
 
-            if (!sailor.isLookingForClients()) {
-                log.info("Setting status of sailor of lookingForClients to true.");
-                sailor.setLookingForClients(true);
-                sailorsRepository.save(sailor);
-            }
+            sailor.setLookingForClients(true);
+            sailorsRepository.save(sailor);
 
             var journeys = journeyRepository.findAllByStateAndSailorAccount_Id(JourneyState.INITIATED, sailor.getAccount().getId());
 

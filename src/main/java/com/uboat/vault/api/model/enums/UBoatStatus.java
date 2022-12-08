@@ -168,7 +168,7 @@ public enum UBoatStatus {
     // /api/client/requestJourney
     NO_ROUTE_FOUND(0, "Free sailors were found but no possible route could be found.", "No route could be determined. Please advise your location and destination choice or try again in a few moments"),
     JOURNEYS_INITIATED(1, "Free sailors have been found and new journeys have been initiated. ", "Found sailor(s) and route(s)!"),
-    NO_FREE_SAILORS_FOUND(2, "No free sailors were found by backend.", "No free sailors were found. Please try again in a few moments"),
+    NO_FREE_SAILORS_FOUND(2, "No free sailors were found by backend.", "No free sailors were found. Please try again"),
 
     // /api/client/selectClient
     JOURNEY_NOT_FOUND(2, "The journey could not be found", CommonStatus.UNEXPECTED_ERROR),

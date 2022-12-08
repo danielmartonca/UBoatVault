@@ -30,8 +30,12 @@ public class Sailor {
     private Account account;
 
     @Getter
-    @Setter
     private boolean lookingForClients;
+
+    public void setLookingForClients(boolean lookingForClients) {
+        this.lastUpdate = new Date();
+        this.lookingForClients = lookingForClients;
+    }
 
     @Getter
     @Setter
