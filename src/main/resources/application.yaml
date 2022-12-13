@@ -18,7 +18,6 @@ whitelist:
 
 client-blacklist:
   /api/boat,
-  /images/boatImage,
   /api/sailor/**
 
 sailor-blacklist:
