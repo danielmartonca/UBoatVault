@@ -6,11 +6,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Embeddable;
+import javax.validation.constraints.NotNull;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Embeddable
 public class Location {
+    @NotNull
     @Getter
     @Setter
     private LatLng coordinates;

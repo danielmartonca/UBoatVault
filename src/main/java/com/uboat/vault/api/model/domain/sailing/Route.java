@@ -1,6 +1,7 @@
 package com.uboat.vault.api.model.domain.sailing;
 
 import com.uboat.vault.api.business.services.GeoService;
+import com.uboat.vault.api.model.dto.JourneyRequestDTO;
 import com.uboat.vault.api.model.exceptions.NoRouteFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,34 +17,44 @@ import java.util.List;
 @Embeddable
 public class Route {
     @AttributeOverrides({
-            @AttributeOverride(name = "coordinates.latitude", column = @Column(name = "sourceLatitude")),
-            @AttributeOverride(name = "coordinates.longitude", column = @Column(name = "sourceLongitude")),
-            @AttributeOverride(name = "address", column = @Column(name = "sourceAddress"))
-    })
-    @Embedded
-    @Getter
-    @Setter
-    private Location source;
-
-    @AttributeOverrides({
-            @AttributeOverride(name = "coordinates.latitude", column = @Column(name = "destinationLatitude")),
-            @AttributeOverride(name = "coordinates.longitude", column = @Column(name = "destinationLongitude")),
-            @AttributeOverride(name = "address", column = @Column(name = "destinationAddress"))
-    })
-    @Embedded
-    @Getter
-    @Setter
-    private Location destination;
-
-    @AttributeOverrides({
-            @AttributeOverride(name = "coordinates.latitude", column = @Column(name = "sailorLatitude")),
-            @AttributeOverride(name = "coordinates.longitude", column = @Column(name = "sailorLongitude")),
-            @AttributeOverride(name = "address", column = @Column(name = "sailorAddress"))
+            @AttributeOverride(name = "coordinates.latitude", column = @Column(name = "sailorLocationLatitude")),
+            @AttributeOverride(name = "coordinates.longitude", column = @Column(name = "sailorLocationLongitude")),
+            @AttributeOverride(name = "address", column = @Column(name = "sailorLocationAddress"))
     })
     @Embedded
     @Getter
     @Setter
     private Location sailorLocation;
+    @AttributeOverrides({
+            @AttributeOverride(name = "coordinates.latitude", column = @Column(name = "clientLocationLatitude")),
+            @AttributeOverride(name = "coordinates.longitude", column = @Column(name = "clientLocationLongitude")),
+            @AttributeOverride(name = "address", column = @Column(name = "clientLocationAddress"))
+    })
+    @Embedded
+    @Getter
+    @Setter
+    private Location clientLocation;
+
+    @AttributeOverrides({
+            @AttributeOverride(name = "coordinates.latitude", column = @Column(name = "pickupLocationLatitude")),
+            @AttributeOverride(name = "coordinates.longitude", column = @Column(name = "pickupLocationLongitude")),
+            @AttributeOverride(name = "address", column = @Column(name = "pickupLocationAddress"))
+    })
+    @Embedded
+    @Getter
+    @Setter
+    private Location pickupLocation;
+
+    @AttributeOverrides({
+            @AttributeOverride(name = "coordinates.latitude", column = @Column(name = "destinationLocationLatitude")),
+            @AttributeOverride(name = "coordinates.longitude", column = @Column(name = "destinationLocationLongitude")),
+            @AttributeOverride(name = "address", column = @Column(name = "destinationLocationAddress"))
+    })
+    @Embedded
+    @Getter
+    @Setter
+    private Location destinationLocation;
+
 
     @Getter
     @Setter
@@ -53,18 +64,23 @@ public class Route {
     @Setter
     private double totalDistance = 0;
 
-    public Route(Location source, Location destination, Location sailorLocation) {
-        this.source = source;
-        this.destination = destination;
+    public Route(Location sailorLocation, Location clientLocation, Location pickupLocation, Location destinationLocation) {
         this.sailorLocation = sailorLocation;
+        this.clientLocation = clientLocation;
+        this.pickupLocation = pickupLocation;
+        this.destinationLocation = destinationLocation;
 
         this.routePolylinePoints = new LinkedList<>();
 
         this.totalDistance = 0;
     }
 
+    public Route(Location sailorLocation, JourneyRequestDTO journeyRequestDTO) {
+        this(sailorLocation, journeyRequestDTO.getClientLocation(), journeyRequestDTO.getPickupLocation(), journeyRequestDTO.getDestinationLocation());
+    }
+
     public void calculateRoute(GeoService geoService) throws NoRouteFoundException {
-        this.routePolylinePoints.addAll(geoService.calculateOnWaterRouteBetweenCoordinates(sailorLocation.getCoordinates(), source.getCoordinates(), destination.getCoordinates()));
+        this.routePolylinePoints.addAll(geoService.calculateOnWaterRouteBetweenCoordinates(sailorLocation, pickupLocation, destinationLocation));
     }
 
     public double getTotalDistance() {

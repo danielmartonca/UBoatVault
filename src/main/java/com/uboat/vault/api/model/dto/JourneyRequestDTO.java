@@ -1,6 +1,6 @@
 package com.uboat.vault.api.model.dto;
 
-import com.uboat.vault.api.model.domain.sailing.LatLng;
+import com.uboat.vault.api.model.domain.sailing.Location;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,10 +12,9 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 public class JourneyRequestDTO {
     @NotNull
-    private LatLng currentCoordinates;
+    private Location clientLocation;
     @NotNull
-    private LatLng destinationCoordinates;
-
-    private String currentAddress;
-    private String destinationAddress;
+    private Location pickupLocation;
+    @NotNull
+    private Location destinationLocation;
 }

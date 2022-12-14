@@ -2,6 +2,7 @@ package com.uboat.vault.api.business.services;
 
 import com.uboat.vault.api.model.domain.account.sailor.Boat;
 import com.uboat.vault.api.model.domain.sailing.LatLng;
+import com.uboat.vault.api.model.domain.sailing.Location;
 import com.uboat.vault.api.model.enums.Currency;
 import com.uboat.vault.api.model.exceptions.NoRouteFoundException;
 import com.uboat.vault.api.utilities.GeoUtils;
@@ -42,7 +43,7 @@ public class GeoService {
     /**
      *
      */
-    public List<LatLng> calculateOnWaterRouteBetweenCoordinates(LatLng sailorLocation, LatLng source, LatLng destination) throws NoRouteFoundException {
-        return List.of(sailorLocation, source, destination);
+    public List<LatLng> calculateOnWaterRouteBetweenCoordinates(Location sailorLocation, Location pickupLocation, Location destinationLocation) throws NoRouteFoundException {
+        return List.of(sailorLocation.getCoordinates(), pickupLocation.getCoordinates(), destinationLocation.getCoordinates());
     }
 }

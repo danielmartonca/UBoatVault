@@ -107,11 +107,8 @@ public class JourneyService {
      * The calculation is done by summing the distance calculated by the algorithm between the sailor boat to the client plus the distance between the client to the destination.
      */
     private Journey buildJourney(JourneyRequestDTO journeyRequestDTO, Sailor sailor, Account clientAccount) {
-        var source = new Location(journeyRequestDTO.getCurrentCoordinates(), journeyRequestDTO.getCurrentAddress());
-        var destination = new Location(journeyRequestDTO.getDestinationCoordinates(), journeyRequestDTO.getDestinationAddress());
-        var sailorLocation = new Location(sailor.getCurrentLocation());
+        var route = new Route(new Location(sailor.getCurrentLocation()), journeyRequestDTO);
 
-        var route = new Route(source, destination, sailorLocation);
         try {
             route.calculateRoute(geoService);
         } catch (NoRouteFoundException exception) {
@@ -180,7 +177,7 @@ public class JourneyService {
 
             var sailors = activeSailors.stream()
                     .filter(Sailor::isLookingForClients)//  - removed sailors who are not active in the last accepted time frame
-                    .filter(sailor -> geoService.calculateDistanceBetweenCoordinates(new LatLng(sailor.getCurrentLocation()), request.getCurrentCoordinates()) < MAX_ACCEPTED_DISTANCE)//  - removes sailors that are not in at least MAX_ACCEPTED_DISTANCE meters between them and the client's location
+                    .filter(sailor -> geoService.calculateDistanceBetweenCoordinates(new LatLng(sailor.getCurrentLocation()), request.getPickupLocation().getCoordinates()) < MAX_ACCEPTED_DISTANCE)//  - removes sailors that are not in at least MAX_ACCEPTED_DISTANCE meters between them and the pickup location
                     .toList();
 
             if (sailors.isEmpty()) {
@@ -300,20 +297,20 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var sailor = entityService.findSailorByJwt(jwtData);
 
-            var source = journeyDTO.getRoute().getSource().getCoordinates();
-            var destination = journeyDTO.getRoute().getDestination().getCoordinates();
-
             var journeyOptional = journeyRepository.findBySailorAndState(sailor, JourneyState.SAILOR_ACCEPTED);
             if (journeyOptional.isPresent()) {
                 log.warn("Another journey has already been selected");
                 return new UBoatDTO(UBoatStatus.JOURNEY_SELECTED, false);
             }
 
-            var journey = journeyRepository.findJourneyOfSailorMatchingStateSourceAndDestination(
+            var pickupLocationCoordinates = journeyDTO.getRoute().getPickupLocation().getCoordinates();
+            var destinationLocationCoordinates = journeyDTO.getRoute().getDestinationLocation().getCoordinates();
+
+            var journey = journeyRepository.findJourneyOfSailorMatchingStatePickupAndDestination(
                     JourneyState.CLIENT_ACCEPTED,
                     sailor.getAccount().getId(),
-                    source.getLatitude(), source.getLongitude(),
-                    destination.getLatitude(), destination.getLongitude());
+                    pickupLocationCoordinates.getLatitude(), pickupLocationCoordinates.getLongitude(),
+                    destinationLocationCoordinates.getLatitude(), destinationLocationCoordinates.getLongitude());
 
             if (journey == null) return new UBoatDTO(UBoatStatus.JOURNEY_NOT_FOUND, false);
 

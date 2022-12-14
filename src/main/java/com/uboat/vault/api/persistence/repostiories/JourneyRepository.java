@@ -19,6 +19,6 @@ public interface JourneyRepository extends JpaRepository<Journey, Long> {
     void deleteAllByClientAccountAndStateIn(Account clientAccount, Set<JourneyState> state);
 
     Optional<Journey> findBySailorAndState(Sailor sailor, JourneyState state);
-    @Query("SELECT j from Journey  j where j.state=?1 and j.sailor.account.id=?2 and j.route.source.coordinates.latitude=?3 and j.route.source.coordinates.longitude=?4 and j.route.destination.coordinates.latitude=?5 and j.route.destination.coordinates.longitude=?6")
-    Journey findJourneyOfSailorMatchingStateSourceAndDestination(JourneyState state, Long sailorId, double sourceLatitude, double sourceLongitude, double destinationLatitude, double destinationLongitude);
+    @Query("SELECT j from Journey  j where j.state=?1 and j.sailor.account.id=?2 and j.route.pickupLocation.coordinates.latitude=?3 and j.route.pickupLocation.coordinates.longitude=?4 and j.route.destinationLocation.coordinates.latitude=?5 and j.route.destinationLocation.coordinates.longitude=?6")
+    Journey findJourneyOfSailorMatchingStatePickupAndDestination(JourneyState state, Long sailorId, double pickupLocationLatitude, double pickupLocationLongitude, double destinationLocationLatitude, double destinationLocationLongitude);
 }
