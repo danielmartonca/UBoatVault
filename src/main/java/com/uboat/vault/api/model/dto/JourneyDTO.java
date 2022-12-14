@@ -1,6 +1,5 @@
 package com.uboat.vault.api.model.dto;
 
-import com.uboat.vault.api.model.domain.account.account.Phone;
 import com.uboat.vault.api.model.domain.account.sailor.Sailor;
 import com.uboat.vault.api.model.domain.sailing.Journey;
 import com.uboat.vault.api.model.domain.sailing.JourneyTemporalData;
@@ -25,7 +24,7 @@ public class JourneyDTO {
                 .sailorId(sailor.getId())
                 .username(sailor.getAccount().getUsername())
                 .fullName(sailor.getAccount().getAccountDetails().getFullName())
-                .phone(sailor.getAccount().getPhone())
+                .phone(new PhoneNumberDTO(sailor.getAccount().getPhone()))
                 .boat(new BoatDTO(sailor.getBoat()))
                 .build();
 
@@ -58,7 +57,7 @@ public class JourneyDTO {
         private String username;
         private String fullName;
 
-        private Phone phone;
+        private PhoneNumberDTO phone;
 
         private BoatDTO boat;
     }

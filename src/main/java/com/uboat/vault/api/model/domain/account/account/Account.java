@@ -69,7 +69,7 @@ public class Account {
         this.password = accountDTO.getPassword();
 
         var dtoPhoneNumber = accountDTO.getPhoneNumber();
-        this.phone = new Phone(dtoPhoneNumber.getPhoneNumber(), dtoPhoneNumber.getDialCode(), dtoPhoneNumber.getIsoCode());
+        this.phone = new Phone(dtoPhoneNumber.getNumber(), dtoPhoneNumber.getDialCode(), dtoPhoneNumber.getIsoCode());
 
         this.accountDetails = new AccountDetails(accountDTO, this);
 

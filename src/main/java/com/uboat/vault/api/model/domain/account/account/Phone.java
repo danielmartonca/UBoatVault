@@ -27,7 +27,7 @@ public class Phone {
     private String isoCode;
 
     public Phone(PhoneNumberDTO phoneNumber) {
-        this.number = phoneNumber.getPhoneNumber();
+        this.number = phoneNumber.getNumber();
         this.dialCode = phoneNumber.getDialCode();
         this.isoCode = phoneNumber.getIsoCode();
     }

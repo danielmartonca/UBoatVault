@@ -174,19 +174,4 @@ public class AccountsController {
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
         };
     }
-
-    @Operation(summary = "Retrieves information regarding the sailor.")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The boat was updated successfully", content = @Content(mediaType = "application/json")), @ApiResponse(responseCode = "400", description = "The JWT does is not corresponding to a sailor account, " + "the authorization header is missing 'Bearer', " + "has a malformed format " + "or the JWT has expired/has problems.", content = @Content(mediaType = "application/json")),})
-    @GetMapping(value = "/sailorDetails")
-    public ResponseEntity<UBoatDTO> getSailorDetails(@RequestParam String sailorId) {
-        var responseBody = accountsService.getSailorDetails(sailorId);
-
-        return switch (responseBody.getHeader()) {
-            case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
-            case SAILOR_DETAILS_RETRIEVED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
-            case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
-                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
-            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
-        };
-    }
 }

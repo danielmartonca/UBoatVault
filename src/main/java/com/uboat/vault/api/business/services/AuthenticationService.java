@@ -108,7 +108,7 @@ public class AuthenticationService {
         }
 
         var phoneNumber = accountDto.getPhoneNumber();
-        foundAccount = accountsRepository.findFirstByPhoneNumberAndPhoneDialCodeAndPhoneIsoCode(phoneNumber.getPhoneNumber(), phoneNumber.getDialCode(), phoneNumber.getIsoCode());
+        foundAccount = accountsRepository.findFirstByPhoneNumberAndPhoneDialCodeAndPhoneIsoCode(phoneNumber.getNumber(), phoneNumber.getDialCode(), phoneNumber.getIsoCode());
         if (foundAccount != null) {
             log.warn("Account with the given phone number already exists.");
             return true;
@@ -267,7 +267,7 @@ public class AuthenticationService {
             for (var foundAccount : foundAccountsList) {
                 if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhone().equals(new Phone(account.getPhoneNumber()))) {
                     log.info("Credentials matched. Found account.");
-                    var jwt = jwtService.generateJwt(account.getPhoneNumber().getPhoneNumber(), account.getUsername(), account.getPassword());
+                    var jwt = jwtService.generateJwt(account.getPhoneNumber().getNumber(), account.getUsername(), account.getPassword());
                     return new UBoatDTO(UBoatStatus.LOGIN_SUCCESSFUL, jwt);
                 } else log.warn("An account with given password found but neither username or phone number match.");
             }

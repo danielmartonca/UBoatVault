@@ -14,7 +14,7 @@ public class Credentials {
 
     private Credentials(AccountDTO account) {
         if (account.getPhoneNumber() != null)
-            this.phoneNumber = account.getPhoneNumber().getPhoneNumber();
+            this.phoneNumber = account.getPhoneNumber().getNumber();
         else
             this.phoneNumber = "";
 

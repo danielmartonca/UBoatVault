@@ -247,32 +247,6 @@ public class AccountsService {
     }
 
 
-    public UBoatDTO getSailorDetails(String sailorId) {
-        try {
-            var sailor = entityService.findSailorByAccountId(sailorId);
-            if (sailor == null)
-                return new UBoatDTO(UBoatStatus.SAILOR_NOT_FOUND);
-
-            var sailorAccountOptional = accountsRepository.findById(Long.valueOf(sailorId));
-            if (sailorAccountOptional.isEmpty())
-                throw new RuntimeException("Warning: sailor has account id which does not belong to any account");
-
-            var sailorAccount = sailorAccountOptional.get();
-
-            var sailorDetails = SailorDetailsDTO.builder()
-                    .fullName(sailorAccount.getAccountDetails().getFullName())
-                    .phoneNumber(sailorAccount.getPhone().getNumber())
-                    .build();
-
-            log.info("Retrieved sailor details successfully.");
-            return new UBoatDTO(UBoatStatus.SAILOR_DETAILS_RETRIEVED, sailorDetails);
-        } catch (Exception e) {
-            log.error("An exception occurred while retrieving details about the sailor.", e);
-            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR, false);
-        }
-    }
-
-
     /**
      * Used by clients to retrieve information about their journey.
      */
