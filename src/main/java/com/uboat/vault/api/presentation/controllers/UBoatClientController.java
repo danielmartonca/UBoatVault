@@ -76,8 +76,7 @@ public class UBoatClientController {
             @ApiResponse(responseCode = "404", description = "Could not find the sailor by sailor ID.", content = @Content(mediaType = "application/json"))
     })
     @PostMapping(value = "/chooseJourney")
-    public ResponseEntity<UBoatDTO> chooseJourney(@RequestHeader(value = "Authorization") String authorizationHeader,
-                                                  @RequestBody JourneyDTO request) {
+    public ResponseEntity<UBoatDTO> chooseJourney(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody JourneyDTO request) {
         var uBoatResponse = journeyService.chooseJourney(authorizationHeader, request);
 
         return switch (uBoatResponse.getHeader()) {
@@ -86,4 +85,20 @@ public class UBoatClientController {
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
     }
+
+    @Operation(summary = "This API deletes all journeys in state INITIATED for the client.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "All journeys of the client in state INITIATED have been deleted.", content = @Content(mediaType = "application/json")),
+    })
+    @DeleteMapping(value = "/deleteInitiatedJourneys")
+    public ResponseEntity<UBoatDTO> deleteInitiatedJourneys(@RequestHeader(value = "Authorization") String authorizationHeader) {
+        var uBoatResponse = journeyService.deleteInitiatedJourneys(authorizationHeader);
+
+        if (uBoatResponse.getHeader() == UBoatStatus.INITIATED_JOURNIES_DELETED)
+            return ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+    }
+
+
 }

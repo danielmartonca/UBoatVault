@@ -10,6 +10,7 @@ import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.JourneyState;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.exceptions.NoRouteFoundException;
+import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import com.uboat.vault.api.persistence.repostiories.JourneyRepository;
 import com.uboat.vault.api.persistence.repostiories.LocationDataRepository;
 import com.uboat.vault.api.persistence.repostiories.SailorsRepository;
@@ -257,6 +258,22 @@ public class JourneyService {
             return new UBoatDTO(UBoatStatus.CLIENT_ACCEPTED_JOURNEY, true);
         } catch (Exception e) {
             log.error("Exception occurred during selectClient workflow.", e);
+            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Transactional
+    public UBoatDTO deleteInitiatedJourneys(String authorizationHeader) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var clientAccount = entityService.findAccountByJwtData(jwtData);
+
+            journeyRepository.deleteAllByClientAccountAndStateIn(clientAccount, Set.of(JourneyState.INITIATED));
+
+            return new UBoatDTO(UBoatStatus.INITIATED_JOURNIES_DELETED, true);
+        } catch (UBoatJwtException e) {
+            log.error("Exception occurred during cancelJourney workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }

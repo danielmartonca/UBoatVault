@@ -170,6 +170,9 @@ public enum UBoatStatus {
     JOURNEYS_INITIATED(1, "Free sailors have been found and new journeys have been initiated. ", "Found sailor(s) and route(s)!"),
     NO_FREE_SAILORS_FOUND(2, "No free sailors were found by backend.", "No free sailors were found. Please try again"),
 
+    // /api/client/deleteInitiatedJourneys
+    INITIATED_JOURNIES_DELETED(1, "All initiated journies have been deleted.", null),
+
     // /api/client/selectClient
     JOURNEY_NOT_FOUND(2, "The journey could not be found", CommonStatus.UNEXPECTED_ERROR),
     JOURNEY_SELECTED(1, "Sailor has selected a journey and canceled all the others.", "Journey accepted"),
