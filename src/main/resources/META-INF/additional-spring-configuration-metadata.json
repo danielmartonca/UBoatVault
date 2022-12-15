@@ -26,9 +26,19 @@
       "description": "List of APIs for which the body will not be logged. Most useful when APIs return bytes."
     },
     {
+      "name": "uboat.schedulersCron.clientScheduler.deleteInactiveInitiatedJourneys",
+      "type": "java.lang.String",
+      "description": "Cron schedule format for deleteInactiveInitiatedJourneys task."
+    },
+    {
+      "name": "uboat.schedulersCron.clientScheduler.initiatedJourneyExpirationSeconds",
+      "type": "java.lang.String",
+      "description": "Every journey in INITIATED state will be deleted from the database if more than initiatedJourneyExpirationSeconds have passed since its dateInitiated."
+    },
+    {
       "name": "uboat.schedulersCron.sailorScheduler.assertSailorsAreActive",
       "type": "java.lang.String",
-      "description": "Cron schedule format for assertSailorsAreActivee task."
+      "description": "Cron schedule format for assertSailorsAreActive task."
     },
     {
       "name": "uboat.hs256_key",

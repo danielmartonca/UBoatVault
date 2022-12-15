@@ -28,7 +28,10 @@ uboat:
   max-accepted-distance: ${MAX_ACCEPTED_DISTANCES}
   
   schedulersCron:
+    clientScheduler:
+      deleteInactiveInitiatedJourneys: "*/30 */1 * * * *"
+      initiatedJourneyExpirationSeconds: 90
     sailorScheduler:
       assertSailorsAreActive: "*/30 * * * * *"
-      
+
   hs256_key: ${HS256_KEY}
