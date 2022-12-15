@@ -109,7 +109,7 @@ public class ImagesService {
             }
 
             log.info("Found profile picture for sailor id " + sailorId);
-            return new UBoatDTO(UBoatStatus.SAILOR_DETAILS_RETRIEVED, image.getBytes());
+            return new UBoatDTO(UBoatStatus.SAILOR_PROFILE_PICTURE_RETRIEVED, image.getBytes());
         } catch (Exception e) {
             log.error("Exception occurred while retrieving sailor profile picture.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);

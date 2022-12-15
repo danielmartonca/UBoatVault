@@ -35,6 +35,7 @@ uboat:
   apis-body-not-logged:
     /images/defaultProfilePicture,
     /images/profileImage,
+    /images/sailorProfilePicture,
     /images/boatImage
 
   regex: # place regex on the second row
