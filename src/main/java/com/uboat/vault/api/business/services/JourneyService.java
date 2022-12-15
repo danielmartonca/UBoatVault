@@ -90,13 +90,13 @@ public class JourneyService {
             sailor.setLookingForClients(pulseRequest.isLookingForClients());
 
             sailorsRepository.save(sailor);
-            log.info("Updated sailor location data and status via pulse.");
+            log.info("Updated sailor location data and isLookingForClients status to {} via pulse.", pulseRequest.isLookingForClients());
 
             if (oldLocationData != null) {
                 locationDataRepository.deleteById(oldLocationData.getId());
                 log.debug("Deleted old location data.");
             }
-            return new UBoatDTO(UBoatStatus.PULSE_SUCCESSFUL, true);
+            return new UBoatDTO(UBoatStatus.PULSE_SUCCESSFUL, sailor.isLookingForClients());
         } catch (Exception e) {
             log.error("An exception occurred during pulse workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);

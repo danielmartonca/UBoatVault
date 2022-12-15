@@ -2,12 +2,10 @@ package com.uboat.vault.api.model.domain.sailing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.dto.LocationDataDTO;
-import com.uboat.vault.api.utilities.LoggingUtils;
 import lombok.*;
 
 import javax.persistence.*;
 import java.util.Date;
-import java.util.Random;
 
 @Builder
 @AllArgsConstructor
@@ -45,8 +43,6 @@ public class LocationData {
     private String elapsedRealtimeUncertaintyNanos;
     private String satelliteNumber;
     private String provider;
-    @Transient
-    private static Random rnd = new Random();
 
     public LocationData(LocationDataDTO currentLocation) {
         this.timeOfRecording = new Date();
@@ -67,29 +63,4 @@ public class LocationData {
         this.provider = currentLocation.getProvider();
     }
 
-    public static LocationData createRandomLocationData() {
-        LocationData locationData = new LocationData();
-        locationData.timeOfRecording = new Date();
-        locationData.latitude = String.valueOf(rnd.nextInt() * 100);
-        locationData.longitude = "1";
-        locationData.accuracy = "1";
-        locationData.altitude = "1";
-        locationData.speed = "1";
-        locationData.speedAccuracy = "1";
-        locationData.heading = "1";
-        locationData.time = "1";
-        locationData.isMock = "0";
-        locationData.verticalAccuracy = "1";
-        locationData.headingAccuracy = "1";
-        locationData.elapsedRealtimeNanos = "1";
-        locationData.elapsedRealtimeUncertaintyNanos = "1";
-        locationData.satelliteNumber = "1";
-        locationData.provider = "1";
-        return locationData;
-    }
-
-    @Override
-    public String toString() {
-        return LoggingUtils.toStringFormatted(this);
-    }
 }
