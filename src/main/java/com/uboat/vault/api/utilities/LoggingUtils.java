@@ -3,6 +3,7 @@ package com.uboat.vault.api.utilities;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
@@ -15,6 +16,9 @@ import java.util.Arrays;
 @Component
 @Slf4j
 public class LoggingUtils {
+    private final static String logApiCallPrefix = "    API CALLED";
+    private final static String logRequestPrefix = "    API PROCESSED";
+
     @Value("${uboat.pretty-print-logs}")
     private void setPrettyPrintLogs(String prettyPrintLogs) {
         LoggingUtils.PRETTY_PRINT_LOGS = prettyPrintLogs;
@@ -32,53 +36,42 @@ public class LoggingUtils {
         return color.getColorCode() + string + TextColor.RESET.getColorCode();
     }
 
-    private static String colorsBasedData(String suffix, HttpMethod requestMethod, String api, String queryParams, String body) {
-        if (body == null || body.isEmpty()) body = " no body";
-        else if (body.startsWith("�PNG")) body = "\n[ 'bytes...' ]";
-        else
-            body = '\n' + body;
+    public static String colorString(String string, HttpMethod requestMethod) {
+        return TextColor.getMethodColor(requestMethod).getColorCode() + string + TextColor.RESET.getColorCode();
+    }
 
-        String finalApi = api;
-        if (Arrays.stream(LoggingUtils.APIS_NOT_LOGGED).anyMatch(notLoggedApi -> notLoggedApi.contains(finalApi)))
-            body = "\nbody logging ignored";
+    private static String getApiAsString(String api, String queryParams) {
+        if (!Strings.isEmpty(queryParams)) return api + "?" + queryParams;
+        return api;
+    }
+
+    private static String formatBodyString(String api, String body) {
+        if (api.contains("swagger") || api.contains("api-docs"))
+            return "";
+
+        if (Arrays.stream(LoggingUtils.APIS_NOT_LOGGED).anyMatch(notLoggedApi -> notLoggedApi.contains(api)))
+            return " body logging ignored";
+
+        if ("true".equalsIgnoreCase(PRETTY_PRINT_LOGS))
+            body = toStringFormatted(body);
+
+        if (Strings.isEmpty(body)) return " no body";
+
+        if (body.startsWith("�PNG")) return "\n[ 'bytes...' ]";
+        body = '\n' + body;
 
         if (body.contains("bytes"))
-            body = body.replaceAll("(\"bytes\":\\s\".+\",)", "\"bytes:\"['bytes...']");
+            return body.replaceAll("(\"bytes\":\\s\".+\",)", "\"bytes:\"['bytes...']");
 
-        if (queryParams != null && !queryParams.isBlank()) api = api + "?" + queryParams;
-
-        final String str = '[' + requestMethod.toString() + "]      " + api + suffix + body;
-        return switch (requestMethod) {
-            case GET -> colorString(str, TextColor.BLUE);
-            case POST -> colorString(str, TextColor.PURPLE);
-            case PUT -> colorString(str, TextColor.YELLOW);
-            case DELETE -> colorString(str, TextColor.CYAN);
-            case PATCH -> colorString(str, TextColor.WHITE);
-            default ->
-                    colorString('[' + requestMethod.toString() + "]      " + api + suffix + body + "\n      HTTP METHOD NOT SUPPORTED BY REST API", TextColor.RED);
-        };
+        return body;
     }
 
-    public static void logRequest(HttpMethod requestMethod, String api, String queryParams, String body) {
-        if (api.contains("swagger") || api.contains("api-docs"))
-            body = "";
-
-        if (PRETTY_PRINT_LOGS != null && PRETTY_PRINT_LOGS.equalsIgnoreCase("true"))
-            body = toStringFormatted(body);
-
-        String suffix = "       REQUEST:";
-        log.info(colorsBasedData(suffix, requestMethod, api, queryParams, body));
+    public static void logApiCall(HttpMethod httpMethod, String api, String queryParams) {
+        log.info(colorString("[{}] {} {}", httpMethod), httpMethod.toString(), getApiAsString(api, queryParams), logApiCallPrefix);
     }
 
-    public static void logResponse(HttpMethod requestMethod, int status, String api, String queryParams, String body) {
-        if (api.contains("swagger") || api.contains("api-docs"))
-            body = "";
-
-        if (PRETTY_PRINT_LOGS != null && PRETTY_PRINT_LOGS.equalsIgnoreCase("true"))
-            body = toStringFormatted(body);
-
-        String suffix = "       RESPONSE: status code <" + HttpStatus.valueOf(status) + ">";
-        log.info(colorsBasedData(suffix, requestMethod, api, queryParams, body));
+    public static void logRequest(HttpMethod httpMethod, int status, String api, String queryParams, String requestBody, String responseBody) {
+        log.info(colorString("[{}] {} {}\nREQUEST:{}\nRESPONSE <{}>:{}", httpMethod), httpMethod.toString(), getApiAsString(api, queryParams), logRequestPrefix, formatBodyString(api, requestBody), HttpStatus.valueOf(status), formatBodyString(api, responseBody));
     }
 
     public enum TextColor {
@@ -100,6 +93,17 @@ public class LoggingUtils {
 
         public String getColorCode() {
             return color;
+        }
+
+        public static TextColor getMethodColor(HttpMethod requestMethod) {
+            return switch (requestMethod) {
+                case GET -> TextColor.BLUE;
+                case POST -> TextColor.PURPLE;
+                case PUT -> TextColor.YELLOW;
+                case DELETE -> TextColor.CYAN;
+                case PATCH -> TextColor.WHITE;
+                default -> TextColor.RED;
+            };
         }
     }
 

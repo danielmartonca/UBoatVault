@@ -21,22 +21,22 @@ import java.nio.charset.StandardCharsets;
 @WebFilter(urlPatterns = "/*")
 @Order(-999)
 @Slf4j
-public class LogResponseFilter extends OncePerRequestFilter {
+public class LogRequestsFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        var req = new ContentCachingRequestWrapper(request);
+        var res = new ContentCachingResponseWrapper(response);
 
-        ContentCachingRequestWrapper req = new ContentCachingRequestWrapper(request);
-        ContentCachingResponseWrapper resp = new ContentCachingResponseWrapper(response);
+        try {
+            filterChain.doFilter(req, res);
+        } finally {
+            String requestBody = new String(req.getContentAsByteArray(), StandardCharsets.UTF_8);
+            String responseBody = new String(res.getContentAsByteArray(), StandardCharsets.UTF_8);
 
-        // Execution request chain
-        filterChain.doFilter(req, resp);
+            res.copyBodyToResponse();
 
-        // Get Cache
-        byte[] responseBody = resp.getContentAsByteArray();
-
-        LoggingUtils.logResponse(HttpMethod.valueOf(request.getMethod()),response.getStatus(), request.getRequestURI(), request.getQueryString(), new String(responseBody, StandardCharsets.UTF_8));
-
-        resp.copyBodyToResponse();
+            LoggingUtils.logRequest(HttpMethod.valueOf(request.getMethod()), response.getStatus(), request.getRequestURI(), request.getQueryString(), requestBody,responseBody);
+        }
     }
 }

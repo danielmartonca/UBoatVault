@@ -7,6 +7,7 @@ import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import com.uboat.vault.api.utilities.LoggingUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -77,6 +78,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain chain) throws ServletException, IOException {
         final var header = request.getHeader("Authorization");
+
+        LoggingUtils.logApiCall(HttpMethod.valueOf(request.getMethod()), request.getRequestURI(), request.getQueryString());
 
         if (header == null) handleNoAuthorizationRequest(request);
         else if (header.startsWith("RToken ")) handleRTokenRequest();
