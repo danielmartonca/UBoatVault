@@ -47,6 +47,7 @@ public class JourneyService {
     private final SailorsRepository sailorsRepository;
     private final LocationDataRepository locationDataRepository;
 
+    @Transactional
     public UBoatDTO getMostRecentRides(String authorizationHeader, Integer ridesRequested) {
         try {
             //cant be null because the operation is already done in the filter before
