@@ -11,6 +11,7 @@ import javax.persistence.Embeddable;
 @Getter
 @Setter
 @Embeddable
+@EqualsAndHashCode
 public class LatLng {
     private double latitude;
     private double longitude;

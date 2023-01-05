@@ -35,22 +35,22 @@ public class UBoatSailorController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
     }
 
-    @Operation(summary = "This API is called by sailors to find possible new journeys. After the clients have created journeys by calling /requestJourney and /chooseJourney APIs," +
-            " the sailor can call this API to retrieve all journies matching this criteria. However, in order to establish a connection between him and the client, the sailor also has to call /selectClient with the data retrieved using this API.")
+    @Operation(summary = "This API is called by sailors to find possible new journey. After the clients have created journeys by calling /requestJourney and /chooseJourney APIs," +
+            " the sailor can call this API to retrieve the closest journey matching this criteria. However, in order to establish a connection between him and the client, the sailor also has to call /selectClient with the data retrieved using this API.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Api was processed correctly. A list of available journeys is returned if existing, null otherwise.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "200", description = "Api was processed correctly. The closest journey to between the sailor and the client if existing, null otherwise.", content = @Content(mediaType = "application/json")),
     })
-    @GetMapping(value = "/findClients")
-    public ResponseEntity<UBoatDTO> findClients(@RequestHeader(value = "Authorization") String authorizationHeader) {
-        var uBoatResponse = journeyService.findClients(authorizationHeader);
+    @GetMapping(value = "/findClient")
+    public ResponseEntity<UBoatDTO> findClient(@RequestHeader(value = "Authorization") String authorizationHeader) {
+        var uBoatResponse = journeyService.findClient(authorizationHeader);
 
         return switch (uBoatResponse.getHeader()) {
-            case CLIENTS_FOUND, NO_CLIENTS_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case CLIENT_FOUND, NO_CLIENT_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
     }
 
-    @Operation(summary = "This API establishes a Journey between the caller and the Journey entity. The request journey must be fetched using /findClients API.")
+    @Operation(summary = "This API establishes a Journey between the caller and the Journey entity. The request journey must be fetched using /findClient API.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Api was processed correctly. True will be returned if a journey was selected by the client " +
                     "and all the other requested journeys are canceled or false if journey from the request could not be found in the database.", content = @Content(mediaType = "application/json")),

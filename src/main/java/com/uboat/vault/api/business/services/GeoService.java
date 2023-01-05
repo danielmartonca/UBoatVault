@@ -41,9 +41,18 @@ public class GeoService {
     }
 
     /**
-     *
+     * Calculates the distance between multiple points on water. Make sure all the points are on water and the route is possible before calling this method to get accurate results.
      */
-    public List<LatLng> calculateOnWaterRouteBetweenCoordinates(Location sailorLocation, Location pickupLocation, Location destinationLocation) throws NoRouteFoundException {
+    public double calculateDistanceOnWaterBetweenPoints(List<LatLng> points) {
+        double totalDistance = 0;
+
+        for (int i = 0; i < points.size() - 1; i++)
+            totalDistance += calculateDistanceBetweenCoordinates(points.get(i), points.get(i + 1));
+
+        return totalDistance;
+    }
+
+    public List<LatLng> calculateOnWaterRoute(Location sailorLocation, Location pickupLocation, Location destinationLocation) throws NoRouteFoundException {
         return List.of(sailorLocation.getCoordinates(), pickupLocation.getCoordinates(), destinationLocation.getCoordinates());
     }
 }

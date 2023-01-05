@@ -283,24 +283,31 @@ public class JourneyService {
      * This method searches for journey objects that have status CLIENT_ACCEPTED for the sailor from request and returns their JourneysDTO.
      */
     @Transactional
-    public UBoatDTO findClients(String authorizationHeader) {
+    public UBoatDTO findClient(String authorizationHeader) {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var sailor = entityService.findSailorByJwt(jwtData);
 
-            sailor.setLookingForClients(true);
-            sailorsRepository.save(sailor);
+            if(!sailor.isLookingForClients()) {
+                sailor.setLookingForClients(true);
+                sailorsRepository.save(sailor);
+            }
 
             var journeys = journeyRepository.findAllByStateAndSailorAccount_Id(JourneyState.INITIATED, sailor.getAccount().getId());
 
             if (CollectionUtils.isEmpty(journeys))
-                return new UBoatDTO(UBoatStatus.NO_CLIENTS_FOUND);
+                return new UBoatDTO(UBoatStatus.NO_CLIENT_FOUND);
 
-            var responseJourneys = journeys.stream().map(JourneyDTO::buildDTOForSailors).toList();
-            return new UBoatDTO(UBoatStatus.CLIENTS_FOUND, responseJourneys);
+            var closestJourneyToClientOptional = journeys.stream()
+                    .min((j1, j2) -> Double.compare(j1.getRoute().getDistanceBetweenSailorAndClient(geoService), j2.getRoute().getDistanceBetweenSailorAndClient(geoService)));
+
+            if (closestJourneyToClientOptional.isEmpty()) throw new RuntimeException("Empty optional found.");
+
+            var closestJourneyToClient = closestJourneyToClientOptional.get();
+            return new UBoatDTO(UBoatStatus.CLIENT_FOUND, JourneyDTO.buildDTOForSailors(closestJourneyToClient));
         } catch (Exception e) {
-            log.error("Exception occurred during findClients workflow. Returning null.", e);
+            log.error("Exception occurred during findClient workflow. Returning null.", e);
             return null;
         }
     }

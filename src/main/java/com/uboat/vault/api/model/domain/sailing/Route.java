@@ -80,7 +80,7 @@ public class Route {
     }
 
     public void calculateRoute(GeoService geoService) throws NoRouteFoundException {
-        this.routePolylinePoints.addAll(geoService.calculateOnWaterRouteBetweenCoordinates(sailorLocation, pickupLocation, destinationLocation));
+        this.routePolylinePoints.addAll(geoService.calculateOnWaterRoute(sailorLocation, pickupLocation, destinationLocation));
     }
 
     public double getTotalDistance() {
@@ -91,12 +91,26 @@ public class Route {
 
     public double getTotalDistance(GeoService geoService) {
         if (totalDistance != 0) return totalDistance;
-        double distance = 0;
-
-        for (int i = 0; i < routePolylinePoints.size() - 1; i++)
-            distance += geoService.calculateDistanceBetweenCoordinates(routePolylinePoints.get(i), routePolylinePoints.get(i + 1));
-
-        totalDistance = distance;
+        totalDistance = geoService.calculateDistanceOnWaterBetweenPoints(routePolylinePoints);
         return totalDistance;
+    }
+
+    public List<LatLng> getPointsBetweenSailorAndClient() {
+        if (routePolylinePoints.isEmpty())
+            throw new RuntimeException("Tried to get points between sailor and client while route was not calculated.");
+
+        List<LatLng> points = new LinkedList<>();
+
+        for (var coordinates : routePolylinePoints) {
+            if (coordinates.equals(this.sailorLocation.getCoordinates()))
+                break;
+            points.add(coordinates);
+        }
+
+        return points;
+    }
+
+    public double getDistanceBetweenSailorAndClient(GeoService geoService){
+        return geoService.calculateDistanceOnWaterBetweenPoints(getPointsBetweenSailorAndClient());
     }
 }

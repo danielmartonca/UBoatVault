@@ -150,9 +150,9 @@ public enum UBoatStatus {
     // /api/sailor/pulse
     PULSE_SUCCESSFUL(1, "The pulse has been registered.", null),
 
-    // /api/sailor/findClients
-    NO_CLIENTS_FOUND(0, "No new client were found.", "No new clients for the moment..."),
-    CLIENTS_FOUND(1, "Found new clients for the sailor", "New clients"),
+    // /api/sailor/findClient
+    NO_CLIENT_FOUND(0, "No new client was found.", "No having any client for the moment..."),
+    CLIENT_FOUND(1, "Found new client for the sailor", "New client"),
 
     // /api/sailor/selectClient
     CLIENT_ACCEPTED_JOURNEY(1, "The status of Journey has been updated. The sailor must now accept the client.", null),
