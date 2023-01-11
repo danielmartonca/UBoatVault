@@ -33,6 +33,7 @@ spring:
 uboat:
   pretty-print-logs: false
   apis-body-not-logged:
+    /api/sailor/pulse,
     /images/defaultProfilePicture,
     /images/profileImage,
     /images/sailorProfilePicture,

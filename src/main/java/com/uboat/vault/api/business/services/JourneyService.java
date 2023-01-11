@@ -279,6 +279,28 @@ public class JourneyService {
         }
     }
 
+    @Transactional
+    public UBoatDTO hasSailorAcceptedJourney(String authorizationHeader, Long sailorId) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByJwtData(jwtData);
+
+            var journeys = journeyRepository.findAllByStateAndSailorAccount_Id(JourneyState.SAILOR_ACCEPTED, sailorId);
+            for (var journey : journeys)
+                if (journey.getClientAccount().getId().equals(account.getId())) {
+                    log.info("Journey for the client and sailor with state SAILOR_ACCEPTED has been found.");
+                    return new UBoatDTO(UBoatStatus.JOURNEY_WITH_STATE_FOUND, true);
+                }
+
+            log.info("Journey for the client and sailor with state SAILOR_ACCEPTED has NOT been found.");
+            return new UBoatDTO(UBoatStatus.JOURNEY_WITH_STATE_NOT_FOUND, false);
+        } catch (Exception e) {
+            log.error("Exception occurred during findClient workflow. Returning null.", e);
+            return null;
+        }
+    }
+
     /**
      * This method searches for journey objects that have status CLIENT_ACCEPTED for the sailor from request and returns their JourneysDTO.
      */
@@ -289,7 +311,7 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var sailor = entityService.findSailorByJwt(jwtData);
 
-            if(!sailor.isLookingForClients()) {
+            if (!sailor.isLookingForClients()) {
                 sailor.setLookingForClients(true);
                 sailorsRepository.save(sailor);
             }

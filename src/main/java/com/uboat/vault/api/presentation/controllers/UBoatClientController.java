@@ -69,23 +69,6 @@ public class UBoatClientController {
         };
     }
 
-    @Operation(summary = "This method establishes the connection between the client and the sailor after the client has chosen the sailor's journey sent in the request body." +
-            "It validates that the data in the request (the sailor is online, and it is not already having another journey) then puts the Journey in stage CLIENT_ACCEPTED, dismissing all the other journeys he has in stage INITIATED into CLIENT_CANCELED.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "A new journey was created and the other ones with status CLIENT_ACCEPTED(due to app restart/error etc) are canceled.", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "404", description = "Could not find the sailor by sailor ID.", content = @Content(mediaType = "application/json"))
-    })
-    @PostMapping(value = "/chooseJourney")
-    public ResponseEntity<UBoatDTO> chooseJourney(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody JourneyDTO request) {
-        var uBoatResponse = journeyService.chooseJourney(authorizationHeader, request);
-
-        return switch (uBoatResponse.getHeader()) {
-            case CLIENT_ACCEPTED_JOURNEY -> ResponseEntity.status(HttpStatus.CREATED).body(uBoatResponse);
-            case SAILOR_NOT_FOUND -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(uBoatResponse);
-            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        };
-    }
-
     @Operation(summary = "This API deletes all journeys in state INITIATED for the client.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "All journeys of the client in state INITIATED have been deleted.", content = @Content(mediaType = "application/json")),
@@ -100,5 +83,30 @@ public class UBoatClientController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 
+    @Operation(summary = "This method establishes the connection between the client and the sailor after the client has chosen the sailor's journey sent in the request body." +
+            "It validates that the data in the request (the sailor is online, and it is not already having another journey) then puts the Journey in stage CLIENT_ACCEPTED, dismissing all the other journeys he has in stage INITIATED into CLIENT_CANCELED.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "A new journey was created and the other ones with status CLIENT_ACCEPTED(due to app restart/error etc) are canceled.", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "Could not find the sailor by sailor ID.", content = @Content(mediaType = "application/json"))
+    })
+    @PostMapping(value = "/chooseJourney")
+    public ResponseEntity<UBoatDTO> chooseJourney(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody JourneyDTO request) {
+        var uBoatResponse = journeyService.chooseJourney(authorizationHeader, request);
 
+        return switch (uBoatResponse.getHeader()) {
+            case SAILOR_NOT_FOUND, JOURNEY_FOR_SAILOR_NOT_FOUND, CLIENT_ACCEPTED_JOURNEY ->
+                    ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
+    }
+
+    @GetMapping(value = "/sailorAccepted")
+    public ResponseEntity<UBoatDTO> sailorAccepted(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam Long sailorId) {
+        var uBoatResponse = journeyService.hasSailorAcceptedJourney(authorizationHeader, sailorId);
+
+        return switch (uBoatResponse.getHeader()) {
+            case JOURNEY_WITH_STATE_NOT_FOUND,JOURNEY_WITH_STATE_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
+    }
 }

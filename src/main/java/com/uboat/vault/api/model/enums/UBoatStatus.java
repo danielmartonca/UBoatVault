@@ -173,6 +173,10 @@ public enum UBoatStatus {
     // /api/client/deleteInitiatedJourneys
     INITIATED_JOURNIES_DELETED(1, "All initiated journies have been deleted.", null),
 
+    // /api/client/journeyStatus
+    JOURNEY_WITH_STATE_NOT_FOUND(0, "The journey with the given status was not found.", null),
+    JOURNEY_WITH_STATE_FOUND(1, "The journey with the given status was found.", null),
+
     // /api/client/selectClient
     JOURNEY_NOT_FOUND(2, "The journey could not be found", CommonStatus.UNEXPECTED_ERROR),
     JOURNEY_SELECTED(1, "Sailor has selected a journey and canceled all the others.", "Journey accepted"),
