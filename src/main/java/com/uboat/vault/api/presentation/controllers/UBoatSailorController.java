@@ -55,12 +55,12 @@ public class UBoatSailorController {
             @ApiResponse(responseCode = "200", description = "Api was processed correctly. True will be returned if a journey was selected by the client " +
                     "and all the other requested journeys are canceled or false if journey from the request could not be found in the database.", content = @Content(mediaType = "application/json")),
     })
-    @PostMapping(value = "/selectClient")
-    public ResponseEntity<UBoatDTO> selectClient(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody JourneyDTO journey) {
+    @PostMapping(value = "/confirmClient")
+    public ResponseEntity<UBoatDTO> confirmClient(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestBody JourneyDTO journey) {
 
-        var uBoatResponse = journeyService.selectClient(authorizationHeader, journey);
+        var uBoatResponse = journeyService.confirmClient(authorizationHeader, journey);
         return switch (uBoatResponse.getHeader()) {
-            case JOURNEY_SELECTED, JOURNEY_NOT_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case JOURNEY_CONFIRMED, JOURNEY_NOT_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
     }

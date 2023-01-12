@@ -2,6 +2,7 @@ package com.uboat.vault.api.presentation.controllers;
 
 import com.uboat.vault.api.business.services.AccountsService;
 import com.uboat.vault.api.business.services.AuthenticationService;
+import com.uboat.vault.api.business.services.JourneyService;
 import com.uboat.vault.api.model.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class AccountsController {
     private final AuthenticationService authenticationService;
     private final AccountsService accountsService;
+    private final JourneyService journeyService;
 
 
     @Operation(summary = "Check if the email given as query parameter is already used.")
@@ -171,6 +173,18 @@ public class AccountsController {
             case BOAT_UPDATED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
             case MISSING_BEARER, INVALID_BEARER_FORMAT, JWT_INVALID ->
                     ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
+    }
+
+    @Operation(summary = "Fetches the current journey if the client/sailor is in a journey or null otherwise.")
+    @GetMapping(value = "/journey")
+    public ResponseEntity<UBoatDTO> journey(@RequestHeader(value = "Authorization") String authorizationHeader) {
+        var responseBody = journeyService.getOngoingJourney(authorizationHeader);
+
+        return switch (responseBody.getHeader()) {
+            case ONGOING_JOURNEY_RETRIEVED, ONGOING_JOURNEY_NOT_FOUND ->
+                    ResponseEntity.status(HttpStatus.OK).body(responseBody);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
         };
     }

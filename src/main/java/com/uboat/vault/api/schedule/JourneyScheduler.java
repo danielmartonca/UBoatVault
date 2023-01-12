@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -28,8 +29,7 @@ public class JourneyScheduler {
     @Transactional
     public void removeJourneysNotConfirmed() {
         try {
-            //TODO maybe add sailor accepted later?
-            var journeys = journeyRepository.findJourneysByStateIn(JourneyState.INITIATED, JourneyState.CLIENT_ACCEPTED);
+            var journeys = journeyRepository.findJourneysByStateIn(List.of(JourneyState.INITIATED, JourneyState.CLIENT_ACCEPTED));
             var journeysToBeDeleted = journeys.stream()
                     .filter(j -> DateUtils.getSecondsPassed(j.getJourneyTemporalData().getDateInitiated()) >= journeysNotConfirmedTimeoutSeconds)
                     .collect(Collectors.toList());

@@ -9,6 +9,7 @@ import com.uboat.vault.api.model.dto.PulseDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.JourneyState;
 import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.exceptions.NoRouteFoundException;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import com.uboat.vault.api.persistence.repostiories.JourneyRepository;
@@ -22,10 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -46,6 +44,34 @@ public class JourneyService {
     private final JourneyRepository journeyRepository;
     private final SailorsRepository sailorsRepository;
     private final LocationDataRepository locationDataRepository;
+
+    @Transactional
+    public UBoatDTO getOngoingJourney(String authorizationHeader) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByJwtData(jwtData);
+
+            var states = Set.of(JourneyState.VERIFYING_PAYMENT, JourneyState.SAILING_TO_CLIENT, JourneyState.SAILING_TO_DESTINATION);
+            Optional<Journey> journeyOptional;
+
+            if (account.getType() == UserType.CLIENT)
+                journeyOptional = journeyRepository.findClientJourneyMatchingAccountAndState(account.getId(), states);
+            else
+                journeyOptional = journeyRepository.findSailorJourneyMatchingAccountAndState(account.getId(), states);
+
+            if (journeyOptional.isEmpty())
+                return new UBoatDTO(UBoatStatus.ONGOING_JOURNEY_NOT_FOUND, null);
+
+            var journey = journeyOptional.get();
+            var dto = account.getType() == UserType.CLIENT ? JourneyDTO.buildDTOForClients(journey) : JourneyDTO.buildDTOForSailors(journey);
+
+            return new UBoatDTO(UBoatStatus.ONGOING_JOURNEY_RETRIEVED, dto);
+        } catch (Exception e) {
+            log.error("An exception occurred during getOngoingJourney workflow.", e);
+            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @Transactional
     public UBoatDTO getMostRecentRides(String authorizationHeader, Integer ridesRequested) {
@@ -338,7 +364,7 @@ public class JourneyService {
      * This method changed the state of the request's client journey to SAILOR_ACCEPTED and dismisses the other Journeys with state CLIENT_ACCEPTED into SAILOR_CANCELED.
      */
     @Transactional
-    public UBoatDTO selectClient(String authorizationHeader, JourneyDTO journeyDTO) {
+    public UBoatDTO confirmClient(String authorizationHeader, JourneyDTO journeyDTO) {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
@@ -347,7 +373,7 @@ public class JourneyService {
             var journeyOptional = journeyRepository.findBySailorAndState(sailor, JourneyState.SAILOR_ACCEPTED);
             if (journeyOptional.isPresent()) {
                 log.warn("Another journey has already been selected");
-                return new UBoatDTO(UBoatStatus.JOURNEY_SELECTED, false);
+                return new UBoatDTO(UBoatStatus.JOURNEY_CONFIRMED, journeyOptional.get());
             }
 
             var pickupLocationCoordinates = journeyDTO.getRoute().getPickupLocation().getCoordinates();
@@ -355,11 +381,11 @@ public class JourneyService {
 
             var journey = journeyRepository.findJourneyOfSailorMatchingStatePickupAndDestination(
                     JourneyState.CLIENT_ACCEPTED,
-                    sailor.getAccount().getId(),
+                    sailor.getId(),
                     pickupLocationCoordinates.getLatitude(), pickupLocationCoordinates.getLongitude(),
                     destinationLocationCoordinates.getLatitude(), destinationLocationCoordinates.getLongitude());
 
-            if (journey == null) return new UBoatDTO(UBoatStatus.JOURNEY_NOT_FOUND, false);
+            if (journey == null) return new UBoatDTO(UBoatStatus.JOURNEY_NOT_FOUND, null);
 
             log.info("Found journey from the request with status CLIENT_ACCEPTED. Journey id: {}", journey.getId());
 
@@ -380,7 +406,7 @@ public class JourneyService {
             journeyRepository.save(journey);
             log.info("Status of journey changed from CLIENT_ACCEPTED to SAILOR_ACCEPTED. Journey id: {}", journey.getId());
 
-            return new UBoatDTO(UBoatStatus.JOURNEY_SELECTED, true);
+            return new UBoatDTO(UBoatStatus.JOURNEY_CONFIRMED, journey);
         } catch (Exception e) {
             log.error("Exception occurred during selectClient workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
