@@ -21,7 +21,7 @@ public interface JourneyRepository extends JpaRepository<Journey, Long> {
     List<Journey> findAllByClientAccount_IdAndState(Long clientAccountId, JourneyState state);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<Journey> findAllByStateAndSailorAccount_Id(JourneyState state, Long sailorAccountId);
+    List<Journey> findAllByStateAndSailorId(JourneyState state, Long sailorId);
 
     void deleteAllByClientAccountAndStateIn(Account clientAccount, Set<JourneyState> state);
 

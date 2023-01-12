@@ -286,7 +286,7 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var account = entityService.findAccountByJwtData(jwtData);
 
-            var journeys = journeyRepository.findAllByStateAndSailorAccount_Id(JourneyState.SAILOR_ACCEPTED, sailorId);
+            var journeys = journeyRepository.findAllByStateAndSailorId(JourneyState.SAILOR_ACCEPTED, sailorId);
             for (var journey : journeys)
                 if (journey.getClientAccount().getId().equals(account.getId())) {
                     log.info("Journey for the client and sailor with state SAILOR_ACCEPTED has been found.");
@@ -316,7 +316,7 @@ public class JourneyService {
                 sailorsRepository.save(sailor);
             }
 
-            var journeys = journeyRepository.findAllByStateAndSailorAccount_Id(JourneyState.INITIATED, sailor.getAccount().getId());
+            var journeys = journeyRepository.findAllByStateAndSailorId(JourneyState.CLIENT_ACCEPTED, sailor.getId());
 
             if (CollectionUtils.isEmpty(journeys))
                 return new UBoatDTO(UBoatStatus.NO_CLIENT_FOUND);
@@ -364,7 +364,7 @@ public class JourneyService {
             log.info("Found journey from the request with status CLIENT_ACCEPTED. Journey id: {}", journey.getId());
 
             //dismiss any other journey for the current sailor - set all the other CLIENT_ACCEPTED journeys for this sailor to SAILOR_CANCELED
-            var otherJourneys = journeyRepository.findAllByStateAndSailorAccount_Id(JourneyState.CLIENT_ACCEPTED, sailor.getAccount().getId());
+            var otherJourneys = journeyRepository.findAllByStateAndSailorId(JourneyState.CLIENT_ACCEPTED, sailor.getId());
             if (!CollectionUtils.isEmpty(otherJourneys)) {
                 log.info("Canceling other journeys.");
                 otherJourneys.stream()
