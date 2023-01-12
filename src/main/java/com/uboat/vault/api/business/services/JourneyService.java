@@ -373,7 +373,7 @@ public class JourneyService {
             var journeyOptional = journeyRepository.findBySailorAndState(sailor, JourneyState.SAILOR_ACCEPTED);
             if (journeyOptional.isPresent()) {
                 log.warn("Another journey has already been selected");
-                return new UBoatDTO(UBoatStatus.JOURNEY_CONFIRMED, journeyOptional.get());
+                return new UBoatDTO(UBoatStatus.JOURNEY_CONFIRMED, JourneyDTO.buildDTOForSailors(journeyOptional.get()));
             }
 
             var pickupLocationCoordinates = journeyDTO.getRoute().getPickupLocation().getCoordinates();
@@ -406,7 +406,7 @@ public class JourneyService {
             journeyRepository.save(journey);
             log.info("Status of journey changed from CLIENT_ACCEPTED to SAILOR_ACCEPTED. Journey id: {}", journey.getId());
 
-            return new UBoatDTO(UBoatStatus.JOURNEY_CONFIRMED, journey);
+            return new UBoatDTO(UBoatStatus.JOURNEY_CONFIRMED, JourneyDTO.buildDTOForSailors(journey));
         } catch (Exception e) {
             log.error("Exception occurred during selectClient workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
