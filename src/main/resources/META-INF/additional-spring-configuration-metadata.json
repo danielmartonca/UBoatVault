@@ -41,6 +41,16 @@
       "description": "Cron schedule format for assertSailorsAreActive task."
     },
     {
+      "name": "uboat.schedulersCron.journeyScheduler.removeJourneysNotConfirmed",
+      "type": "java.lang.String",
+      "description": "Cron schedule format for removeJourneysNotConfirmed task."
+    },
+    {
+      "name": "uboat.schedulersCron.journeyScheduler.journeysNotConfirmedTimeoutSeconds",
+      "type": "java.lang.Integer",
+      "description": "After how many seconds should the journey be considered expired."
+    },
+    {
       "name": "uboat.hs256_key",
       "type": "java.lang.String",
       "description": "Private key used in the creation of JWT."

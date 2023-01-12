@@ -18,6 +18,9 @@ public interface JourneyRepository extends JpaRepository<Journey, Long> {
     List<Journey> findJourneysByState(JourneyState state);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Journey> findJourneysByStateIn(JourneyState... state);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Journey> findAllByClientAccount_IdAndState(Long clientAccountId, JourneyState state);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
