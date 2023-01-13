@@ -3,10 +3,7 @@ package com.uboat.vault.api.business.services;
 import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.account.sailor.Sailor;
 import com.uboat.vault.api.model.domain.sailing.*;
-import com.uboat.vault.api.model.dto.JourneyDTO;
-import com.uboat.vault.api.model.dto.JourneyRequestDTO;
-import com.uboat.vault.api.model.dto.PulseDTO;
-import com.uboat.vault.api.model.dto.UBoatDTO;
+import com.uboat.vault.api.model.dto.*;
 import com.uboat.vault.api.model.enums.JourneyState;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
@@ -69,6 +66,52 @@ public class JourneyService {
             return new UBoatDTO(UBoatStatus.ONGOING_JOURNEY_RETRIEVED, dto);
         } catch (Exception e) {
             log.error("An exception occurred during getOngoingJourney workflow.", e);
+            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Transactional
+    public UBoatDTO sail(String authorizationHeader, LocationDataDTO locationDataDTO) {
+        try {
+            //cant be null because the operation is already done in the filter before
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByJwtData(jwtData);
+
+            var states = Set.of(JourneyState.SAILING_TO_CLIENT, JourneyState.SAILING_TO_DESTINATION);
+            Optional<Journey> journeyOptional;
+            if (account.getType() == UserType.CLIENT)
+                journeyOptional = journeyRepository.findClientJourneyMatchingAccountAndState(account.getId(), states);
+            else
+                journeyOptional = journeyRepository.findSailorJourneyMatchingAccountAndState(account.getId(), states);
+
+            if (journeyOptional.isEmpty())
+                return new UBoatDTO(UBoatStatus.NOT_SAILING, null);
+
+            var journey = journeyOptional.get();
+
+            //update state if sailor has reached the client
+            if (journey.getState() == JourneyState.SAILING_TO_CLIENT && account.getType() == UserType.CLIENT) {
+                //Only the client can update the status of the Journey
+                var currentLocation = new LatLng(locationDataDTO);
+                var lastKnownSailorLocation = journey.getLastKnownLocation(UserType.SAILOR).getLocation().getCoordinates();
+                if (geoService.calculateDistanceBetweenCoordinates(currentLocation, lastKnownSailorLocation) <= 10) {
+                    log.info("Sailor has reached the client, updating journey state.");
+                    journey.setState(JourneyState.SAILING_TO_DESTINATION);
+                }
+            }
+
+            journey.getRecordedLocationInfos().add(JourneyLocationInfo.builder()
+                    .recorder(account.getType())
+                    .journeyState(journey.getState())
+                    .location(new Location(locationDataDTO))
+                    .timestamp(new Date())
+                    .journey(journey)
+                    .build());
+
+            var lastKnownLocationInfo = journey.getLastKnownLocation(account.getType() == UserType.CLIENT ? UserType.SAILOR : UserType.CLIENT);
+            return new UBoatDTO(UBoatStatus.SAIL_RECORDED, lastKnownLocationInfo == null ? null : new SailDTO(lastKnownLocationInfo));
+        } catch (Exception e) {
+            log.error("An exception occurred during sail workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
@@ -316,6 +359,8 @@ public class JourneyService {
             for (var journey : journeys)
                 if (journey.getClientAccount().getId().equals(account.getId())) {
                     log.info("Journey for the client and sailor with state SAILOR_ACCEPTED has been found.");
+                    journey.setState(JourneyState.SAILING_TO_CLIENT);
+                    journeyRepository.save(journey);
                     return new UBoatDTO(UBoatStatus.JOURNEY_WITH_STATE_FOUND, true);
                 }
 

@@ -100,6 +100,8 @@ public class UBoatClientController {
         };
     }
 
+    @Operation(summary = "Called by the clients to check if the sailor has accepted the Journey. A Journey is accepted if it is in state SAILOR_ACCEPTED." +
+            "This API also changes the journey (if found) state to SAILING_TO_CLIENT.")
     @GetMapping(value = "/sailorAccepted")
     public ResponseEntity<UBoatDTO> sailorAccepted(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam Long sailorId) {
         var uBoatResponse = journeyService.hasSailorAcceptedJourney(authorizationHeader, sailorId);

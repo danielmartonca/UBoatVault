@@ -58,9 +58,13 @@ public enum UBoatStatus {
     // /api/boat
     BOAT_UPDATED(1, "The boat details have been updated", "Updated your boat details"),
 
-    // /api/journey
+    // /api/sailing/journey
     ONGOING_JOURNEY_NOT_FOUND(0, "There is no ongoing journey.", null),
     ONGOING_JOURNEY_RETRIEVED(1, "Ongoing journey was retrieved.", null),
+
+    // /api/sailing/sail
+    SAIL_RECORDED(1, "Position recorded with sail API.", null),
+    NOT_SAILING(-1, "The API was called with no active Journey.", "You are not sailing..."),
 
     // /api/sailorDetails
     SAILOR_DETAILS_RETRIEVED(1, "The sailor name has been retrieved", CommonStatus.SUCCESS),
@@ -181,10 +185,9 @@ public enum UBoatStatus {
     JOURNEY_WITH_STATE_NOT_FOUND(0, "The journey with the given status was not found.", null),
     JOURNEY_WITH_STATE_FOUND(1, "The journey with the given status was found.", null),
 
-    // /api/client/selectClient
-    JOURNEY_NOT_FOUND(2, "The journey could not be found", CommonStatus.UNEXPECTED_ERROR),
+    // /api/client/confirmClient
+    JOURNEY_NOT_FOUND(0, "The journey could not be found", CommonStatus.UNEXPECTED_ERROR),
     JOURNEY_CONFIRMED(1, "Sailor has selected a journey and canceled all the others.", "Journey confirmed"),
-    ANOTHER_JOURNEY_ALREADY_SELECTED(3, "Sailor has already selected another journey. ", "You have already selected another ride. Please wait for the client to cancel it or the journey to expire."),
 
     VAULT_INTERNAL_SERVER_ERROR(-1, "UBoat vault has encountered an internal exception. Please report to administration.", CommonStatus.UNEXPECTED_ERROR);
 

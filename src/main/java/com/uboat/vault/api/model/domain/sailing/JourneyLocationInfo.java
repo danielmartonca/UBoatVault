@@ -2,6 +2,7 @@ package com.uboat.vault.api.model.domain.sailing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.enums.JourneyState;
+import com.uboat.vault.api.model.enums.UserType;
 import lombok.*;
 
 import javax.persistence.*;
@@ -21,16 +22,17 @@ public class JourneyLocationInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Getter
+    private UserType recorder;
+
     @Enumerated(EnumType.STRING)
     @Getter
     private JourneyState journeyState;
 
     public void setJourneyState(JourneyState journeyState) {
-        if (!Set.of(com.uboat.vault.api.model.enums.JourneyState.CLIENT_ACCEPTED,
-                        com.uboat.vault.api.model.enums.JourneyState.SAILING_TO_CLIENT,
-                        com.uboat.vault.api.model.enums.JourneyState.SAILING_TO_DESTINATION,
-                        com.uboat.vault.api.model.enums.JourneyState.SUCCESSFULLY_FINISHED)
-                .contains(journeyState))
+        if (!Set.of(JourneyState.SAILING_TO_CLIENT, JourneyState.SAILING_TO_DESTINATION).contains(journeyState))
             throw new RuntimeException("Stage '" + journeyState.name() + "' is not allowed for JourneyLocationInfo.");
         this.journeyState = journeyState;
     }
@@ -39,6 +41,11 @@ public class JourneyLocationInfo {
     @Getter
     @Setter
     private Location location;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @Getter
+    @Setter
+    private LocationData locationData;
 
     @Getter
     @Setter

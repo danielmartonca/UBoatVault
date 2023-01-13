@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.account.sailor.Sailor;
 import com.uboat.vault.api.model.enums.JourneyState;
+import com.uboat.vault.api.model.enums.UserType;
 import lombok.*;
 
 import javax.persistence.*;
@@ -78,5 +79,12 @@ public class Journey {
     @Override
     public int hashCode() {
         return Objects.hash(getId());
+    }
+
+    public JourneyLocationInfo getLastKnownLocation(UserType userType) {
+        return recordedLocationInfos.stream()
+                .filter(r -> r.getRecorder() == userType)
+                .reduce((first, second) -> second)
+                .orElse(null);
     }
 }

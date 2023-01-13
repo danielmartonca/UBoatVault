@@ -1,5 +1,6 @@
 package com.uboat.vault.api.model.domain.sailing;
 
+import com.uboat.vault.api.model.dto.LocationDataDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,5 +28,8 @@ public class Location {
 
     public Location(LocationData locationData) {
         this(new LatLng(locationData));
+    }
+    public Location(LocationDataDTO locationDataDto) {
+        this(new LatLng(locationDataDto));
     }
 }
