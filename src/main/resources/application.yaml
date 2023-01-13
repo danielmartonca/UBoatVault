@@ -10,7 +10,6 @@ whitelist:
   /api/username,
   /api/deviceRegistration,
   /api/jwt,
-  /api/journey,
   /api/requestRegistration,
   /api/registrationSms,
   /api/emailVerification,
