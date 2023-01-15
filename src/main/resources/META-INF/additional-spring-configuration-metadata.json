@@ -48,7 +48,17 @@
     {
       "name": "uboat.schedulersCron.journeyScheduler.journeysNotConfirmedTimeoutSeconds",
       "type": "java.lang.Integer",
-      "description": "After how many seconds should the journey be considered expired."
+      "description": "After how many seconds should the journey not confirmed be considered expired."
+    },
+    {
+      "name": "uboat.schedulersCron.journeyScheduler.checkNoActivityJourneys",
+      "type": "java.lang.String",
+      "description": "Cron schedule format for checkNoActivityJourneys task."
+    },
+    {
+      "name": "uboat.schedulersCron.journeyScheduler.checkNoActivityJourneysTimeoutSeconds",
+      "type": "java.lang.Integer",
+      "description": "After how many seconds should the journey which was started be considered expired therefore moved to IN_ERROR state."
     },
     {
       "name": "uboat.hs256_key",

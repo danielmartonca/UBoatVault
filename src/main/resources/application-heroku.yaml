@@ -38,5 +38,7 @@ uboat:
     journeyScheduler:
       removeJourneysNotConfirmed: "*/30 * * * * *"
       journeysNotConfirmedTimeoutSeconds: 60
+      checkNoActivityJourneys: "* */1 * * * *"
+      checkNoActivityJourneysTimeoutSeconds: 600 # 10 minutes
 
   hs256_key: ${HS256_KEY}
