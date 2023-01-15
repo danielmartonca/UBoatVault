@@ -93,10 +93,13 @@ public class JourneyService {
             if (journey.getState() == JourneyState.SAILING_TO_CLIENT && account.getType() == UserType.CLIENT) {
                 //Only the client can update the status of the Journey
                 var currentLocation = new LatLng(locationDataDTO);
-                var lastKnownSailorLocation = journey.getLastKnownLocation(UserType.SAILOR).getLocation().getCoordinates();
-                if (geoService.calculateDistanceBetweenCoordinates(currentLocation, lastKnownSailorLocation) <= 10) {
-                    log.info("Sailor has reached the client, updating journey state.");
-                    journey.setState(JourneyState.SAILING_TO_DESTINATION);
+                var lastKnownSailorLocation = journey.getLastKnownLocation(UserType.SAILOR);
+                if (lastKnownSailorLocation != null) {
+                    var lastKnownSailorLocationCoordinates = lastKnownSailorLocation.getLocation().getCoordinates();
+                    if (geoService.calculateDistanceBetweenCoordinates(currentLocation, lastKnownSailorLocationCoordinates) <= 10) {
+                        log.info("Sailor has reached the client, updating journey state.");
+                        journey.setState(JourneyState.SAILING_TO_DESTINATION);
+                    }
                 }
             }
 
