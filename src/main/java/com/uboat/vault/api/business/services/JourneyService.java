@@ -360,6 +360,7 @@ public class JourneyService {
                 if (journey.getClientAccount().getId().equals(account.getId())) {
                     log.info("Journey for the client and sailor with state SAILOR_ACCEPTED has been found.");
                     journey.setState(JourneyState.SAILING_TO_CLIENT);
+                    journey.getJourneyTemporalData().setDateBooking(new Date());
                     journeyRepository.save(journey);
                     return new UBoatDTO(UBoatStatus.JOURNEY_WITH_STATE_FOUND, true);
                 }
