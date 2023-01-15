@@ -1,8 +1,10 @@
 package com.uboat.vault.api.schedule;
 
+import com.uboat.vault.api.model.domain.sailing.JourneyError;
 import com.uboat.vault.api.model.enums.JourneyState;
 import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.persistence.repostiories.JourneyRepository;
+import com.uboat.vault.api.persistence.repostiories.JourneysErrorRepository;
 import com.uboat.vault.api.utilities.DateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,7 @@ import java.util.stream.Collectors;
 public class JourneyScheduler {
 
     private final JourneyRepository journeyRepository;
+    private final JourneysErrorRepository errorRepository;
 
     @Value("${uboat.schedulersCron.journeyScheduler.journeysNotConfirmedTimeoutSeconds}")
     Integer journeysNotConfirmedTimeoutSeconds;
@@ -33,13 +37,23 @@ public class JourneyScheduler {
     public void removeJourneysNotConfirmed() {
         try {
             var journeys = journeyRepository.findJourneysByStateIn(List.of(JourneyState.INITIATED, JourneyState.CLIENT_ACCEPTED));
-            var journeysToBeDeleted = journeys.stream()
+            var journeysToBeSetInError = journeys.stream()
                     .filter(j -> DateUtils.getSecondsPassed(j.getJourneyTemporalData().getDateInitiated()) >= journeysNotConfirmedTimeoutSeconds)
                     .collect(Collectors.toList());
 
-            if (!journeysToBeDeleted.isEmpty()) {
-                journeyRepository.deleteAll(journeysToBeDeleted);
-                log.info("A total of {} journey(s) have been deleted in the removeJourneysNotConfirmed task scheduler due to no activity being detected in the last {} seconds.", journeysToBeDeleted.size(), journeysNotConfirmedTimeoutSeconds);
+            if (!journeysToBeSetInError.isEmpty()) {
+                journeysToBeSetInError.forEach(j -> {
+                    j.setState(JourneyState.IN_ERROR);
+                    errorRepository.save(JourneyError.builder()
+                            .journey(j)
+                            .dateRecorded(new Date())
+                            .reason("Journey no activity being detected in the last [journeysNotConfirmedTimeoutSeconds] seconds.")
+                            .build());
+                    log.warn("Journey with ID {} has been set in error due to no activity being detected in the last {} seconds.", j.getId(), journeysNotConfirmedTimeoutSeconds);
+                    journeyRepository.save(j);
+                });
+                journeyRepository.deleteAll(journeysToBeSetInError);
+                log.warn("A total of {} journey(s) have been deleted in the removeJourneysNotConfirmed task scheduler due to no activity being detected in the last {} seconds.", journeysToBeSetInError.size(), journeysNotConfirmedTimeoutSeconds);
             }
         } catch (Exception e) {
             log.error("Exception occurred during removeJourneysNotConfirmed scheduled task.", e);
@@ -73,9 +87,14 @@ public class JourneyScheduler {
             if (!journeysToBeSetInError.isEmpty()) {
                 journeysToBeSetInError.forEach(j -> {
                     j.setState(JourneyState.IN_ERROR);
+                    errorRepository.save(JourneyError.builder()
+                            .journey(j)
+                            .dateRecorded(new Date())
+                            .reason("Journey no activity being detected in the [checkNoActivityJourneysTimeoutSeconds] seconds seconds since its initiation.")
+                            .build());
                     journeyRepository.save(j);
                 });
-                log.info("A total of {} journey(s) have been set in IN_ERROR state with checkNoActivityJourneys task scheduler due to no activity being detected in {} seconds since its(their) initiation.", journeysToBeSetInError.size(), checkNoActivityJourneysTimeoutSeconds);
+                log.warn("A total of {} journey(s) have been set in IN_ERROR state with checkNoActivityJourneys task scheduler due to no activity being detected in {} seconds since its(their) initiation.", journeysToBeSetInError.size(), checkNoActivityJourneysTimeoutSeconds);
             }
         } catch (Exception e) {
             log.error("Exception occurred during checkNoActivityJourneysTimeoutSeconds scheduled task.", e);
