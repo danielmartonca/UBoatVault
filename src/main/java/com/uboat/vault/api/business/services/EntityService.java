@@ -71,7 +71,7 @@ public class EntityService {
         if (Strings.isNotEmpty(username)) {
             foundAccount = accountsRepository.findFirstByUsernameAndPassword(username, password);
             if (foundAccount != null) {
-                log.info("Found account by username and password.");
+                log.info("Found {} account by username and password.", foundAccount.getType());
                 return foundAccount;
             }
             log.warn("Couldn't find account by username and password. Searching by phone number and password.");
@@ -83,7 +83,7 @@ public class EntityService {
             return null;
         }
 
-        log.info("Found account by phone number and password.");
+        log.info("Found {} account by phone number and password.", foundAccount.getType());
         return foundAccount;
     }
 

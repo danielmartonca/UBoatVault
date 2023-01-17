@@ -21,6 +21,11 @@
       "description": "Describes the maximum distance in meters allowed between the sailor and the client when before creating new Journeys."
     },
     {
+      "name": "uboat.journey.inactivityTimeoutSeconds",
+      "type": "java.lang.Integer",
+      "description": "Describes the maximum amount of seconds allowed for an entity to not respond during a ongoing Journey."
+    },
+    {
       "name": "uboat.apis-body-not-logged",
       "type": "java.util.Arrays",
       "description": "List of APIs for which the body will not be logged. Most useful when APIs return bytes."

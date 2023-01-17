@@ -26,7 +26,10 @@ uboat:
   max-active-seconds: ${MAX_ACTIVE_SECONDS}
   max-active-sailors: ${MAX_ACTIVE_SAILORS}
   max-accepted-distance: ${MAX_ACCEPTED_DISTANCES}
-  
+
+  journey:
+    inactivityTimeoutSeconds: 60
+
   schedulersCron:
     clientScheduler:
       deleteInactiveInitiatedJourneys: "*/30 */1 * * * *"

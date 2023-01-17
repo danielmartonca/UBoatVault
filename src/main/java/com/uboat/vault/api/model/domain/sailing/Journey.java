@@ -82,9 +82,10 @@ public class Journey {
     }
 
     public JourneyLocationInfo getLastKnownLocation(UserType userType) {
-        return recordedLocationInfos.stream()
-                .filter(r -> r.getRecorder() == userType)
-                .reduce((first, second) -> second)
-                .orElse(null);
+        if (recordedLocationInfos.isEmpty()) return null;
+        for (int i = recordedLocationInfos.size() - 1; i >= 0; i--)
+            if (recordedLocationInfos.get(i).getRecorder() == userType)
+                return recordedLocationInfos.get(i);
+        return null;
     }
 }

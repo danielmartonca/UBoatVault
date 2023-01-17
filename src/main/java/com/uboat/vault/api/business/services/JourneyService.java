@@ -10,6 +10,7 @@ import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.exceptions.NoRouteFoundException;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import com.uboat.vault.api.persistence.repostiories.JourneyRepository;
+import com.uboat.vault.api.persistence.repostiories.JourneysErrorRepository;
 import com.uboat.vault.api.persistence.repostiories.LocationDataRepository;
 import com.uboat.vault.api.persistence.repostiories.SailorsRepository;
 import com.uboat.vault.api.utilities.DateUtils;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 @Service
@@ -34,6 +37,9 @@ public class JourneyService {
     @Value("${uboat.max-accepted-distance}")
     private int MAX_ACCEPTED_DISTANCE;
 
+    @Value("${uboat.journey.inactivityTimeoutSeconds}")
+    private int inactivityTimeoutSeconds;
+
     private final EntityService entityService;
     private final GeoService geoService;
     private final JwtService jwtService;
@@ -41,6 +47,19 @@ public class JourneyService {
     private final JourneyRepository journeyRepository;
     private final SailorsRepository sailorsRepository;
     private final LocationDataRepository locationDataRepository;
+
+    private final JourneysErrorRepository errorRepository;
+
+    @Transactional
+    public void setJourneyInError(Journey journey, @NotNull @NotEmpty String reason) {
+        journey.setState(JourneyState.IN_ERROR);
+        errorRepository.save(JourneyError.builder()
+                .journey(journey)
+                .dateRecorded(new Date())
+                .reason(reason)
+                .build());
+        journeyRepository.save(journey);
+    }
 
     @Transactional
     public UBoatDTO getOngoingJourney(String authorizationHeader) {
@@ -70,6 +89,22 @@ public class JourneyService {
         }
     }
 
+    private void recordLocation(UserType userType, Journey journey, LocationDataDTO dto) {
+        journey.getRecordedLocationInfos().add(JourneyLocationInfo.builder()
+                .recorder(userType)
+                .journeyState(journey.getState())
+                .location(new Location(dto))
+                .locationData(new LocationData(dto))
+                .timestamp(new Date())
+                .journey(journey)
+                .build());
+        journeyRepository.save(journey);
+    }
+
+    private void recordLocation(Account account, Journey journey, LocationDataDTO dto) {
+        recordLocation(account.getType(), journey, dto);
+    }
+
     @Transactional
     public UBoatDTO sail(String authorizationHeader, LocationDataDTO locationDataDTO) {
         try {
@@ -84,35 +119,44 @@ public class JourneyService {
             else
                 journeyOptional = journeyRepository.findSailorJourneyMatchingAccountAndState(account.getId(), states);
 
+            log.info("Sail API called by a {}.", account.getType());
+
             if (journeyOptional.isEmpty())
                 return new UBoatDTO(UBoatStatus.NOT_SAILING, null);
 
             var journey = journeyOptional.get();
 
+            var lastKnownLocationInfo = journey.getLastKnownLocation(account.getType() == UserType.CLIENT ? UserType.SAILOR : UserType.CLIENT);
+
+            if (lastKnownLocationInfo == null) {
+                log.info("First sail call recorded.");
+                recordLocation(account, journey, locationDataDTO);
+                var location = account.getType() == UserType.CLIENT ? journey.getRoute().getSailorLocation() : journey.getRoute().getClientLocation();
+                return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(location));
+            }
+
             //update state if sailor has reached the client
             if (journey.getState() == JourneyState.SAILING_TO_CLIENT && account.getType() == UserType.CLIENT) {
                 //Only the client can update the status of the Journey
                 var currentLocation = new LatLng(locationDataDTO);
-                var lastKnownSailorLocation = journey.getLastKnownLocation(UserType.SAILOR);
-                if (lastKnownSailorLocation != null) {
-                    var lastKnownSailorLocationCoordinates = lastKnownSailorLocation.getLocation().getCoordinates();
-                    if (geoService.calculateDistanceBetweenCoordinates(currentLocation, lastKnownSailorLocationCoordinates) <= 10) {
-                        log.info("Sailor has reached the client, updating journey state.");
-                        journey.setState(JourneyState.SAILING_TO_DESTINATION);
-                    }
+                var lastKnownSailorLocationCoordinates = lastKnownLocationInfo.getLocation().getCoordinates();
+
+                if (geoService.calculateDistanceBetweenCoordinates(currentLocation, lastKnownSailorLocationCoordinates) <= 10) {
+                    log.info("Sailor has reached the client, updating journey state.");
+                    journey.setState(JourneyState.SAILING_TO_DESTINATION);
                 }
             }
 
-            journey.getRecordedLocationInfos().add(JourneyLocationInfo.builder()
-                    .recorder(account.getType())
-                    .journeyState(journey.getState())
-                    .location(new Location(locationDataDTO))
-                    .timestamp(new Date())
-                    .journey(journey)
-                    .build());
+            if (DateUtils.getSecondsPassed(lastKnownLocationInfo.getTimestamp()) >= inactivityTimeoutSeconds) {
+                log.warn("Seconds passed: {} . Last recorded timestamp: {}", DateUtils.getSecondsPassed(lastKnownLocationInfo.getTimestamp()), lastKnownLocationInfo.getTimestamp());
+                log.warn("Journey set in error due to no activity being detected from the other entity in the last {} seconds.", inactivityTimeoutSeconds);
+                setJourneyInError(journey, "The other entity failed to record any activity in the last [inactivityTimeoutSeconds] seconds.");
+                recordLocation(account, journey, locationDataDTO);
+                return new UBoatDTO(UBoatStatus.LOST_CONNECTION, null);
+            }
 
-            var lastKnownLocationInfo = journey.getLastKnownLocation(account.getType() == UserType.CLIENT ? UserType.SAILOR : UserType.CLIENT);
-            return new UBoatDTO(UBoatStatus.SAIL_RECORDED, lastKnownLocationInfo == null ? null : new SailDTO(lastKnownLocationInfo));
+            recordLocation(account, journey, locationDataDTO);
+            return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(lastKnownLocationInfo));
         } catch (Exception e) {
             log.error("An exception occurred during sail workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);

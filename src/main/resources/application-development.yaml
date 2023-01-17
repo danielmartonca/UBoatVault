@@ -24,6 +24,9 @@ uboat:
   max-active-seconds: 300
   max-active-sailors: 5
   max-accepted-distance: 100000
+
+  journey:
+    inactivityTimeoutSeconds: 60
   
   schedulersCron:
     clientScheduler:

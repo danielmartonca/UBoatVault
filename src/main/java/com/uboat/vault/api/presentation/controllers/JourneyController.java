@@ -33,8 +33,7 @@ public class JourneyController {
         var responseBody = journeyService.sail(authorizationHeader, locationDataDTO);
 
         return switch (responseBody.getHeader()) {
-            case SAIL_RECORDED -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
-            case NOT_SAILING -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
+            case SAIL_RECORDED, NOT_SAILING, LOST_CONNECTION -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
         };
     }

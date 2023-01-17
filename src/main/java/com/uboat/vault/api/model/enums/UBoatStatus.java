@@ -64,7 +64,8 @@ public enum UBoatStatus {
 
     // /api/sailing/sail
     SAIL_RECORDED(1, "Position recorded with sail API.", null),
-    NOT_SAILING(-1, "The API was called with no active Journey.", "You are not sailing..."),
+    LOST_CONNECTION(2, "The other entity exceeded maximum time allowed to provide any information.", null),
+    NOT_SAILING(0, "The API was called with no active Journey.", "You are not sailing..."),
 
     // /api/sailorDetails
     SAILOR_DETAILS_RETRIEVED(1, "The sailor name has been retrieved", CommonStatus.SUCCESS),
