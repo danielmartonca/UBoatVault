@@ -197,6 +197,7 @@ public class AccountsService {
     /**
      * Used by sailors to get and retrieve their boat account
      */
+    @Transactional
     public UBoatDTO getMyBoat(String authorizationHeader) {
         try {
             //cant be null because the operation is already done in the filter before
