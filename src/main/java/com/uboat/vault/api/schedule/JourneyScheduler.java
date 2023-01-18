@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -36,7 +35,7 @@ public class JourneyScheduler {
             var journeys = journeyRepository.findJourneysByStateIn(List.of(JourneyState.INITIATED, JourneyState.CLIENT_ACCEPTED));
             var journeysToBeSetInError = journeys.stream()
                     .filter(j -> DateUtils.getSecondsPassed(j.getJourneyTemporalData().getDateInitiated()) >= journeysNotConfirmedTimeoutSeconds)
-                    .collect(Collectors.toList());
+                    .toList();
 
             if (!journeysToBeSetInError.isEmpty()) {
                 journeysToBeSetInError.forEach(j -> {
@@ -44,7 +43,6 @@ public class JourneyScheduler {
                     log.warn("Journey with ID {} has been set in error due to no activity being detected in the last {} seconds.", j.getId(), journeysNotConfirmedTimeoutSeconds);
                     journeyRepository.save(j);
                 });
-                journeyRepository.deleteAll(journeysToBeSetInError);
                 log.warn("A total of {} journey(s) have been deleted in the removeJourneysNotConfirmed task scheduler due to no activity being detected in the last {} seconds.", journeysToBeSetInError.size(), journeysNotConfirmedTimeoutSeconds);
             }
         } catch (Exception e) {

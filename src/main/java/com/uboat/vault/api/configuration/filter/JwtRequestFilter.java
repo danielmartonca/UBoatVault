@@ -65,7 +65,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 }
             }
         } catch (UsernameNotFoundException e) {
-            logger.warn(LoggingUtils.colorString("Valid JWT token with username not bound to any account found.", LoggingUtils.TextColor.RED));
+            logger.warn(LoggingUtils.colorString("Valid JWT token with username not bound to any account.", LoggingUtils.TextColor.RED));
         } catch (UBoatJwtException e) {
             logger.warn(LoggingUtils.colorString("JWT is invalid: " + e.getStatus().getServerMessage(), LoggingUtils.TextColor.RED));
         }

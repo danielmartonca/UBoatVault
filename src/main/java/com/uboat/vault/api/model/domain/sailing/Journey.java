@@ -5,13 +5,16 @@ import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.account.sailor.Sailor;
 import com.uboat.vault.api.model.enums.JourneyState;
 import com.uboat.vault.api.model.enums.UserType;
+import com.uboat.vault.api.utilities.DateUtils;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.persistence.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Entity
 @Table(name = "Journeys")
 @Builder
@@ -82,10 +85,17 @@ public class Journey {
     }
 
     public JourneyLocationInfo getLastKnownLocation(UserType userType) {
-        if (recordedLocationInfos.isEmpty()) return null;
+        if (recordedLocationInfos.isEmpty()) {
+            log.info("There are no recorded location info for the {}", userType.getType());
+            return null;
+        }
+
         for (int i = recordedLocationInfos.size() - 1; i >= 0; i--)
-            if (recordedLocationInfos.get(i).getRecorder() == userType)
+            if (recordedLocationInfos.get(i).getRecorder() == userType) {
+                log.info("Last recorded location info for the {} was {} seconds ago.", userType.getType(), DateUtils.getSecondsPassed(recordedLocationInfos.get(i).getTimestamp()));
                 return recordedLocationInfos.get(i);
+            }
+        log.info("There are no recorded location info for the {}", userType.getType());
         return null;
     }
 }

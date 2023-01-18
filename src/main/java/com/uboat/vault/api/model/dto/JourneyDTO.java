@@ -14,12 +14,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JourneyDTO {
+    private String state;
     private JourneySailorDetailsDTO sailorDetails;
     private JourneyTemporalData temporalData;
     private PaymentDTO payment;
     private Route route;
 
     private JourneyDTO(Journey journey, Sailor sailor) {
+        this.state = journey.getState().name();
         this.sailorDetails = JourneySailorDetailsDTO.builder()
                 .sailorId(sailor.getId())
                 .username(sailor.getAccount().getUsername())
@@ -34,6 +36,8 @@ public class JourneyDTO {
     }
 
     private JourneyDTO(Journey journey) {
+        this.state = journey.getState().name();
+        this.sailorDetails = null;
         this.temporalData = journey.getJourneyTemporalData();
         this.payment = new PaymentDTO(journey.getPayment());
         this.route = journey.getRoute();
