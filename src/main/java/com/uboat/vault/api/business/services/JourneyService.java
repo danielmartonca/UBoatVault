@@ -132,7 +132,7 @@ public class JourneyService {
                 log.info("First sail call recorded.");
                 recordLocation(account, journey, locationDataDTO);
                 var location = account.getType() == UserType.CLIENT ? journey.getRoute().getSailorLocation() : journey.getRoute().getClientLocation();
-                return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey,location));
+                return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey, location));
             }
 
             //update state if sailor has reached the client
@@ -141,9 +141,10 @@ public class JourneyService {
                 var currentLocation = new LatLng(locationDataDTO);
                 var lastKnownSailorLocationCoordinates = lastKnownLocationInfo.getLocation().getCoordinates();
 
-                if (geoService.calculateDistanceBetweenCoordinates(currentLocation, lastKnownSailorLocationCoordinates) <= 10) {
-                    log.info("Sailor has reached the client, updating journey state.");
+                if (geoService.calculateDistanceBetweenCoordinates(currentLocation, lastKnownSailorLocationCoordinates) <= 100) {
+                    log.info("Sailor has reached the client, updating journey state to {}.", JourneyState.SAILING_TO_DESTINATION);
                     journey.setState(JourneyState.SAILING_TO_DESTINATION);
+                    journeyRepository.save(journey);
                 }
             }
 
@@ -156,7 +157,7 @@ public class JourneyService {
             }
 
             recordLocation(account, journey, locationDataDTO);
-            return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey,lastKnownLocationInfo));
+            return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey, lastKnownLocationInfo));
         } catch (Exception e) {
             log.error("An exception occurred during sail workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);

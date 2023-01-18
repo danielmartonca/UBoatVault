@@ -86,16 +86,16 @@ public class Journey {
 
     public JourneyLocationInfo getLastKnownLocation(UserType userType) {
         if (recordedLocationInfos.isEmpty()) {
-            log.info("There are no recorded location info for the {}", userType.getType());
+            log.debug("There are no recorded location info for the {}", userType.getType());
             return null;
         }
 
         for (int i = recordedLocationInfos.size() - 1; i >= 0; i--)
             if (recordedLocationInfos.get(i).getRecorder() == userType) {
-                log.info("Last recorded location info for the {} was {} seconds ago.", userType.getType(), DateUtils.getSecondsPassed(recordedLocationInfos.get(i).getTimestamp()));
+                log.debug("Last recorded location info for the {} was {} seconds ago.", userType.getType(), DateUtils.getSecondsPassed(recordedLocationInfos.get(i).getTimestamp()));
                 return recordedLocationInfos.get(i);
             }
-        log.info("There are no recorded location info for the {}", userType.getType());
+        log.debug("There are no recorded location info for the {}", userType.getType());
         return null;
     }
 }

@@ -26,7 +26,7 @@ uboat:
   max-accepted-distance: 100000
 
   journey:
-    inactivityTimeoutSeconds: 60
+    inactivityTimeoutSeconds: 600
   
   schedulersCron:
     clientScheduler:
