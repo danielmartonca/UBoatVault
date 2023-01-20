@@ -1,10 +1,12 @@
 package com.uboat.vault.api.business.services;
 
 import com.uboat.vault.api.model.domain.account.account.Account;
+import com.uboat.vault.api.model.domain.account.account.CreditCard;
 import com.uboat.vault.api.model.domain.account.sailor.Sailor;
 import com.uboat.vault.api.model.domain.sailing.*;
 import com.uboat.vault.api.model.dto.*;
 import com.uboat.vault.api.model.enums.JourneyState;
+import com.uboat.vault.api.model.enums.PaymentType;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.exceptions.NoRouteFoundException;
@@ -290,6 +292,14 @@ public class JourneyService {
         log.info("Sailor '{}' has not been active in the last {} seconds. Updating lookingForClient flag to false.", sailor.getAccount().getUsername(), MAX_ACTIVE_SECONDS);
     }
 
+    private CreditCard findCreditCardMatchingNumberForClientAccount(Account clientAccount, String number) {
+        return clientAccount.getCreditCards()
+                .stream()
+                .filter(card -> card.getNumber().trim().equalsIgnoreCase(number.trim()))
+                .findFirst()
+                .orElse(null);
+    }
+
     /**
      * This method creates new journeys in state INITIATED if:
      * <ol>
@@ -301,7 +311,7 @@ public class JourneyService {
      * @return If no route could be determined or there are no free sailors, an empty list will be returned, otherwise a JourneyDTO containing all the required information about the journey (including Polyline coordinates) will be returned
      */
     @Transactional
-    public UBoatDTO requestJourney(String authorizationHeader, JourneyRequestDTO request) {
+    public UBoatDTO requestJourney(String authorizationHeader, JourneyRequestDTO dto) {
         try {
             log.info("Searching for sailors...");
 
@@ -314,11 +324,12 @@ public class JourneyService {
             //  dismiss all current CLIENT_ACCEPTED journeys
             journeyRepository.deleteAllByClientAccountAndStateIn(clientAccount, Set.of(JourneyState.INITIATED, JourneyState.CLIENT_ACCEPTED));
 
+
             var activeSailors = sailorsRepository.findAllByLookingForClients(true);
             activeSailors.forEach(this::checkAndUpdateSailorActiveStatus);
 
             var sailors = activeSailors.stream().filter(Sailor::isLookingForClients)//  - removed sailors who are not active in the last accepted time frame
-                    .filter(sailor -> geoService.calculateDistanceBetweenCoordinates(new LatLng(sailor.getCurrentLocation()), request.getPickupLocation().getCoordinates()) < MAX_ACCEPTED_DISTANCE)//  - removes sailors that are not in at least MAX_ACCEPTED_DISTANCE meters between them and the pickup location
+                    .filter(sailor -> geoService.calculateDistanceBetweenCoordinates(new LatLng(sailor.getCurrentLocation()), dto.getPickupLocation().getCoordinates()) < MAX_ACCEPTED_DISTANCE)//  - removes sailors that are not in at least MAX_ACCEPTED_DISTANCE meters between them and the pickup location
                     .toList();
 
             if (sailors.isEmpty()) {
@@ -328,7 +339,7 @@ public class JourneyService {
 
             log.info("{} free sailors within distance were found. ", sailors.size());
 
-            var journeys = sailors.stream().map(sailor -> this.buildJourney(request, sailor, clientAccount))  //build Journey entities
+            var journeys = sailors.stream().map(sailor -> this.buildJourney(dto, sailor, clientAccount))  //build Journey entities
                     .filter(Objects::nonNull)   //remove error journeys
                     .sorted((j1, j2) -> (int) (j1.getRoute().getTotalDistance() - j2.getRoute().getTotalDistance()))    //sort by total distance ascending
                     .limit(MAX_ACTIVE_SAILORS)  //create only MAX_ACTIVE_SAILORS journeys
@@ -361,6 +372,17 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var clientAccount = entityService.findAccountByJwtData(jwtData);
 
+            //first check if the payment method is valid
+            var paymentType = PaymentType.fromPaymentType(journeyDTO.getPayment().getPaymentType());
+            CreditCard creditCard = null;
+            if (paymentType == PaymentType.CARD) {
+                creditCard = findCreditCardMatchingNumberForClientAccount(clientAccount, journeyDTO.getPayment().getCardNumber());
+                if (creditCard == null) {
+                    log.warn("Credit card could not be found for the given account.");
+                    return new UBoatDTO(UBoatStatus.PAYMENT_METHOD_NOT_FOUND, null);
+                }
+            }
+
             var sailor = sailorsRepository.findSailorByIdAndLookingForClientsIsTrue(journeyDTO.getSailorDetails().getSailorId());
 
             //if the sailor could not be found, or he has not updated his status for more than MAX_ACTIVE_SECONDS
@@ -388,6 +410,9 @@ public class JourneyService {
             });
 
             journey.setState(JourneyState.CLIENT_ACCEPTED);
+            journey.getPayment().setPaymentType(paymentType);
+            journey.getPayment().setCreditCard(creditCard);
+
             journeyRepository.save(journey);
 
             return new UBoatDTO(UBoatStatus.CLIENT_ACCEPTED_JOURNEY, true);

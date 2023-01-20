@@ -41,7 +41,7 @@ public class Payment {
     @Getter
     @Setter
     @ManyToOne()
-    @JoinColumn(name = "creditCardId", updatable = false)
+    @JoinColumn(name = "credit_card_id")
     private CreditCard creditCard;
 
     @Getter

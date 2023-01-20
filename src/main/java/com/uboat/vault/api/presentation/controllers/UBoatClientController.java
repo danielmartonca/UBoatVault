@@ -64,7 +64,8 @@ public class UBoatClientController {
         var uBoatResponse = journeyService.requestJourney(authorizationHeader, request);
 
         return switch (uBoatResponse.getHeader()) {
-            case JOURNEYS_INITIATED, NO_FREE_SAILORS_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case JOURNEYS_INITIATED, NO_FREE_SAILORS_FOUND, PAYMENT_METHOD_NOT_FOUND ->
+                    ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
     }
@@ -94,7 +95,7 @@ public class UBoatClientController {
         var uBoatResponse = journeyService.chooseJourney(authorizationHeader, request);
 
         return switch (uBoatResponse.getHeader()) {
-            case SAILOR_NOT_FOUND, JOURNEY_FOR_SAILOR_NOT_FOUND, CLIENT_ACCEPTED_JOURNEY ->
+            case SAILOR_NOT_FOUND, PAYMENT_METHOD_NOT_FOUND, JOURNEY_FOR_SAILOR_NOT_FOUND, CLIENT_ACCEPTED_JOURNEY ->
                     ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
@@ -107,7 +108,8 @@ public class UBoatClientController {
         var uBoatResponse = journeyService.hasSailorAcceptedJourney(authorizationHeader, sailorId);
 
         return switch (uBoatResponse.getHeader()) {
-            case JOURNEY_WITH_STATE_NOT_FOUND,JOURNEY_WITH_STATE_FOUND -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            case JOURNEY_WITH_STATE_NOT_FOUND, JOURNEY_WITH_STATE_FOUND ->
+                    ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         };
     }

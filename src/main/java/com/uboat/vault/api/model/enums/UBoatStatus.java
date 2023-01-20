@@ -70,7 +70,8 @@ public enum UBoatStatus {
     // /api/sailorDetails
     SAILOR_DETAILS_RETRIEVED(1, "The sailor name has been retrieved", CommonStatus.SUCCESS),
     SAILOR_NOT_FOUND(0, "The sailor couldn't be found by ID", null),
-    JOURNEY_FOR_SAILOR_NOT_FOUND(2, "The sailor is valid but no journey could be found for him matching the client.", null),
+    PAYMENT_METHOD_NOT_FOUND(2, "The credit card number could not be found to the client's account credit cards.", "Invalid credit card"),
+    JOURNEY_FOR_SAILOR_NOT_FOUND(3, "The sailor is valid but no journey could be found for him matching the client.", null),
 
 
     // /api/checkDeviceRegistration
