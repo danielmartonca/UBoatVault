@@ -20,13 +20,15 @@ spring:
       ddl-auto: update
 
 uboat:
-  pretty-print-logs: true
+  pretty-print-logs: false
   max-active-seconds: 300
   max-active-sailors: 5
   max-accepted-distance: 100000
 
   journey:
     inactivityTimeoutSeconds: 600
+    metersDistanceForCloseConsideration: 50
+    recordAllLocationData: true
   
   schedulersCron:
     clientScheduler:

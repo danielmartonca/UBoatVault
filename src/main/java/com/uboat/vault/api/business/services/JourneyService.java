@@ -40,6 +40,12 @@ public class JourneyService {
     @Value("${uboat.journey.inactivityTimeoutSeconds}")
     private int inactivityTimeoutSeconds;
 
+    @Value("${uboat.journey.metersDistanceForCloseConsideration}")
+    private int metersDistanceForCloseConsideration;
+
+    @Value("${uboat.journey.recordAllLocationData}")
+    private Boolean recordAllLocationData = false;
+
     private final EntityService entityService;
     private final GeoService geoService;
     private final JwtService jwtService;
@@ -53,11 +59,7 @@ public class JourneyService {
     @Transactional
     public void setJourneyInError(Journey journey, @NotNull @NotEmpty String reason) {
         journey.setState(JourneyState.IN_ERROR);
-        errorRepository.save(JourneyError.builder()
-                .journey(journey)
-                .dateRecorded(new Date())
-                .reason(reason)
-                .build());
+        errorRepository.save(JourneyError.builder().journey(journey).dateRecorded(new Date()).reason(reason).build());
         journeyRepository.save(journey);
     }
 
@@ -73,11 +75,9 @@ public class JourneyService {
 
             if (account.getType() == UserType.CLIENT)
                 journeyOptional = journeyRepository.findClientJourneyMatchingAccountAndState(account.getId(), states);
-            else
-                journeyOptional = journeyRepository.findSailorJourneyMatchingAccountAndState(account.getId(), states);
+            else journeyOptional = journeyRepository.findSailorJourneyMatchingAccountAndState(account.getId(), states);
 
-            if (journeyOptional.isEmpty())
-                return new UBoatDTO(UBoatStatus.ONGOING_JOURNEY_NOT_FOUND, null);
+            if (journeyOptional.isEmpty()) return new UBoatDTO(UBoatStatus.ONGOING_JOURNEY_NOT_FOUND, null);
 
             var journey = journeyOptional.get();
             var dto = account.getType() == UserType.CLIENT ? JourneyDTO.buildDTOForClients(journey) : JourneyDTO.buildDTOForSailors(journey);
@@ -89,15 +89,51 @@ public class JourneyService {
         }
     }
 
-    private void recordLocation(UserType userType, Journey journey, LocationDataDTO dto) {
-        journey.getRecordedLocationInfos().add(JourneyLocationInfo.builder()
-                .recorder(userType)
-                .journeyState(journey.getState())
-                .location(new Location(dto))
-                .locationData(new LocationData(dto))
-                .timestamp(new Date())
-                .journey(journey)
-                .build());
+    private boolean isNotNearCoordinates(LatLng currentCoordinates, LatLng coordinates) {
+        return (geoService.calculateDistanceBetweenCoordinates(currentCoordinates, coordinates) >= metersDistanceForCloseConsideration);
+    }
+
+    private void updateJourneyStateBasedOnPosition(Journey journey, LocationDataDTO dto, JourneyLocationInfo lastKnownLocationInfo) {
+        var coordinates = new LatLng(dto);
+        switch (journey.getState()) {
+            case SAILING_TO_CLIENT -> {
+                //has to be near the sailor
+                if (isNotNearCoordinates(coordinates, lastKnownLocationInfo.getLocation().getCoordinates()))
+                    break;
+                log.info("Sailor has reached the client, updating journey state to {}.", JourneyState.SAILING_TO_DESTINATION);
+                journey.setState(JourneyState.SAILING_TO_DESTINATION);
+                journeyRepository.save(journey);
+            }
+            case SAILING_TO_DESTINATION -> {
+                //has to be near the sailor and near the destination
+                if (isNotNearCoordinates(coordinates, lastKnownLocationInfo.getLocation().getCoordinates()) || isNotNearCoordinates(coordinates, journey.getRoute().getDestinationLocation().getCoordinates()))
+                    break;
+                log.info("The client and the sailor have reached the destination, updating journey state to {}.", JourneyState.VERIFYING_PAYMENT);
+                journey.setState(JourneyState.VERIFYING_PAYMENT);
+                journeyRepository.save(journey);
+            }
+        }
+    }
+
+    private boolean isOtherEntityInactive(JourneyLocationInfo lastKnownLocationInfo) {
+        return DateUtils.getSecondsPassed(lastKnownLocationInfo.getTimestamp()) >= inactivityTimeoutSeconds;
+    }
+
+    @Transactional
+    void recordLocation(UserType userType, Journey journey, LocationDataDTO dto) {
+        var locationData = new LocationData(dto);
+        var location = new Location(dto);
+        if (recordAllLocationData) {
+            journey.getRecordedLocationInfos().add(JourneyLocationInfo.builder().recorder(userType).journeyState(journey.getState()).location(location).locationData(locationData).timestamp(new Date()).journey(journey).build());
+        } else {
+            var locationInfo = journey.getLastKnownLocation(userType);
+            if (locationInfo == null) {
+                journey.getRecordedLocationInfos().add(JourneyLocationInfo.builder().recorder(userType).journeyState(journey.getState()).location(location).locationData(locationData).timestamp(new Date()).journey(journey).build());
+            } else {
+                locationInfo.setLocation(location);
+                locationInfo.setLocationData(locationData);
+            }
+        }
         journeyRepository.save(journey);
     }
 
@@ -106,58 +142,45 @@ public class JourneyService {
     }
 
     @Transactional
-    public UBoatDTO sail(String authorizationHeader, LocationDataDTO locationDataDTO) {
+    public UBoatDTO sail(String authorizationHeader, LocationDataDTO dto) {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var account = entityService.findAccountByJwtData(jwtData);
+            log.info("Sail API called by the {}.", account.getType());
 
-            var states = Set.of(JourneyState.SAILING_TO_CLIENT, JourneyState.SAILING_TO_DESTINATION);
-            Optional<Journey> journeyOptional;
-            if (account.getType() == UserType.CLIENT)
-                journeyOptional = journeyRepository.findClientJourneyMatchingAccountAndState(account.getId(), states);
-            else
-                journeyOptional = journeyRepository.findSailorJourneyMatchingAccountAndState(account.getId(), states);
+            var states = Set.of(JourneyState.SAILING_TO_CLIENT, JourneyState.SAILING_TO_DESTINATION, JourneyState.VERIFYING_PAYMENT);
+            var journeyOptional = account.getType() == UserType.CLIENT ? journeyRepository.findClientJourneyMatchingAccountAndState(account.getId(), states) : journeyRepository.findSailorJourneyMatchingAccountAndState(account.getId(), states);
 
-            log.info("Sail API called by a {}.", account.getType());
-
-            if (journeyOptional.isEmpty())
+            if (journeyOptional.isEmpty()) {
+                log.warn("Sail API called but there is no ongoing journey for this entity.");
                 return new UBoatDTO(UBoatStatus.NOT_SAILING, null);
+            }
 
             var journey = journeyOptional.get();
-
             var lastKnownLocationInfo = journey.getLastKnownLocation(account.getType() == UserType.CLIENT ? UserType.SAILOR : UserType.CLIENT);
 
-            if (lastKnownLocationInfo == null) {
-                log.info("First sail call recorded.");
-                recordLocation(account, journey, locationDataDTO);
-                var location = account.getType() == UserType.CLIENT ? journey.getRoute().getSailorLocation() : journey.getRoute().getClientLocation();
-                return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey, location));
-            }
-
-            //update state if sailor has reached the client
-            if (journey.getState() == JourneyState.SAILING_TO_CLIENT && account.getType() == UserType.CLIENT) {
-                //Only the client can update the status of the Journey
-                var currentLocation = new LatLng(locationDataDTO);
-                var lastKnownSailorLocationCoordinates = lastKnownLocationInfo.getLocation().getCoordinates();
-
-                if (geoService.calculateDistanceBetweenCoordinates(currentLocation, lastKnownSailorLocationCoordinates) <= 100) {
-                    log.info("Sailor has reached the client, updating journey state to {}.", JourneyState.SAILING_TO_DESTINATION);
-                    journey.setState(JourneyState.SAILING_TO_DESTINATION);
-                    journeyRepository.save(journey);
+            try {
+                if (lastKnownLocationInfo == null) {
+                    log.info("First sail call recorded.");
+                    return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey, account.getType() == UserType.CLIENT ? journey.getRoute().getSailorLocation() : journey.getRoute().getClientLocation()));
                 }
-            }
 
-            if (DateUtils.getSecondsPassed(lastKnownLocationInfo.getTimestamp()) >= inactivityTimeoutSeconds) {
-                log.warn("Seconds passed: {} . Last recorded timestamp: {}", DateUtils.getSecondsPassed(lastKnownLocationInfo.getTimestamp()), lastKnownLocationInfo.getTimestamp());
-                log.warn("Journey set in error due to no activity being detected from the other entity in the last {} seconds.", inactivityTimeoutSeconds);
-                setJourneyInError(journey, "The other entity failed to record any activity in the last [inactivityTimeoutSeconds] seconds.");
-                recordLocation(account, journey, locationDataDTO);
-                return new UBoatDTO(UBoatStatus.LOST_CONNECTION, null);
-            }
+                //if the other entity is considered inactive, cancel the journey
+                if (isOtherEntityInactive(lastKnownLocationInfo)) {
+                    log.warn("Journey set in error due to no activity being detected from the other entity in the last {} seconds. Seconds passed: {} . Last recorded timestamp: {}.", inactivityTimeoutSeconds, DateUtils.getSecondsPassed(lastKnownLocationInfo.getTimestamp()), lastKnownLocationInfo.getTimestamp());
+                    setJourneyInError(journey, "The other entity failed to record any activity in the last [inactivityTimeoutSeconds] seconds.");
+                    return new UBoatDTO(UBoatStatus.LOST_CONNECTION, null);
+                }
 
-            recordLocation(account, journey, locationDataDTO);
-            return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey, lastKnownLocationInfo));
+                //the client updates the journey state if pickup/destination/other have been reached
+                if (account.getType() == UserType.CLIENT)
+                    updateJourneyStateBasedOnPosition(journey, dto, lastKnownLocationInfo);
+
+                return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey, lastKnownLocationInfo));
+            } finally {
+                recordLocation(account, journey, dto);
+            }
         } catch (Exception e) {
             log.error("An exception occurred during sail workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
@@ -171,20 +194,18 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var account = entityService.findAccountByJwtData(jwtData);
 
-            List<Journey> foundJourneys = journeyRepository.findAllByClientAccount_IdAndState(account.getId(), JourneyState.SUCCESSFULLY_FINISHED);
+            var foundJourneys = journeyRepository.findAllByClientAccount_IdAndState(account.getId(), JourneyState.SUCCESSFULLY_FINISHED);
             if (foundJourneys == null || foundJourneys.isEmpty()) {
                 log.info("User has no completed journeys.");
                 return new UBoatDTO(UBoatStatus.MOST_RECENT_RIDES_RETRIEVED, new LinkedList<>());
             }
-            log.info("Found journeys for the user.");
 
-
-            List<JourneyDTO> journeys = new LinkedList<>();
-            for (var journey : foundJourneys) {
-                if (ridesRequested == 0) break;
-                journeys.add(JourneyDTO.buildDTOForClients(journey));
-                ridesRequested--;
-            }
+            log.info("Found completed {} journeys for the user.", foundJourneys.size());
+            var journeys = foundJourneys.stream()
+                    .map(JourneyDTO::buildDTOForClients)
+                    .sorted(Comparator.comparingInt(j -> (int) DateUtils.getSecondsPassed(j.getTemporalData().getDateArrival())))
+                    .limit(ridesRequested)
+                    .toList();
 
             return new UBoatDTO(UBoatStatus.MOST_RECENT_RIDES_RETRIEVED, journeys);
         } catch (Exception e) {
@@ -240,13 +261,7 @@ public class JourneyService {
 
         var estimatedDuration = geoService.estimateRideDurationInSeconds(route.getTotalDistance(geoService), sailor.getBoat());
 
-        var journey = Journey.builder()
-                .clientAccount(clientAccount)
-                .sailor(sailor)
-                .state(JourneyState.INITIATED)
-                .route(route)
-                .journeyTemporalData(new JourneyTemporalData(estimatedDuration))
-                .build();
+        var journey = Journey.builder().clientAccount(clientAccount).sailor(sailor).state(JourneyState.INITIATED).route(route).journeyTemporalData(new JourneyTemporalData(estimatedDuration)).build();
 
         journey.setPayment(new Payment(journey, geoService.estimateRideCost(route.getTotalDistance(), sailor.getBoat())));
         log.info("Possible journey found.");
@@ -294,8 +309,7 @@ public class JourneyService {
             var activeSailors = sailorsRepository.findAllByLookingForClients(true);
             activeSailors.forEach(this::checkAndUpdateSailorActiveStatus);
 
-            var sailors = activeSailors.stream()
-                    .filter(Sailor::isLookingForClients)//  - removed sailors who are not active in the last accepted time frame
+            var sailors = activeSailors.stream().filter(Sailor::isLookingForClients)//  - removed sailors who are not active in the last accepted time frame
                     .filter(sailor -> geoService.calculateDistanceBetweenCoordinates(new LatLng(sailor.getCurrentLocation()), request.getPickupLocation().getCoordinates()) < MAX_ACCEPTED_DISTANCE)//  - removes sailors that are not in at least MAX_ACCEPTED_DISTANCE meters between them and the pickup location
                     .toList();
 
@@ -306,8 +320,7 @@ public class JourneyService {
 
             log.info("{} free sailors within distance were found. ", sailors.size());
 
-            var journeys = sailors.stream()
-                    .map(sailor -> this.buildJourney(request, sailor, clientAccount))  //build Journey entities
+            var journeys = sailors.stream().map(sailor -> this.buildJourney(request, sailor, clientAccount))  //build Journey entities
                     .filter(Objects::nonNull)   //remove error journeys
                     .sorted((j1, j2) -> (int) (j1.getRoute().getTotalDistance() - j2.getRoute().getTotalDistance()))    //sort by total distance ascending
                     .limit(MAX_ACTIVE_SAILORS)  //create only MAX_ACTIVE_SAILORS journeys
@@ -350,9 +363,7 @@ public class JourneyService {
 
             var journeys = journeyRepository.findAllByClientAccount_IdAndState(clientAccount.getId(), JourneyState.INITIATED);
 
-            var journeyOptional = journeys.stream()
-                    .filter(j -> j.getSailor().getId().equals(journeyDTO.getSailorDetails().getSailorId()) && j.getClientAccount().getId().equals(clientAccount.getId()))
-                    .findFirst();
+            var journeyOptional = journeys.stream().filter(j -> j.getSailor().getId().equals(journeyDTO.getSailorDetails().getSailorId()) && j.getClientAccount().getId().equals(clientAccount.getId())).findFirst();
 
             if (journeyOptional.isEmpty()) {
                 log.warn("No journey could be found with the request's journey sailor ID for the authenticated client.");
@@ -362,13 +373,11 @@ public class JourneyService {
             var journey = journeyOptional.get();
 
             //cancel other journeys
-            journeys.stream()
-                    .filter(otherJourney -> !otherJourney.equals(journey))
-                    .forEach(journeyToBeCanceled -> {
-                        journeyToBeCanceled.setState(JourneyState.CLIENT_CANCELED);
-                        journeyRepository.save(journeyToBeCanceled);
-                        log.info("Journey with ID {} was canceled by the user.", journeyToBeCanceled.getId());
-                    });
+            journeys.stream().filter(otherJourney -> !otherJourney.equals(journey)).forEach(journeyToBeCanceled -> {
+                journeyToBeCanceled.setState(JourneyState.CLIENT_CANCELED);
+                journeyRepository.save(journeyToBeCanceled);
+                log.info("Journey with ID {} was canceled by the user.", journeyToBeCanceled.getId());
+            });
 
             journey.setState(JourneyState.CLIENT_ACCEPTED);
             journeyRepository.save(journey);
@@ -438,11 +447,9 @@ public class JourneyService {
 
             var journeys = journeyRepository.findAllByStateAndSailorId(JourneyState.CLIENT_ACCEPTED, sailor.getId());
 
-            if (CollectionUtils.isEmpty(journeys))
-                return new UBoatDTO(UBoatStatus.NO_CLIENT_FOUND);
+            if (CollectionUtils.isEmpty(journeys)) return new UBoatDTO(UBoatStatus.NO_CLIENT_FOUND);
 
-            var closestJourneyToClientOptional = journeys.stream()
-                    .min((j1, j2) -> Double.compare(j1.getRoute().getDistanceBetweenSailorAndClient(geoService), j2.getRoute().getDistanceBetweenSailorAndClient(geoService)));
+            var closestJourneyToClientOptional = journeys.stream().min((j1, j2) -> Double.compare(j1.getRoute().getDistanceBetweenSailorAndClient(geoService), j2.getRoute().getDistanceBetweenSailorAndClient(geoService)));
 
             if (closestJourneyToClientOptional.isEmpty()) throw new RuntimeException("Empty optional found.");
 
@@ -473,11 +480,7 @@ public class JourneyService {
             var pickupLocationCoordinates = journeyDTO.getRoute().getPickupLocation().getCoordinates();
             var destinationLocationCoordinates = journeyDTO.getRoute().getDestinationLocation().getCoordinates();
 
-            var journey = journeyRepository.findJourneyOfSailorMatchingStatePickupAndDestination(
-                    JourneyState.CLIENT_ACCEPTED,
-                    sailor.getId(),
-                    pickupLocationCoordinates.getLatitude(), pickupLocationCoordinates.getLongitude(),
-                    destinationLocationCoordinates.getLatitude(), destinationLocationCoordinates.getLongitude());
+            var journey = journeyRepository.findJourneyOfSailorMatchingStatePickupAndDestination(JourneyState.CLIENT_ACCEPTED, sailor.getId(), pickupLocationCoordinates.getLatitude(), pickupLocationCoordinates.getLongitude(), destinationLocationCoordinates.getLatitude(), destinationLocationCoordinates.getLongitude());
 
             if (journey == null) return new UBoatDTO(UBoatStatus.JOURNEY_NOT_FOUND, null);
 
@@ -487,13 +490,11 @@ public class JourneyService {
             var otherJourneys = journeyRepository.findAllByStateAndSailorId(JourneyState.CLIENT_ACCEPTED, sailor.getId());
             if (!CollectionUtils.isEmpty(otherJourneys)) {
                 log.info("Canceling other journeys.");
-                otherJourneys.stream()
-                        .filter(otherJourney -> !otherJourney.getId().equals(journey.getId()))
-                        .forEach(otherJourney -> {
-                            otherJourney.setState(JourneyState.SAILOR_CANCELED);
-                            journeyRepository.save(otherJourney);
-                            log.info("Canceled journey with id {}.", otherJourney.getId());
-                        });
+                otherJourneys.stream().filter(otherJourney -> !otherJourney.getId().equals(journey.getId())).forEach(otherJourney -> {
+                    otherJourney.setState(JourneyState.SAILOR_CANCELED);
+                    journeyRepository.save(otherJourney);
+                    log.info("Canceled journey with id {}.", otherJourney.getId());
+                });
             }
 
             journey.setState(JourneyState.SAILOR_ACCEPTED);

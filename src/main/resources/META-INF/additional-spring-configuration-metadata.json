@@ -26,6 +26,16 @@
       "description": "Describes the maximum amount of seconds allowed for an entity to not respond during a ongoing Journey."
     },
     {
+      "name": "uboat.journey.metersDistanceForCloseConsideration",
+      "type": "java.lang.Integer",
+      "description": "Describes the maximum amount of distance (expressed in meters) for two LatLng coordinates to be considered near each other."
+    },
+    {
+      "name": "uboat.journey.recordAllLocationData",
+      "type": "java.lang.Boolean",
+      "description": "If this flag is set to true, every location data sent with the sail API will be stored in the database. If this flag is set to false, the current position will be recorded."
+    },
+    {
       "name": "uboat.apis-body-not-logged",
       "type": "java.util.Arrays",
       "description": "List of APIs for which the body will not be logged. Most useful when APIs return bytes."

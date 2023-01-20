@@ -28,7 +28,9 @@ uboat:
   max-accepted-distance: ${MAX_ACCEPTED_DISTANCES}
 
   journey:
-    inactivityTimeoutSeconds: 60
+    inactivityTimeoutSeconds: 120
+    metersDistanceForCloseConsideration: 50
+    recordAllLocationData: true
 
   schedulersCron:
     clientScheduler:
