@@ -4,7 +4,6 @@ import com.uboat.vault.api.business.services.JourneyService;
 import com.uboat.vault.api.model.dto.JourneyDTO;
 import com.uboat.vault.api.model.dto.PulseDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
-import com.uboat.vault.api.model.enums.UBoatStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,10 +28,11 @@ public class UBoatSailorController {
     public ResponseEntity<UBoatDTO> pulse(@RequestHeader(value = "Authorization") String authorizationHeader,
                                           @RequestBody PulseDTO pulse) {
         var uBoatResponse = journeyService.pulse(authorizationHeader, pulse);
-        if (uBoatResponse.getHeader() == UBoatStatus.PULSE_SUCCESSFUL)
-            return ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+        return switch (uBoatResponse.getHeader()) {
+            case PULSE_SUCCESSFUL, PULSE_JOURNEY_DETECTED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        };
     }
 
     @Operation(summary = "This API is called by sailors to find possible new journey. After the clients have created journeys by calling /requestJourney and /chooseJourney APIs," +

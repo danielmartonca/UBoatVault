@@ -158,6 +158,7 @@ public enum UBoatStatus {
 
     // /api/sailor/pulse
     PULSE_SUCCESSFUL(1, "The pulse has been registered.", null),
+    PULSE_JOURNEY_DETECTED(2, "The pulse has been registered but a ongoing journey has been detected.", null),
 
     // /api/sailor/findClient
     NO_CLIENT_FOUND(0, "No new client was found.", "No having any client for the moment..."),

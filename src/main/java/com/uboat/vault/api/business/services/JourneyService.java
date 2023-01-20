@@ -224,6 +224,10 @@ public class JourneyService {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var sailor = entityService.findSailorByJwt(jwtData);
 
+            var journeyOptional = journeyRepository.findSailorJourneyMatchingAccountAndState(sailor.getAccount().getId(), Set.of(JourneyState.SAILING_TO_CLIENT, JourneyState.SAILING_TO_DESTINATION, JourneyState.VERIFYING_PAYMENT));
+
+            if (journeyOptional.isPresent()) pulseRequest.setLookingForClients(false);
+
             var oldLocationData = sailor.getCurrentLocation();
             sailor.setCurrentLocation(pulseRequest.getLocationData());
             sailor.setLookingForClients(pulseRequest.isLookingForClients());
@@ -235,6 +239,10 @@ public class JourneyService {
                 locationDataRepository.deleteById(oldLocationData.getId());
                 log.debug("Deleted old location data.");
             }
+
+            if (journeyOptional.isPresent())
+                return new UBoatDTO(UBoatStatus.PULSE_JOURNEY_DETECTED, true);
+
             return new UBoatDTO(UBoatStatus.PULSE_SUCCESSFUL, sailor.isLookingForClients());
         } catch (Exception e) {
             log.error("An exception occurred during pulse workflow.", e);
