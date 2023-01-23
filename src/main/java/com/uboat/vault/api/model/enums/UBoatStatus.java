@@ -193,8 +193,9 @@ public enum UBoatStatus {
     JOURNEY_CONFIRMED(1, "Sailor has selected a journey and canceled all the others.", "Journey confirmed"),
 
     // payment
-    PAYMENT_COMPLETED(1,"The payment has been completed successfully.",null),
-    PAYMENT_NOT_COMPLETED(0,"The payment has been NOT been completed!",null),
+    PAYMENT_COMPLETED(1, "The payment has been completed successfully.", null),
+    PAYMENT_NOT_COMPLETED(0, "The payment has been NOT been completed!", null),
+    NO_JOURNEY_TO_PAY(2, "There is no ongoing journey that needs to be payed.", null),
 
     VAULT_INTERNAL_SERVER_ERROR(-1, "UBoat vault has encountered an internal exception. Please report to administration.", CommonStatus.UNEXPECTED_ERROR);
 

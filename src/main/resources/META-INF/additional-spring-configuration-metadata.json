@@ -69,6 +69,10 @@
       "name": "uboat.schedulersCron.journeyScheduler.checkNoActivityJourneys",
       "type": "java.lang.String",
       "description": "Cron schedule format for checkNoActivityJourneys task."
+    },    {
+      "name": "uboat.schedulersCron.journeyScheduler.completePayedJourneys",
+      "type": "java.lang.String",
+      "description": "Cron schedule format for completePayedJourneys task."
     },
     {
       "name": "uboat.schedulersCron.journeyScheduler.checkNoActivityJourneysTimeoutSeconds",

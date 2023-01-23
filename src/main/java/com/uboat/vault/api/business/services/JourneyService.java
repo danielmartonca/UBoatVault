@@ -20,6 +20,7 @@ import com.uboat.vault.api.utilities.DateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -27,6 +28,7 @@ import org.springframework.util.CollectionUtils;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -114,6 +116,7 @@ public class JourneyService {
                     break;
                 log.info("The client and the sailor have reached the destination, updating journey state to {}.", JourneyState.VERIFYING_PAYMENT);
                 journey.setState(JourneyState.VERIFYING_PAYMENT);
+                journey.getJourneyTemporalData().setDateArrival(new Date());
                 journeyRepository.save(journey);
             }
         }
@@ -153,7 +156,7 @@ public class JourneyService {
             var account = entityService.findAccountByJwtData(jwtData);
             log.info("Sail API called by the {}.", account.getType());
 
-            var states = Set.of(JourneyState.SAILING_TO_CLIENT, JourneyState.SAILING_TO_DESTINATION, JourneyState.VERIFYING_PAYMENT);
+            var states = Set.of(JourneyState.SAILING_TO_CLIENT, JourneyState.SAILING_TO_DESTINATION, JourneyState.VERIFYING_PAYMENT, JourneyState.PAYMENT_VERIFIED);
             var journeyOptional = account.getType() == UserType.CLIENT ? journeyRepository.findClientJourneyMatchingAccountAndState(account.getId(), states) : journeyRepository.findSailorJourneyMatchingAccountAndState(account.getId(), states);
 
             if (journeyOptional.isEmpty()) {
@@ -183,7 +186,7 @@ public class JourneyService {
 
                 //trigger automatic card payment once the destination has been reached
                 var payment = journey.getPayment();
-                if (journey.getState() == JourneyState.VERIFYING_PAYMENT && payment.getPaymentType() == PaymentType.CARD && !payment.isCompleted() && !payment.isPending())
+                if (journey.getState() == JourneyState.VERIFYING_PAYMENT && payment.getPaymentType() == PaymentType.CARD && !payment.isCompleted())
                     paymentService.triggerCardPayment(authorizationHeader, payment);
 
                 return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey, lastKnownLocationInfo));
@@ -546,5 +549,14 @@ public class JourneyService {
             log.error("Exception occurred during selectClient workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Async
+    @Transactional
+    public void completeSuccessfulJourney(Journey journey, int delaySeconds) throws InterruptedException {
+        if (journey.getState() != JourneyState.PAYMENT_VERIFIED) throw new RuntimeException("Invalid journey state");
+        TimeUnit.SECONDS.sleep(delaySeconds);
+        journey.setState(JourneyState.SUCCESSFULLY_FINISHED);
+        journeyRepository.save(journey);
     }
 }

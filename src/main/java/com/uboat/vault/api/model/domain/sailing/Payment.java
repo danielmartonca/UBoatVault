@@ -51,10 +51,6 @@ public class Payment {
     @Setter
     private boolean completed = false;
 
-    @Getter
-    @Setter
-    private boolean pending = false;
-
     @Temporal(TemporalType.TIMESTAMP)
     @Getter
     @Setter

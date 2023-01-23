@@ -82,4 +82,20 @@ public class JourneyScheduler {
             log.error("Exception occurred during checkNoActivityJourneysTimeoutSeconds scheduled task.", e);
         }
     }
+
+    @Async
+    @Scheduled(cron = "${uboat.schedulersCron.journeyScheduler.completePayedJourneys}")
+    @Transactional
+    public void completePayedJourneys() {
+        journeyRepository.findJourneysByStateIn(List.of(JourneyState.PAYMENT_VERIFIED))
+                .parallelStream()
+                .forEach(j -> {
+                    try {
+                        journeyService.completeSuccessfulJourney(j, 10);
+                    } catch (InterruptedException e) {
+                        log.error("Sleep interrupted while completing journey with id {}. Exception: {}", j.getId(), e);
+                    }
+                });
+
+    }
 }
