@@ -169,8 +169,8 @@ public enum UBoatStatus {
     CLIENT_ACCEPTED_JOURNEY(1, "The status of Journey has been updated. The sailor must now accept the client.", null),
 
 
-    // /api/client/getMostRecentRides
-    MOST_RECENT_RIDES_RETRIEVED(1, "Retrieved most recent rides for the client.", null),
+    // /api/sailing/journeys
+    MOST_RECENT_JOURNEYS_RETRIEVED(1, "Retrieved most recent journeys.", null),
 
     // /api/client/getSailorBoat
     SAILOR_BOAT_RETRIEVED(1, "Sailor boat details have been retrieved successfully.", null),

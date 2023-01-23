@@ -200,26 +200,29 @@ public class JourneyService {
     }
 
     @Transactional
-    public UBoatDTO getMostRecentRides(String authorizationHeader, Integer ridesRequested) {
+    public UBoatDTO getMostRecentJourneys(String authorizationHeader, Integer ridesRequested) {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var account = entityService.findAccountByJwtData(jwtData);
 
-            var foundJourneys = journeyRepository.findAllByClientAccount_IdAndState(account.getId(), JourneyState.SUCCESSFULLY_FINISHED);
+            var foundJourneys = account.getType() == UserType.CLIENT ?
+                    journeyRepository.findAllByClientAccount_IdAndState(account.getId(), JourneyState.SUCCESSFULLY_FINISHED) :
+                    journeyRepository.findAllByStateAndSailorId(JourneyState.SUCCESSFULLY_FINISHED, entityService.findSailorByJwt(jwtData).getId());
+
             if (foundJourneys == null || foundJourneys.isEmpty()) {
                 log.info("User has no completed journeys.");
-                return new UBoatDTO(UBoatStatus.MOST_RECENT_RIDES_RETRIEVED, new LinkedList<>());
+                return new UBoatDTO(UBoatStatus.MOST_RECENT_JOURNEYS_RETRIEVED, new LinkedList<>());
             }
 
             log.info("Found completed {} journeys for the user.", foundJourneys.size());
             var journeys = foundJourneys.stream()
-                    .map(JourneyDTO::buildDTOForClients)
+                    .map(account.getType() == UserType.CLIENT ? JourneyDTO::buildDTOForClients : JourneyDTO::buildDTOForSailors)
                     .sorted(Comparator.comparingInt(j -> (int) DateUtils.getSecondsPassed(j.getTemporalData().getDateArrival())))
                     .limit(ridesRequested)
                     .toList();
 
-            return new UBoatDTO(UBoatStatus.MOST_RECENT_RIDES_RETRIEVED, journeys);
+            return new UBoatDTO(UBoatStatus.MOST_RECENT_JOURNEYS_RETRIEVED, journeys);
         } catch (Exception e) {
             log.error("An exception occurred during getMostRecentRides workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);

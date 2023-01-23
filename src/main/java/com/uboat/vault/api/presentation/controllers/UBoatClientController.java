@@ -15,27 +15,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-
 @RestController
 @RequestMapping("api/client")
 @RequiredArgsConstructor
 public class UBoatClientController {
     private final JourneyService journeyService;
     private final AccountsService accountsService;
-
-    @Operation(summary = "Retrieves the last {ridesRequested} number of journeys for the client extracted from the JWT. ")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The journeys have been retrieved successfully", content = @Content(mediaType = "application/json")),})
-    @GetMapping(value = "/mostRecentRides")
-    public ResponseEntity<UBoatDTO> mostRecentRides(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam @Min(1) @Max(3) Integer ridesRequested) {
-        var uBoatResponse = journeyService.getMostRecentRides(authorizationHeader, ridesRequested);
-
-        if (uBoatResponse.getHeader() == UBoatStatus.MOST_RECENT_RIDES_RETRIEVED)
-            return ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
-    }
 
     @Operation(summary = "Retrieves information about the boat of the sailor searched by ID.")
     @ApiResponses(value = {

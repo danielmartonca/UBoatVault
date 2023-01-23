@@ -4,11 +4,18 @@ import com.uboat.vault.api.business.services.JourneyService;
 import com.uboat.vault.api.business.services.payment.PaymentService;
 import com.uboat.vault.api.model.dto.LocationDataDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
+import com.uboat.vault.api.model.enums.UBoatStatus;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,6 +23,18 @@ import org.springframework.web.bind.annotation.*;
 public class JourneyController {
     private final JourneyService journeyService;
     private final PaymentService paymentService;
+
+    @Operation(summary = "Retrieves the last {ridesRequested} number of journeys for the client extracted from the JWT. ")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The journeys have been retrieved successfully", content = @Content(mediaType = "application/json")),})
+    @GetMapping(value = "/journeys")
+    public ResponseEntity<UBoatDTO> journeys(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam @Min(1) @Max(3) Integer ridesRequested) {
+        var uBoatResponse = journeyService.getMostRecentJourneys(authorizationHeader, ridesRequested);
+
+        if (uBoatResponse.getHeader() == UBoatStatus.MOST_RECENT_JOURNEYS_RETRIEVED)
+            return ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(uBoatResponse);
+    }
 
     @Operation(summary = "Fetches the current journey if the client/sailor is in a journey or null otherwise.")
     @GetMapping(value = "/journey")
@@ -49,7 +68,8 @@ public class JourneyController {
         var responseBody = paymentService.pay(authorizationHeader);
 
         return switch (responseBody.getHeader()) {
-            case PAYMENT_COMPLETED, PAYMENT_NOT_COMPLETED,NO_JOURNEY_TO_PAY -> ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            case PAYMENT_COMPLETED, PAYMENT_NOT_COMPLETED, NO_JOURNEY_TO_PAY ->
+                    ResponseEntity.status(HttpStatus.OK).body(responseBody);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
         };
     }
