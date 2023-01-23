@@ -1,5 +1,6 @@
 package com.uboat.vault.api.business.services;
 
+import com.uboat.vault.api.business.services.payment.PaymentService;
 import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.account.account.CreditCard;
 import com.uboat.vault.api.model.domain.account.sailor.Sailor;
@@ -51,6 +52,7 @@ public class JourneyService {
     private final EntityService entityService;
     private final GeoService geoService;
     private final JwtService jwtService;
+    private final PaymentService paymentService;
 
     private final JourneyRepository journeyRepository;
     private final SailorsRepository sailorsRepository;
@@ -178,6 +180,11 @@ public class JourneyService {
                 //the client updates the journey state if pickup/destination/other have been reached
                 if (account.getType() == UserType.CLIENT)
                     updateJourneyStateBasedOnPosition(journey, dto, lastKnownLocationInfo);
+
+                //trigger automatic card payment once the destination has been reached
+                var payment = journey.getPayment();
+                if (journey.getState() == JourneyState.VERIFYING_PAYMENT && payment.getPaymentType() == PaymentType.CARD && !payment.isCompleted() && !payment.isPending())
+                    paymentService.triggerCardPayment(authorizationHeader, payment);
 
                 return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey, lastKnownLocationInfo));
             } finally {

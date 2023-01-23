@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
+//Three-letter ISO currency code, in lowercase. Must be a supported currency in lower case format.
 public enum Currency {
     EUR("EUR"), RON("RON");
 

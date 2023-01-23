@@ -192,6 +192,10 @@ public enum UBoatStatus {
     JOURNEY_NOT_FOUND(0, "The journey could not be found", CommonStatus.UNEXPECTED_ERROR),
     JOURNEY_CONFIRMED(1, "Sailor has selected a journey and canceled all the others.", "Journey confirmed"),
 
+    // payment
+    PAYMENT_COMPLETED(1,"The payment has been completed successfully.",null),
+    PAYMENT_NOT_COMPLETED(0,"The payment has been NOT been completed!",null),
+
     VAULT_INTERNAL_SERVER_ERROR(-1, "UBoat vault has encountered an internal exception. Please report to administration.", CommonStatus.UNEXPECTED_ERROR);
 
     private final int code;

@@ -81,6 +81,16 @@
       "description": "Private key used in the creation of JWT."
     },
     {
+      "name": "uboat.stripe_public_key",
+      "type": "java.lang.String",
+      "description": "Public key used to call Stripe APIs."
+    },
+    {
+      "name": "uboat.stripe_private_key",
+      "type": "java.lang.String",
+      "description": "Private key used to call Stripe APIs."
+    },
+    {
       "name": "whitelist",
       "type": "java.util.Arrays",
       "description": "List of ant patterns that don't require authorization header."

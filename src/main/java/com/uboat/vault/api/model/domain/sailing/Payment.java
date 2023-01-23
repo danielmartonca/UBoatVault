@@ -8,6 +8,7 @@ import lombok.*;
 import org.springframework.data.util.Pair;
 
 import javax.persistence.*;
+import javax.validation.constraints.DecimalMin;
 import java.util.Date;
 
 @Entity
@@ -29,10 +30,12 @@ public class Payment {
     @Setter
     private PaymentType paymentType;
 
+    @Enumerated(EnumType.STRING)
     @Getter
     @Setter
     private Currency currency;
 
+    @DecimalMin("1.00")
     @Getter
     @Setter
     private double amount;
@@ -46,7 +49,11 @@ public class Payment {
 
     @Getter
     @Setter
-    private Boolean completed;
+    private boolean completed = false;
+
+    @Getter
+    @Setter
+    private boolean pending = false;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Getter
@@ -64,5 +71,10 @@ public class Payment {
         this.amount = paymentPair.getSecond();
         this.completed = false;
         this.journey = journey;
+    }
+
+    public void complete() {
+        completed = true;
+        timeOfCompletion = new Date();
     }
 }
