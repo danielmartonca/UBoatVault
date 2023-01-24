@@ -1,6 +1,7 @@
 package com.uboat.vault.api.model.domain.account.pending;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.uboat.vault.api.model.domain.account.account.Phone;
 import com.uboat.vault.api.model.dto.AccountDTO;
 import com.uboat.vault.api.model.enums.UserType;
 import lombok.Getter;
@@ -39,6 +40,11 @@ public class PendingAccount {
     @NotNull
     @Getter
     @Setter
+    @Embedded
+    private Phone phone;
+    @NotNull
+    @Getter
+    @Setter
     private String email;
 
     @Getter
@@ -60,6 +66,7 @@ public class PendingAccount {
         this.type = account.getType();
         this.username = account.getUsername();
         this.password = account.getPassword();
+        this.phone = new Phone(account.getPhoneNumber());
         this.email = account.getEmail();
         this.token = registrationToken;
     }

@@ -1,9 +1,9 @@
 package com.uboat.vault.api.business.services;
 
 import com.uboat.vault.api.business.services.mail.verification.MailVerificationService;
+import com.uboat.vault.api.business.services.security.CryptoService;
 import com.uboat.vault.api.business.services.sms.verification.SmsVerificationService;
 import com.uboat.vault.api.model.domain.account.account.Account;
-import com.uboat.vault.api.model.domain.account.account.Phone;
 import com.uboat.vault.api.model.domain.account.account.RegistrationData;
 import com.uboat.vault.api.model.domain.account.pending.PendingAccount;
 import com.uboat.vault.api.model.domain.account.sailor.Sailor;
@@ -31,6 +31,8 @@ import java.util.regex.Pattern;
 public class AuthenticationService {
     private final JwtService jwtService;
     private final EntityService entityService;
+
+    private final CryptoService cryptoService;
 
     private final AccountsRepository accountsRepository;
     private final RegistrationDataRepository registrationDataRepository;
@@ -114,12 +116,6 @@ public class AuthenticationService {
             return true;
         }
 
-        foundAccount = accountsRepository.findFirstByUsernameAndPassword(accountDto.getUsername(), accountDto.getPassword());
-        if (foundAccount != null) {
-            log.warn("Account with the given username and password already exist.");
-            return true;
-        }
-
         log.info("No account in the database with the given credentials found.");
         return false;
     }
@@ -139,20 +135,33 @@ public class AuthenticationService {
      * This method returns a new token if registrationData is not found in database, or its token if it is found.
      */
     @Transactional
-    public UBoatDTO requestRegistration(AccountDTO account) {
+    public UBoatDTO requestRegistration(AccountDTO dto) {
         try {
-            if (isAccountAlreadyExisting(account)) {
+            if (isAccountAlreadyExisting(dto)) {
                 log.warn("Account already exists with the given credentials.");
                 return new UBoatDTO(UBoatStatus.ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS);
             }
 
-            var pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(account.getUsername(), account.getPassword());
+            var pendingAccount = pendingAccountsRepository.findFirstByUsername(dto.getUsername());
+
+            if (pendingAccount == null) {
+                var phoneNumber = dto.getPhoneNumber();
+                pendingAccount = pendingAccountsRepository.findFirstByPhoneNumberAndPhoneDialCodeAndPhoneIsoCode(phoneNumber.getNumber(), phoneNumber.getDialCode(), phoneNumber.getIsoCode());
+            }
+
             if (pendingAccount != null) {
+                if (dto.getUsername().equals(pendingAccount.getUsername()) ||
+                        !dto.getPhoneNumber().equals(pendingAccount.getPhone()) ||
+                        !cryptoService.matchesHash(dto.getPassword(), pendingAccount.getPassword())) {
+                    return new UBoatDTO(UBoatStatus.ACCOUNT_ALREADY_EXISTS_BY_CREDENTIALS, null);
+                }
+
                 var pendingRegistrationToken = pendingAccount.getToken();
-                if (account.getEmail().equals(pendingAccount.getEmail())) {
-                    pendingAccount.setEmail(account.getEmail());
+                if (dto.getEmail().equals(pendingAccount.getEmail())) {
+                    pendingAccount.setEmail(dto.getEmail());
                     pendingAccountsRepository.save(pendingAccount);
                 }
+
                 mailVerificationService.sendRegistrationEmailConfirmationMail(pendingAccount.getEmail(), pendingAccount.getUsername(), pendingRegistrationToken);
                 return new UBoatDTO(UBoatStatus.ACCOUNT_ALREADY_PENDING_REGISTRATION, pendingRegistrationToken);
             }
@@ -162,7 +171,8 @@ public class AuthenticationService {
             //creating new pendingAccount and its pendingToken
             var registrationToken = generateRegistrationToken();
 
-            var newPendingAccount = new PendingAccount(account, registrationToken);
+            dto.setPassword(cryptoService.hash(dto.getPassword()));
+            var newPendingAccount = new PendingAccount(dto, registrationToken);
             mailVerificationService.sendRegistrationEmailConfirmationMail(newPendingAccount.getEmail(), newPendingAccount.getUsername(), registrationToken);
             pendingAccountsRepository.save(newPendingAccount);
 
@@ -212,7 +222,7 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public UBoatDTO register(AccountDTO accountDTO, String registrationToken) {
+    public UBoatDTO register(AccountDTO dto, String registrationToken) {
         try {
             var pendingAccount = pendingAccountsRepository.findFirstByToken(registrationToken);
             if (pendingAccount == null) {
@@ -220,27 +230,29 @@ public class AuthenticationService {
                 return new UBoatDTO(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE);
             }
 
-            pendingAccount = pendingAccountsRepository.findFirstByUsernameAndPassword(accountDTO.getUsername(), accountDTO.getPassword());
-            if (pendingAccount == null || !accountDTO.equalsPendingAccount(pendingAccount)) {
+            pendingAccount = pendingAccountsRepository.findFirstByUsername(dto.getUsername());
+
+            if (pendingAccount == null || !pendingAccount.getUsername().equals(dto.getUsername()) || !cryptoService.matchesHash(dto.getPassword(), pendingAccount.getPassword())) {
                 log.warn("Token found but credentials don't match.");
                 return new UBoatDTO(UBoatStatus.RTOKEN_AND_ACCOUNT_NOT_MATCHING);
             }
 
-            if (accountDTO.getRegistrationData() == null || accountDTO.getPhoneNumber() == null) {
+            if (dto.getRegistrationData() == null || dto.getPhoneNumber() == null) {
                 log.warn("Account request is missing registrationData or phoneNumber");
                 return new UBoatDTO(UBoatStatus.MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER);
             }
 
-            var account = new Account(accountDTO);
+            dto.setPassword(cryptoService.hash(dto.getPassword()));
+            var account = new Account(dto);
 
-            var registrationData = registrationDataRepository.findFirstByDeviceInfo(accountDTO.getRegistrationData().getDeviceInfo());
+            var registrationData = registrationDataRepository.findFirstByDeviceInfo(dto.getRegistrationData().getDeviceInfo());
 
-            if (registrationData == null) registrationData = new RegistrationData(accountDTO.getRegistrationData());
+            if (registrationData == null) registrationData = new RegistrationData(dto.getRegistrationData());
             else
                 log.warn("Registration data is already used by another account. There will be two accounts bound to this device.");
             account.setRegistrationData(registrationData);
 
-            var jsonWebToken = jwtService.generateJwt(account.getPhone().getNumber(), account.getUsername(), account.getPassword());
+            var jsonWebToken = jwtService.generateJwt(account.getPhone().getNumber(), account.getUsername(), dto.getPassword());
 
             account = accountsRepository.save(account);
             pendingAccountsRepository.delete(pendingAccount);
@@ -256,24 +268,28 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public UBoatDTO login(AccountDTO account) {
+    public UBoatDTO login(AccountDTO dto) {
         try {
-            var foundAccountsList = accountsRepository.findAllByPassword(account.getPassword());
-            if (foundAccountsList == null) {
-                log.warn("No account was found with the given username/phone number and password.");
+            var foundAccount = accountsRepository.findFirstByUsername(dto.getUsername());
+
+            if (foundAccount == null) {
+                var phoneNumber = dto.getPhoneNumber();
+                foundAccount = accountsRepository.findFirstByPhoneNumberAndPhoneDialCodeAndPhoneIsoCode(phoneNumber.getNumber(), phoneNumber.getDialCode(), phoneNumber.getIsoCode());
+            }
+
+            if (foundAccount == null) {
+                log.warn("No account was found with the given username/phone number.");
                 return new UBoatDTO(UBoatStatus.CREDENTIALS_NOT_FOUND);
             }
 
-            for (var foundAccount : foundAccountsList) {
-                if (foundAccount.getUsername().equals(account.getUsername()) || foundAccount.getPhone().equals(new Phone(account.getPhoneNumber()))) {
-                    log.info("Credentials matched. Found account.");
-                    var jwt = jwtService.generateJwt(account.getPhoneNumber().getNumber(), account.getUsername(), account.getPassword());
-                    return new UBoatDTO(UBoatStatus.LOGIN_SUCCESSFUL, jwt);
-                } else log.warn("An account with given password found but neither username or phone number match.");
+            if (!cryptoService.matchesHash(dto.getPassword(), foundAccount.getPassword())) {
+                log.warn("Invalid credentials. Login failed");
+                return new UBoatDTO(UBoatStatus.INVALID_CREDENTIALS);
             }
 
-            log.warn("Invalid credentials. Login failed");
-            return new UBoatDTO(UBoatStatus.INVALID_CREDENTIALS);
+            log.info("Credentials matched. Found account.");
+            var jwt = jwtService.generateJwt(foundAccount.getPhone().getNumber(), foundAccount.getUsername(), dto.getPassword());
+            return new UBoatDTO(UBoatStatus.LOGIN_SUCCESSFUL, jwt);
         } catch (Exception e) {
             log.error("An exception occurred during login workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);

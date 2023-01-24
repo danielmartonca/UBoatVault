@@ -1,6 +1,5 @@
 package com.uboat.vault.api.model.dto;
 
-import com.uboat.vault.api.model.domain.account.pending.PendingAccount;
 import com.uboat.vault.api.model.enums.UserType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,9 +26,4 @@ public class AccountDTO {
     private PhoneNumberDTO phoneNumber;
 
     private RegistrationDataDTO registrationData;
-
-    public boolean equalsPendingAccount(PendingAccount pendingAccount) {
-        return this.username.equals(pendingAccount.getUsername()) &&
-                this.password.equals(pendingAccount.getPassword());
-    }
 }

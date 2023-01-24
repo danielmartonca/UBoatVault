@@ -1,5 +1,6 @@
 package com.uboat.vault.api.business.services;
 
+import com.uboat.vault.api.business.services.security.CryptoService;
 import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.account.account.SimCard;
 import com.uboat.vault.api.model.domain.account.sailor.Sailor;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 public class EntityService {
+    private final CryptoService cryptoService;
     private final AccountsRepository accountsRepository;
     private final RegistrationDataRepository registrationDataRepository;
     private final SimCardRepository simCardRepository;
@@ -69,22 +71,27 @@ public class EntityService {
             throw new RuntimeException("Both phone number and username are null/empty while retrieving account by credentials.");
 
         if (Strings.isNotEmpty(username)) {
-            foundAccount = accountsRepository.findFirstByUsernameAndPassword(username, password);
+            foundAccount = accountsRepository.findFirstByUsername(username);
             if (foundAccount != null) {
-                log.info("Found {} account by username and password.", foundAccount.getType());
+                if (cryptoService.matchesHash(password, foundAccount.getPassword())) {
+                    log.info("Found {} account by username and password.", foundAccount.getType());
+                    return foundAccount;
+                }
+            } else
+                log.warn("Couldn't find account by username and password.");
+        } else log.warn("Username is empty.");
+
+        foundAccount = accountsRepository.findFirstByPhoneNumber(phoneNumber);
+        if (foundAccount != null) {
+            if (cryptoService.matchesHash(password, foundAccount.getPassword())) {
+                log.info("Found {} account by phone number and password.", foundAccount.getType());
                 return foundAccount;
             }
-            log.warn("Couldn't find account by username and password. Searching by phone number and password.");
-        }
+        } else log.warn("Couldn't find account by phone number.");
 
-        foundAccount = accountsRepository.findFirstByPhoneNumberAndPassword(phoneNumber, password);
-        if (foundAccount == null) {
-            log.warn("Couldn't find account by phone number and password.");
-            return null;
-        }
 
-        log.info("Found {} account by phone number and password.", foundAccount.getType());
-        return foundAccount;
+        log.info("Could not find account with the given credentials.");
+        return null;
     }
 
     /**
@@ -130,25 +137,6 @@ public class EntityService {
 
         log.info("Found sailor account.");
         return sailorOptional.get();
-    }
-
-    public Sailor findSailorByAccountId(String accountId) {
-        long accountIdLong;
-        try {
-            accountIdLong = Long.parseLong(accountId);
-        } catch (Exception e) {
-            log.error("Exception occurred while transforming sailorId String to Long", e);
-            return null;
-        }
-
-        var sailor = sailorsRepository.findFirstByAccountId(accountIdLong);
-        if (sailor == null) {
-            log.warn("No account was found by id " + accountId);
-            return null;
-        }
-        log.warn("Found sailor account by id.");
-
-        return sailor;
     }
 
     public Sailor findSailorByJwt(JwtService.Data jwtData) {

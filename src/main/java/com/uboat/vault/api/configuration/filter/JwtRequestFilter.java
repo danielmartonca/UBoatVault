@@ -49,7 +49,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     }
 
     private void handleBearerRequest(String jwtToken, HttpServletRequest request) {
-        logger.info(LoggingUtils.colorString("Authorization 'Bearer ' header found.", LoggingUtils.TextColor.GREEN));
+        logger.debug(LoggingUtils.colorString("Authorization 'Bearer ' header found.", LoggingUtils.TextColor.GREEN));
 
         try {
             var jwtData = jwtService.extractUsernameAndPhoneNumber(jwtToken);

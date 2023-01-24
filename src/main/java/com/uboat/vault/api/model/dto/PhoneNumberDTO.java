@@ -25,4 +25,8 @@ public class PhoneNumberDTO {
         this.dialCode = phone.getDialCode();
         this.isoCode = phone.getIsoCode();
     }
+
+    public boolean equals(Phone phone) {
+        return this.number.equals(phone.getNumber()) && this.dialCode.equals(phone.getDialCode()) && this.isoCode.equals(phone.getIsoCode());
+    }
 }
