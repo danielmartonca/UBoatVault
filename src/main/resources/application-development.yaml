@@ -25,6 +25,14 @@ uboat:
   max-active-sailors: 5
   max-accepted-distance: 100000
 
+  security:
+    hs256_key: ${HS256_KEY}
+    encryption:
+      password: "parola. Dc as pune cv mai complicat?"
+      algorithm: "AES/CBC/PKCS5Padding"
+    stripe_public_key: pk_test_51MTN1fJWxAlPqtWal0I7s9CDVzVbrlo8ohsrxiyfP2jgvC7nA9dEt0eLWCEgOELBbrRuJMibCRQ3XUPdhR9NP1pe00Es4ueo40
+    stripe_private_key: sk_test_51MTN1fJWxAlPqtWakPb4IAwu6RkAjGh5vdBf7tPiGhxedWrCLZXxP0k2D93oO7Fi1mxBslKWiLHqI0VgoiPYXdv800RGHqYIo6
+
   journey:
     inactivityTimeoutSeconds: 600
     metersDistanceForCloseConsideration: 50
@@ -44,7 +52,3 @@ uboat:
       checkNoActivityJourneys: "* */1 * * * *"
       checkNoActivityJourneysTimeoutSeconds: 600 # 10 minutes
       completePayedJourneys: "*/30 * * * * *"
-
-  hs256_key: key1234
-  stripe_public_key: pk_test_51MTN1fJWxAlPqtWal0I7s9CDVzVbrlo8ohsrxiyfP2jgvC7nA9dEt0eLWCEgOELBbrRuJMibCRQ3XUPdhR9NP1pe00Es4ueo40
-  stripe_private_key: sk_test_51MTN1fJWxAlPqtWakPb4IAwu6RkAjGh5vdBf7tPiGhxedWrCLZXxP0k2D93oO7Fi1mxBslKWiLHqI0VgoiPYXdv800RGHqYIo6

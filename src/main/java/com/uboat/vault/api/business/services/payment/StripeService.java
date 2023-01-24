@@ -16,9 +16,9 @@ import javax.annotation.PostConstruct;
 @RequiredArgsConstructor
 public class StripeService {
 
-    @Value("${uboat.stripe_public_key}")
+    @Value("${uboat.security.stripe_public_key}")
     private String stripePublicKey;
-    @Value("${uboat.stripe_private_key}")
+    @Value("${uboat.security.stripe_private_key}")
     private String stripePrivateKey;
 
     @PostConstruct

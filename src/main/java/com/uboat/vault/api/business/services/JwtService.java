@@ -21,7 +21,7 @@ import java.util.function.Function;
 @Slf4j
 @RequiredArgsConstructor
 public class JwtService {
-    @Value("${uboat.hs256_key}")
+    @Value("${uboat.security.hs256_key}")
     @Setter
     private String SECRET_KEY;
 
