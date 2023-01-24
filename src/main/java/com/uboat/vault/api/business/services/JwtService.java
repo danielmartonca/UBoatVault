@@ -1,9 +1,14 @@
 package com.uboat.vault.api.business.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.enums.JwtStatus;
 import com.uboat.vault.api.model.enums.UBoatStatus;
+import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.exceptions.UBoatJwtException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +31,12 @@ public class JwtService {
     private String SECRET_KEY;
 
     private final EntityService entityService;
+    private final ObjectMapper jackson = new ObjectMapper();
 
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    /**
+     * @throws JwtException if the JWT is not valid.
+     */
+    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) throws JwtException {
         final var claims = Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
         return claimsResolver.apply(claims);
     }
@@ -44,39 +53,47 @@ public class JwtService {
 
     public Data extractUsernameAndPhoneNumber(String jsonWebToken) throws UBoatJwtException {
         try {
-            final String subject = extractClaim(jsonWebToken, Claims::getSubject);
-            final String[] parts = subject.split("\t");
-            if (parts[0].isEmpty()) parts[0] = "null";
-            if (parts[1].isEmpty()) parts[1] = "null";
-            return new Data(parts[1], parts[0]);
+            final var subject = extractClaim(jsonWebToken, Claims::getSubject);
+            var map = jackson.readValue(subject, HashMap.class);
+
+            var userType = UserType.valueOf((String) map.get("userType"));
+            var phoneNumber = (String) map.get("phone");
+            var username = (String) map.get("username");
+
+            return new Data(userType, username, phoneNumber);
         } catch (Exception e) {
             log.warn("Failed to decompose JWT: {}", e.getMessage());
             throw new UBoatJwtException(UBoatStatus.JWT_INVALID);
         }
     }
 
-    public String generateJwt(String phoneNumber, String username, String password) {
+    public String generateJwt(Account account) throws JsonProcessingException {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, phoneNumber + '\t' + username + '\t' + password);
+
+        Map<String, String> subject = new HashMap<>();
+        subject.put("userType", account.getType().getType());
+        subject.put("phone", account.getPhone().getNumber());
+        subject.put("username", account.getUsername());
+
+        return createToken(claims, jackson.writeValueAsString(subject));
     }
 
     public JwtStatus validateJsonWebToken(String jsonWebToken) {
         try {
-            final var subject = extractClaim(jsonWebToken, Claims::getSubject);
-            final var parts = subject.split("\t");
-            final var phoneNumber = parts[0];
-            final var username = parts[1];
-            final var password = parts[2];
-
-            var account = entityService.findAccountByCredentials(phoneNumber, username, password);
-            if (account == null)
-                return JwtStatus.ACCOUNT_NOT_FOUND;
+            //check if its valid
+            Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(jsonWebToken);
 
             final var expirationDate = extractClaim(jsonWebToken, Claims::getExpiration);
-            if (expirationDate.before(new Date())) {
+            if (expirationDate.before(new Date(System.currentTimeMillis()))) {
                 log.warn("Token is expired.");
                 return JwtStatus.EXPIRED;
             }
+
+            var jwtData = extractUsernameAndPhoneNumber(jsonWebToken);
+
+            var account = entityService.findAccountByJwtData(jwtData);
+            if (account == null)
+                return JwtStatus.ACCOUNT_NOT_FOUND;
 
             return JwtStatus.VALID;
         } catch (Exception e) {
@@ -105,10 +122,9 @@ public class JwtService {
         return data;
     }
 
-
-    public record Data(String username, String phoneNumber) {
+    public record Data(UserType userType, String username, String phoneNumber) {
         public String join() {
-            return username + '\t' + phoneNumber;
+            return userType.getType() + '\t' + username + '\t' + phoneNumber;
         }
     }
 }

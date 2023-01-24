@@ -252,7 +252,7 @@ public class AuthenticationService {
                 log.warn("Registration data is already used by another account. There will be two accounts bound to this device.");
             account.setRegistrationData(registrationData);
 
-            var jsonWebToken = jwtService.generateJwt(account.getPhone().getNumber(), account.getUsername(), dto.getPassword());
+            var jsonWebToken = jwtService.generateJwt(account);
 
             account = accountsRepository.save(account);
             pendingAccountsRepository.delete(pendingAccount);
@@ -288,7 +288,7 @@ public class AuthenticationService {
             }
 
             log.info("Credentials matched. Found account.");
-            var jwt = jwtService.generateJwt(foundAccount.getPhone().getNumber(), foundAccount.getUsername(), dto.getPassword());
+            var jwt = jwtService.generateJwt(foundAccount);
             return new UBoatDTO(UBoatStatus.LOGIN_SUCCESSFUL, jwt);
         } catch (Exception e) {
             log.error("An exception occurred during login workflow.", e);

@@ -1,6 +1,7 @@
 package com.uboat.vault.api.business.services;
 
 import com.uboat.vault.api.model.domain.account.account.Account;
+import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.persistence.repostiories.AccountsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,13 +21,13 @@ public class JwtUserDetailsService implements UserDetailsService {
     private final AccountsRepository accountsRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String usernameAndPhoneNumber) throws UsernameNotFoundException {
-        var split = usernameAndPhoneNumber.split("\t");
-        final String username = split[0];
-        final String phoneNumber = split[1];
+    public UserDetails loadUserByUsername(String jwtDataAsTabSeparatedString) throws UsernameNotFoundException {
+        var split = jwtDataAsTabSeparatedString.split("\t");
+        final var userType = UserType.valueOf(split[0]).getType();
+        final String username = split[1];
+        final String phoneNumber = split[2];
 
         Account account = null;
-
         if (!phoneNumber.equals("null"))
             account = accountsRepository.findFirstByPhoneNumber(phoneNumber);
 
@@ -36,9 +37,6 @@ public class JwtUserDetailsService implements UserDetailsService {
         if (account == null)
             throw new UsernameNotFoundException("User not found.");
 
-        var accountType = account.getType().getType();
-        var authorities = List.of(new SimpleGrantedAuthority(accountType));
-
-        return new User(account.getUsername(), account.getPassword(), authorities);
+        return new User(account.getUsername(), account.getPassword(), List.of(new SimpleGrantedAuthority(userType)));
     }
 }
