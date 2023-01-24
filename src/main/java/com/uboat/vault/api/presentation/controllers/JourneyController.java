@@ -68,7 +68,7 @@ public class JourneyController {
         var responseBody = paymentService.pay(authorizationHeader);
 
         return switch (responseBody.getHeader()) {
-            case PAYMENT_COMPLETED, PAYMENT_NOT_COMPLETED, NO_JOURNEY_TO_PAY ->
+            case PAYMENT_COMPLETED, PAYMENT_NOT_COMPLETED, NO_JOURNEY_TO_PAY, CARD_PAYMENT_NOT_SUCCESSFUL ->
                     ResponseEntity.status(HttpStatus.OK).body(responseBody);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
         };

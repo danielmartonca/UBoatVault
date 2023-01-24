@@ -61,14 +61,29 @@ public class PaymentService {
                 }
                 case CARD: {
 
-                    //todo call stripe API
-                    log.info("TODO -> CARD PAYMENT VIA STRIPE");
-
-                    payment.complete();
-                    payment.getJourney().setState(JourneyState.PAYMENT_VERIFIED);
-                    paymentsRepository.save(payment);
-                    journeyRepository.save(payment.getJourney());
-                    return new UBoatDTO(UBoatStatus.PAYMENT_COMPLETED, true);
+                    var paymentStatus = stripeService.pay(payment);
+                    switch (paymentStatus) {
+                        case ERROR -> {
+                            log.warn("Payment via card not completed due to error");
+                            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+                        }
+                        case DENIED, INSUFFICIENT_FOUNDS -> {
+                            log.warn("Payment via card not completed due to {}.", paymentStatus);
+                            log.info("Setting new payment method to payment with id {} to cash payment.", payment.getId());
+                            payment.setPaymentType(PaymentType.CASH);
+                            payment.setCreditCard(null);
+                            paymentsRepository.save(payment);
+                            return new UBoatDTO(UBoatStatus.CARD_PAYMENT_NOT_SUCCESSFUL, false);
+                        }
+                        case SUCCESSFUL -> {
+                            log.info("Payment via card completed");
+                            payment.complete();
+                            payment.getJourney().setState(JourneyState.PAYMENT_VERIFIED);
+                            paymentsRepository.save(payment);
+                            journeyRepository.save(payment.getJourney());
+                            return new UBoatDTO(UBoatStatus.PAYMENT_COMPLETED, true);
+                        }
+                    }
                 }
                 default:
                     return new UBoatDTO(UBoatStatus.PAYMENT_NOT_COMPLETED, false);
@@ -97,23 +112,6 @@ public class PaymentService {
             return pay(account, payment);
         } catch (Exception e) {
             log.error("An exception occurred during pay API workflow.", e);
-            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Transactional
-    public UBoatDTO pay(String authorizationHeader, Payment payment) {
-        try {
-            if (payment.isCompleted()) {
-                log.info("Payment already completed.");
-                return new UBoatDTO(UBoatStatus.PAYMENT_COMPLETED, true);
-            }
-
-            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByJwtData(jwtData);
-            return pay(account, payment);
-        } catch (Exception e) {
-            log.error("An exception occurred during pay workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
         }
     }
