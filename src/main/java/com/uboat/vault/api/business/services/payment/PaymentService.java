@@ -37,7 +37,7 @@ public class PaymentService {
     private static final ReentrantLock lock = new ReentrantLock();
 
     @Transactional
-    UBoatDTO pay(Account account, Payment payment) {
+    UBoatDTO cardPayment(Payment payment) {
         lock.lock();
         try {
             if (payment.isCompleted()) {
@@ -45,48 +45,34 @@ public class PaymentService {
                 return new UBoatDTO(UBoatStatus.PAYMENT_COMPLETED, true);
             }
 
-            switch (payment.getPaymentType()) {
-                case CASH: {
-                    if (account.getType() == UserType.CLIENT) {
-                        log.warn("A cash payment can only be confirmed by the sailor.");
-                        return new UBoatDTO(UBoatStatus.PAYMENT_NOT_COMPLETED, false);
-                    }
-
+            var paymentStatus = stripeService.pay(payment);
+            switch (paymentStatus) {
+                case ERROR -> {
+                    log.warn("Payment via card not completed due to error");
+                    return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+                }   case NOT_A_CARD_PAYMENT -> {
+                    log.warn("Stripe payments cannot be completed on a cash payment.");
+                    return new UBoatDTO(UBoatStatus.INVALID_PAYMENT_METHOD);
+                }
+                case DENIED, INSUFFICIENT_FOUNDS -> {
+                    log.warn("Payment via card not completed due to {}.", paymentStatus);
+                    log.info("Setting new payment method to payment with id {} to cash payment.", payment.getId());
+                    payment.setPaymentType(PaymentType.CASH);
+                    payment.setCreditCard(null);
+                    paymentsRepository.save(payment);
+                    return new UBoatDTO(UBoatStatus.CARD_PAYMENT_NOT_SUCCESSFUL, false);
+                }
+                case SUCCESSFUL -> {
+                    log.info("Payment via card completed");
                     payment.complete();
                     payment.getJourney().setState(JourneyState.PAYMENT_VERIFIED);
                     paymentsRepository.save(payment);
                     journeyRepository.save(payment.getJourney());
-                    log.info("The sailor has confirmed the cash payment.");
                     return new UBoatDTO(UBoatStatus.PAYMENT_COMPLETED, true);
                 }
-                case CARD: {
-
-                    var paymentStatus = stripeService.pay(payment);
-                    switch (paymentStatus) {
-                        case ERROR -> {
-                            log.warn("Payment via card not completed due to error");
-                            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
-                        }
-                        case DENIED, INSUFFICIENT_FOUNDS -> {
-                            log.warn("Payment via card not completed due to {}.", paymentStatus);
-                            log.info("Setting new payment method to payment with id {} to cash payment.", payment.getId());
-                            payment.setPaymentType(PaymentType.CASH);
-                            payment.setCreditCard(null);
-                            paymentsRepository.save(payment);
-                            return new UBoatDTO(UBoatStatus.CARD_PAYMENT_NOT_SUCCESSFUL, false);
-                        }
-                        case SUCCESSFUL -> {
-                            log.info("Payment via card completed");
-                            payment.complete();
-                            payment.getJourney().setState(JourneyState.PAYMENT_VERIFIED);
-                            paymentsRepository.save(payment);
-                            journeyRepository.save(payment.getJourney());
-                            return new UBoatDTO(UBoatStatus.PAYMENT_COMPLETED, true);
-                        }
-                    }
+                default -> {
+                    return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
                 }
-                default:
-                    return new UBoatDTO(UBoatStatus.PAYMENT_NOT_COMPLETED, false);
             }
         } finally {
             lock.unlock();
@@ -94,7 +80,32 @@ public class PaymentService {
     }
 
     @Transactional
-    public UBoatDTO pay(String authorizationHeader) {
+    UBoatDTO cashPayment(Account account, Payment payment) {
+        lock.lock();
+        try {
+            if (payment.isCompleted()) {
+                log.info("Payment already completed.");
+                return new UBoatDTO(UBoatStatus.PAYMENT_COMPLETED, true);
+            }
+
+            if (account.getType() == UserType.CLIENT) {
+                log.warn("A cash payment can only be confirmed by the sailor.");
+                return new UBoatDTO(UBoatStatus.PAYMENT_NOT_COMPLETED, false);
+            }
+
+            payment.complete();
+            payment.getJourney().setState(JourneyState.PAYMENT_VERIFIED);
+            paymentsRepository.save(payment);
+            journeyRepository.save(payment.getJourney());
+            log.info("The sailor has confirmed the cash payment.");
+            return new UBoatDTO(UBoatStatus.PAYMENT_COMPLETED, true);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Transactional
+    public UBoatDTO cardPay(String authorizationHeader) {
         try {
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
             var account = entityService.findAccountByJwtData(jwtData);
@@ -109,7 +120,30 @@ public class PaymentService {
                 return new UBoatDTO(UBoatStatus.NO_JOURNEY_TO_PAY);
 
             var payment = journeyOptional.get().getPayment();
-            return pay(account, payment);
+            return cardPayment(payment);
+        } catch (Exception e) {
+            log.error("An exception occurred during pay API workflow.", e);
+            return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Transactional
+    public UBoatDTO cashPay(String authorizationHeader) {
+        try {
+            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
+            var account = entityService.findAccountByJwtData(jwtData);
+
+            Optional<Journey> journeyOptional;
+            if (account.getType() == UserType.CLIENT)
+                journeyOptional = journeyRepository.findClientJourneyMatchingAccountAndState(account.getId(), Set.of(JourneyState.VERIFYING_PAYMENT));
+            else
+                journeyOptional = journeyRepository.findSailorJourneyMatchingAccountAndState(account.getId(), Set.of(JourneyState.VERIFYING_PAYMENT));
+
+            if (journeyOptional.isEmpty())
+                return new UBoatDTO(UBoatStatus.NO_JOURNEY_TO_PAY);
+
+            var payment = journeyOptional.get().getPayment();
+            return cashPayment(account, payment);
         } catch (Exception e) {
             log.error("An exception occurred during pay API workflow.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);
@@ -117,7 +151,8 @@ public class PaymentService {
     }
 
     @Async
-    public void triggerCardPayment(String authorizationHeader, Payment payment) {
+    public void triggerCardPayment(Payment payment) {
+
         try {
             if (payment.isCompleted()) {
                 log.info("Payment already completed.");
@@ -129,11 +164,8 @@ public class PaymentService {
                 return;
             }
 
-            var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByJwtData(jwtData);
-
             log.info("Automatic payment has been engaged for card payment with id {}.", payment.getId());
-            pay(account, payment);
+            cardPayment(payment);
         } catch (Exception e) {
             log.error("An exception occurred during pay workflow.", e);
         }

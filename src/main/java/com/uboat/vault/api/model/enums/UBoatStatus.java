@@ -197,6 +197,7 @@ public enum UBoatStatus {
     PAYMENT_NOT_COMPLETED(0, "The payment has been NOT been completed!", null),
     CARD_PAYMENT_NOT_SUCCESSFUL(2, "The credit card payment has been denied", null),
     NO_JOURNEY_TO_PAY(3, "There is no ongoing journey that needs to be payed.", null),
+    INVALID_PAYMENT_METHOD(4, "The payment method for the journey is in cash", null),
 
     VAULT_INTERNAL_SERVER_ERROR(-1, "UBoat vault has encountered an internal exception. Please report to administration.", CommonStatus.UNEXPECTED_ERROR);
 

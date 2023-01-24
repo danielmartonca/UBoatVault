@@ -1,8 +1,6 @@
 package com.uboat.vault.api.business.services.payment;
 
 import com.stripe.Stripe;
-import com.stripe.model.PaymentIntent;
-import com.stripe.param.PaymentIntentCreateParams;
 import com.uboat.vault.api.model.domain.sailing.Payment;
 import com.uboat.vault.api.model.enums.CardPaymentStatus;
 import com.uboat.vault.api.model.enums.PaymentType;
@@ -31,20 +29,18 @@ public class StripeService {
     public CardPaymentStatus pay(Payment payment) {
         try {
             if (payment.getPaymentType() == PaymentType.CASH)
-                throw new RuntimeException("Stripe charge attempted for a cash payment.");
+                return CardPaymentStatus.NOT_A_CARD_PAYMENT;
 
-            var params = PaymentIntentCreateParams
-                    .builder()
-                    .setAmount((long) (payment.getAmount() * 100))
-                    .setCurrency(payment.getCurrency().getCurrency().toLowerCase())
-                    .addPaymentMethodType("card")
-                    .setConfirmationMethod(PaymentIntentCreateParams.ConfirmationMethod.MANUAL)
-                    .setConfirm(true)
-                    .build();
-
-            var paymentIntent = PaymentIntent.create(params);
-
-            paymentIntent = paymentIntent.confirm();
+//            var params = PaymentIntentCreateParams
+//                    .builder()
+//                    .setAmount((long) (payment.getAmount() * 100))
+//                    .setCurrency(payment.getCurrency().getCurrency().toLowerCase())
+//                    .addPaymentMethodType("card")
+//                    .setConfirmationMethod(PaymentIntentCreateParams.ConfirmationMethod.MANUAL)
+//                    .setConfirm(true)
+//                    .build();
+//            var paymentIntent = PaymentIntent.create(params);
+//            paymentIntent = paymentIntent.confirm();
 
             if (payment.getCreditCard().getNumber().contains("4242")) return CardPaymentStatus.INSUFFICIENT_FOUNDS;
             if (payment.getCreditCard().getNumber().contains("1111")) return CardPaymentStatus.DENIED;

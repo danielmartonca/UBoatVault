@@ -28,6 +28,7 @@ import org.springframework.util.CollectionUtils;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.*;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -187,7 +188,8 @@ public class JourneyService {
                 //trigger automatic card payment once the destination has been reached
                 var payment = journey.getPayment();
                 if (journey.getState() == JourneyState.VERIFYING_PAYMENT && payment.getPaymentType() == PaymentType.CARD && !payment.isCompleted())
-                    paymentService.triggerCardPayment(authorizationHeader, payment);
+                    Executors.newScheduledThreadPool(1).schedule(() -> paymentService.triggerCardPayment(payment), 5, TimeUnit.MINUTES);
+
 
                 return new UBoatDTO(UBoatStatus.SAIL_RECORDED, new SailDTO(journey, lastKnownLocationInfo));
             } finally {

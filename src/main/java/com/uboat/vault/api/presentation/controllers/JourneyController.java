@@ -62,13 +62,28 @@ public class JourneyController {
     @Operation(summary = "Called by both the client and the sailor with different outcomes. " +
             "If the client calls it, it will engage an automatic card payment on the ongoing journey or get the status of the payment. " +
             "If the sailor calls it, its use case is to confirm that the client has completed the payment in cash.")
-    @PostMapping(value = "/pay")
-    public ResponseEntity<UBoatDTO> pay(@RequestHeader(value = "Authorization") String authorizationHeader) {
+    @PostMapping(value = "/cardPay")
+    public ResponseEntity<UBoatDTO> cardPay(@RequestHeader(value = "Authorization") String authorizationHeader) {
 
-        var responseBody = paymentService.pay(authorizationHeader);
+        var responseBody = paymentService.cardPay(authorizationHeader);
 
         return switch (responseBody.getHeader()) {
-            case PAYMENT_COMPLETED, PAYMENT_NOT_COMPLETED, NO_JOURNEY_TO_PAY, CARD_PAYMENT_NOT_SUCCESSFUL ->
+            case NO_JOURNEY_TO_PAY, PAYMENT_COMPLETED, PAYMENT_NOT_COMPLETED, CARD_PAYMENT_NOT_SUCCESSFUL, INVALID_PAYMENT_METHOD ->
+                    ResponseEntity.status(HttpStatus.OK).body(responseBody);
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+        };
+    }
+
+    @Operation(summary = "Called by both the client and the sailor with different outcomes. " +
+            "If the client calls it, it will engage an automatic card payment on the ongoing journey or get the status of the payment. " +
+            "If the sailor calls it, its use case is to confirm that the client has completed the payment in cash.")
+    @PostMapping(value = "/cashPay")
+    public ResponseEntity<UBoatDTO> cashPay(@RequestHeader(value = "Authorization") String authorizationHeader) {
+
+        var responseBody = paymentService.cashPay(authorizationHeader);
+
+        return switch (responseBody.getHeader()) {
+            case PAYMENT_COMPLETED, PAYMENT_NOT_COMPLETED, NO_JOURNEY_TO_PAY ->
                     ResponseEntity.status(HttpStatus.OK).body(responseBody);
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
         };
