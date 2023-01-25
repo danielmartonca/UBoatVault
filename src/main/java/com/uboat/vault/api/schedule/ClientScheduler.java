@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 public class ClientScheduler {
-    @Value("${uboat.schedulersCron.clientScheduler.initiatedJourneyExpirationSeconds}")
+    @Value("${uboat.schedulersCron.clientScheduler.initiatedJourneyExpirationSeconds:60}")
     private Integer initiatedJourneyExpirationSeconds;
     private final JourneyRepository journeyRepository;
 

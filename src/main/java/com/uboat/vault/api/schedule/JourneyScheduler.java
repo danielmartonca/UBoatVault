@@ -22,9 +22,9 @@ public class JourneyScheduler {
     private final JourneyService journeyService;
     private final JourneyRepository journeyRepository;
 
-    @Value("${uboat.schedulersCron.journeyScheduler.journeysNotConfirmedTimeoutSeconds}")
+    @Value("${uboat.schedulersCron.journeyScheduler.journeysNotConfirmedTimeoutSeconds:60}")
     Integer journeysNotConfirmedTimeoutSeconds;
-    @Value("${uboat.schedulersCron.journeyScheduler.checkNoActivityJourneysTimeoutSeconds}")
+    @Value("${uboat.schedulersCron.journeyScheduler.checkNoActivityJourneysTimeoutSeconds:600}")
     Integer checkNoActivityJourneysTimeoutSeconds;
 
     @Async
