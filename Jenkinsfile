@@ -33,8 +33,10 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh 'mvn test -P test -Dspring.profiles.active=test'
-                echo 'Successfully ran the tests of UBoat Vault.'
+                timeout(time: 5, unit: 'MINUTES') {
+                    sh 'mvn test -P test -Dspring.profiles.active=test'
+                    echo 'Successfully ran the tests of UBoat Vault.'
+                }
             }
         }
 
