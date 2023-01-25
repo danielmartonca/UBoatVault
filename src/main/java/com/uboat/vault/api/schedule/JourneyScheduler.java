@@ -28,7 +28,7 @@ public class JourneyScheduler {
     Integer checkNoActivityJourneysTimeoutSeconds;
 
     @Async
-    @Scheduled(cron = "${uboat.schedulersCron.journeyScheduler.removeJourneysNotConfirmed}")
+    @Scheduled(cron = "${uboat.schedulersCron.journeyScheduler.removeJourneysNotConfirmed:-}")
     @Transactional
     public void removeJourneysNotConfirmed() {
         try {
@@ -51,7 +51,7 @@ public class JourneyScheduler {
     }
 
     @Async
-    @Scheduled(cron = "${uboat.schedulersCron.journeyScheduler.checkNoActivityJourneys}")
+    @Scheduled(cron = "${uboat.schedulersCron.journeyScheduler.checkNoActivityJourneys:-}")
     @Transactional
     public void checkNoActivityJourneys() {
         try {
@@ -84,7 +84,7 @@ public class JourneyScheduler {
     }
 
     @Async
-    @Scheduled(cron = "${uboat.schedulersCron.journeyScheduler.completePayedJourneys}")
+    @Scheduled(cron = "${uboat.schedulersCron.journeyScheduler.completePayedJourneys:-}")
     @Transactional
     public void completePayedJourneys() {
         journeyRepository.findJourneysByStateIn(List.of(JourneyState.PAYMENT_VERIFIED))

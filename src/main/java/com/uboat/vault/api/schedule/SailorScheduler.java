@@ -18,7 +18,7 @@ public class SailorScheduler {
     private final SailorsRepository sailorsRepository;
 
     @Async
-    @Scheduled(cron = "${uboat.schedulersCron.sailorScheduler.assertSailorsAreActive}")
+    @Scheduled(cron = "${uboat.schedulersCron.sailorScheduler.assertSailorsAreActive:-}")
     @Transactional
     public void assertSailorsAreActive() {
         try {

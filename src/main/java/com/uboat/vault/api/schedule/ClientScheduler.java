@@ -20,7 +20,7 @@ public class ClientScheduler {
     private final JourneyRepository journeyRepository;
 
     @Async
-    @Scheduled(cron = "${uboat.schedulersCron.clientScheduler.deleteInactiveInitiatedJourneys}")
+    @Scheduled(cron = "${uboat.schedulersCron.clientScheduler.deleteInactiveInitiatedJourneys:-}")
     @Transactional
     public void deleteInactiveInitiatedJourneys() {
         try {
