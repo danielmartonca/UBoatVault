@@ -1,0 +1,53 @@
+server:
+  port: ${PORT}
+  error:
+    include-message: always
+    whitelabel:
+      enabled: false
+
+spring:
+  security:
+    user:
+      name: ${SPRING_SECURITY_USER}
+      password: ${SPRING_SECURITY_PASSWORD}
+
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DB}?user=${DATABASE_USERNAME}&password=${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: ${SHOW_SQL}
+    hibernate:
+      ddl-auto: ${DDL_AUTO}
+
+uboat:
+  pretty-print-logs: false
+
+  security:
+    jwtEncryptionKey: ${JWT_ENCRYPTION_KEY}
+    stripe_public_key: ${STRIPE_PUBLIC_KEY}
+    stripe_private_key: ${STRIPE_PRIVATE_KEY}
+
+  journey:
+    max-active-seconds: ${MAX_ACTIVE_SECONDS}
+    max-active-sailors: ${MAX_ACTIVE_SAILORS}
+    max-accepted-distance: ${MAX_ACCEPTED_DISTANCES}
+    inactivityTimeoutSeconds: ${JOURNEY_inactivityTimeoutSeconds}
+    metersDistanceForCloseConsideration: ${JOURNEY_metersDistanceForCloseConsideration}
+    recordAllLocationData: ${JOURNEY_recordAllLocationData}
+
+  schedulersCron:
+    clientScheduler:
+      deleteInactiveInitiatedJourneys: ${CRON_deleteInactiveInitiatedJourneys}
+      initiatedJourneyExpirationSeconds: ${CRON_initiatedJourneyExpirationSeconds}
+
+    sailorScheduler:
+      assertSailorsAreActive: ${CRON_assertSailorsAreActive}
+
+    journeyScheduler:
+      removeJourneysNotConfirmed: ${CRON_removeJourneysNotConfirmed}
+      journeysNotConfirmedTimeoutSeconds: ${CRON_journeysNotConfirmedTimeoutSeconds}
+      checkNoActivityJourneys: ${CRON_checkNoActivityJourneys}
+      checkNoActivityJourneysTimeoutSeconds: ${CRON_checkNoActivityJourneysTimeoutSeconds}
+      completePayedJourneys: ${CRON_completePayedJourneys}

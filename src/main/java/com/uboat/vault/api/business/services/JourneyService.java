@@ -35,12 +35,12 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @RequiredArgsConstructor
 public class JourneyService {
-    @Value("${uboat.max-active-seconds}")
+    @Value("${uboat.journey.max-active-seconds}")
     private int MAX_ACTIVE_SECONDS;
-    @Value("${uboat.max-active-sailors}")
+    @Value("${uboat.journey.max-active-sailors}")
     private int MAX_ACTIVE_SAILORS;
 
-    @Value("${uboat.max-accepted-distance}")
+    @Value("${uboat.journey.max-accepted-distance}")
     private int MAX_ACCEPTED_DISTANCE;
 
     @Value("${uboat.journey.inactivityTimeoutSeconds}")

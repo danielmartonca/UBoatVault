@@ -6,17 +6,17 @@
       "description": "Set to true if the app should print objects formatted with spaces and multiple lines."
     },
     {
-      "name": "uboat.max-active-seconds",
+      "name": "uboat.journey.max-active-seconds",
       "type": "java.lang.String",
       "description": "Describes how many seconds are allowed by an sailor to not give any update of his position(pulse) for clients to request a journey to him."
     },
     {
-      "name": "uboat.max-active-sailors",
+      "name": "uboat.journey.max-active-sailors",
       "type": "java.lang.String",
       "description": "Describes how many sailors can be retrieved when requesting a new journey. The closest [max-active-sailors] will be retrieved."
     },
     {
-      "name": "uboat.max-accepted-distance",
+      "name": "uboat.journey.max-accepted-distance",
       "type": "java.lang.String",
       "description": "Describes the maximum distance in meters allowed between the sailor and the client when before creating new Journeys."
     },
@@ -81,7 +81,7 @@
       "description": "After how many seconds should the journey which was started be considered expired therefore moved to IN_ERROR state."
     },
     {
-      "name": "uboat.security.hs256_key",
+      "name": "uboat.security.jwtEncryptionKey",
       "type": "java.lang.String",
       "description": "Private key used in the creation of JWT."
     },

@@ -26,9 +26,9 @@ import java.util.function.Function;
 @Slf4j
 @RequiredArgsConstructor
 public class JwtService {
-    @Value("${uboat.security.hs256_key}")
+    @Value("${uboat.security.jwtEncryptionKey}")
     @Setter
-    private String SECRET_KEY;
+    private String jwtEncryptionKey;
 
     private final EntityService entityService;
     private final ObjectMapper jackson = new ObjectMapper();
@@ -37,7 +37,7 @@ public class JwtService {
      * @throws JwtException if the JWT is not valid.
      */
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) throws JwtException {
-        final var claims = Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+        final var claims = Jwts.parser().setSigningKey(jwtEncryptionKey).parseClaimsJws(token).getBody();
         return claimsResolver.apply(claims);
     }
 
@@ -47,7 +47,7 @@ public class JwtService {
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(SignatureAlgorithm.HS256, jwtEncryptionKey)
                 .compact();
     }
 
@@ -81,7 +81,7 @@ public class JwtService {
     public JwtStatus validateJsonWebToken(String jsonWebToken) {
         try {
             //check if its valid
-            Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(jsonWebToken);
+            Jwts.parser().setSigningKey(jwtEncryptionKey).parseClaimsJws(jsonWebToken);
 
             final var expirationDate = extractClaim(jsonWebToken, Claims::getExpiration);
             if (expirationDate.before(new Date(System.currentTimeMillis()))) {
