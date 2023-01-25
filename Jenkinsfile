@@ -10,9 +10,7 @@ pipeline {
         gitUrl = 'https://github.com/danielmartonca/UBoatVault.git'
         uboatUrl = 'https://uboat-vault.herokuapp.com'
         VERSION = readMavenPom().getVersion()
-        dockerAccount = "danielmartonca"
-        registry = "uboat-vault"
-        imageTag = "$VERSION"
+        imageTag = "danielmartonca/uboat-vault:$VERSION"
     }
 
     stages {
@@ -66,7 +64,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'password', usernameVariable: 'username')]) {
                     sh 'docker logout > /dev/null 2>&1'
                     sh "docker login -u $username -p $password"
-                    sh "docker push $dockerAccount/$registry:$imageTag"
+                    sh "docker push \"$imageTag\""
                     echo "Pushed the docker image $imageTag to Docker Hub"
                 }
             }
