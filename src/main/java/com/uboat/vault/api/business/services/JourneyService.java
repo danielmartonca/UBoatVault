@@ -35,21 +35,21 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @RequiredArgsConstructor
 public class JourneyService {
-    @Value("${uboat.journey.max-active-seconds}")
+    @Value("${uboat.journey.max-active-seconds:10}")
     private int MAX_ACTIVE_SECONDS;
-    @Value("${uboat.journey.max-active-sailors}")
+    @Value("${uboat.journey.max-active-sailors:3}")
     private int MAX_ACTIVE_SAILORS;
 
-    @Value("${uboat.journey.max-accepted-distance}")
+    @Value("${uboat.journey.max-accepted-distance:100000}")
     private int MAX_ACCEPTED_DISTANCE;
 
-    @Value("${uboat.journey.inactivityTimeoutSeconds}")
+    @Value("${uboat.journey.inactivityTimeoutSeconds:600}")
     private int inactivityTimeoutSeconds;
 
-    @Value("${uboat.journey.metersDistanceForCloseConsideration}")
+    @Value("${uboat.journey.metersDistanceForCloseConsideration:100}")
     private int metersDistanceForCloseConsideration;
 
-    @Value("${uboat.journey.recordAllLocationData}")
+    @Value("${uboat.journey.recordAllLocationData:false}")
     private Boolean recordAllLocationData = false;
 
     private final EntityService entityService;

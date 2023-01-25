@@ -16,3 +16,8 @@ spring:
 
 uboat:
   pretty-print-logs: true
+
+  security:
+    jwtEncryptionKey: "junit"
+    stripe_public_key: empty
+    stripe_private_key: empty
