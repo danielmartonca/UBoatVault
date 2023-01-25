@@ -25,9 +25,11 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo "Building UBoat-Vault-${VERSION}."
-                sh 'mvn clean package -P production -DskipTests --batch-mode'
-                echo 'Successfully built UBoat Vault with maven.'
+                timeout(time: 5, unit: 'MINUTES') {
+                    echo "Building UBoat-Vault-${VERSION}."
+                    sh 'mvn clean package -P production -DskipTests --batch-mode'
+                    echo 'Successfully built UBoat Vault with maven.'
+                }
             }
         }
 

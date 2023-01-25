@@ -176,16 +176,16 @@
         </profile>
 
         <profile>
-            <id>junit</id>
+            <id>test</id>
             <properties>
-                <spring.profiles.active>junit</spring.profiles.active>
+                <spring.profiles.active>test</spring.profiles.active>
             </properties>
         </profile>
 
         <profile>
-            <id>heroku</id>
+            <id>production</id>
             <properties>
-                <spring.profiles.active>heroku</spring.profiles.active>
+                <spring.profiles.active>production</spring.profiles.active>
             </properties>
         </profile>
     </profiles>
