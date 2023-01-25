@@ -10,7 +10,9 @@ pipeline {
         gitUrl = 'https://github.com/danielmartonca/UBoatVault.git'
         uboatUrl = 'https://uboat-vault.herokuapp.com'
         VERSION = readMavenPom().getVersion()
-        imageTag = "danielmartonca/uboat-vault:$VERSION"
+        dockerAccount = "danielmartonca"
+        registry = "uboat-vault"
+        imageTag = "$VERSION"
     }
 
     stages {
@@ -24,14 +26,14 @@ pipeline {
         stage('Build') {
             steps {
                 echo "Building UBoat-Vault-${VERSION}."
-                sh 'mvn clean package -P heroku -DskipTests --batch-mode'
+                sh 'mvn clean package -P production -DskipTests --batch-mode'
                 echo 'Successfully built UBoat Vault with maven.'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'mvn test -P junit -Dspring.profiles.active=junit'
+                sh 'mvn test -P test -Dspring.profiles.active=test'
                 echo 'Successfully ran the tests of UBoat Vault.'
             }
         }
@@ -60,7 +62,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'password', usernameVariable: 'username')]) {
                     sh 'docker logout > /dev/null 2>&1'
                     sh "docker login -u $username -p $password"
-                    sh "docker push $imageTag"
+                    sh "docker push $dockerAccount/$registry:$imageTag"
                     echo "Pushed the docker image $imageTag to Docker Hub"
                 }
             }
