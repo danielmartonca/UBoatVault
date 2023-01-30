@@ -45,7 +45,7 @@ pipeline {
                 withSonarQubeEnv(credentialsId: 'sonarqube-token', installationName: 'UBoat-SonarQube') {
                     sh 'mvn sonar:sonar'
                 }
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                     echo 'Successfully ran code Quality Check on SonarQube '
                 }
@@ -70,17 +70,17 @@ pipeline {
             }
         }
 
-//        stage('Deploy') {
-//            steps {
+        stage('Deploy') {
+            steps {
 //                withCredentials([string(credentialsId: 'heroku-token', variable: 'authToken')]) {
 //                    sh 'heroku container:login'
 //                    sh 'heroku git:remote -a uboat-vault'
 //                    sh 'heroku container:push web'
 //                    sh 'heroku container:release web'
-//                    echo 'Deployed Docker container on Heroku successfully. Testing if app is running...'
+                    echo 'Deployed Docker Image to the Environment successfully.'
 //                }
-//            }
-//        }
+            }
+        }
 
 //        stage('Test if Vault is running') {
 //            steps {
