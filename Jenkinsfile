@@ -1,3 +1,6 @@
+def VERSION
+def imageTag
+
 pipeline {
     agent any
 
@@ -9,14 +12,19 @@ pipeline {
     environment {
         gitUrl = 'https://github.com/danielmartonca/UBoatVault.git'
         uboatUrl = 'https://uboat-vault.herokuapp.com'
-        VERSION = readMavenPom().getVersion()
-        imageTag = "danielmartonca/uboat-vault:$VERSION"
     }
-
+    parameters {
+        string(name: 'VERSION', defaultValue: '')
+        string(name: 'imageTag', defaultValue: '')
+    }
     stages {
         stage('Clone') {
             steps {
-                git credentialsId: 'github-token', url: gitUrl
+                git credentialsId: 'github-jenkins-token', url: gitUrl
+                script {
+                    VERSION = readMavenPom().getVersion()
+                    imageTag = "danielmartonca/uboat-vault:$VERSION"
+                }
                 echo 'Successfully cloned repository of UBoat Vault.'
             }
         }
@@ -25,7 +33,7 @@ pipeline {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
                     echo "Building UBoat-Vault-${VERSION}."
-                    sh 'mvn clean package -P production -DskipTests --batch-mode'
+                    bat 'mvn clean package -P production -DskipTests --batch-mode'
                     echo 'Successfully built UBoat Vault with maven.'
                 }
             }
@@ -34,7 +42,7 @@ pipeline {
         stage('Test') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
-                    sh 'mvn test -P test -Dspring.profiles.active=test'
+                    bat 'mvn test -P test -Dspring.profiles.active=test'
                     echo 'Successfully ran the tests of UBoat Vault.'
                 }
             }
@@ -43,7 +51,7 @@ pipeline {
         stage('Quality Check') {
             steps {
                 withSonarQubeEnv(credentialsId: 'sonarqube-token', installationName: 'UBoat-SonarQube') {
-                    sh 'mvn sonar:sonar'
+                    bat 'mvn sonar:sonar'
                 }
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
@@ -54,7 +62,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t $imageTag ."
+                bat "docker build -t $imageTag ."
                 echo "Built Docker Image '$imageTag'"
             }
         }
@@ -62,10 +70,10 @@ pipeline {
         stage('Push Image to Dockerhub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'password', usernameVariable: 'username')]) {
-                    sh 'docker logout > /dev/null 2>&1'
-                    sh "docker login -u $username -p $password"
-                    sh "docker push \"$imageTag\""
-                    echo "Pushed the docker image $imageTag to Docker Hub"
+                    bat 'docker logout'
+                    bat "docker login -u $username -p $password"
+                    bat "docker push \"${imageTag}\""
+                    echo "Pushed the docker image ${imageTag} to Docker Hub"
                 }
             }
         }
@@ -73,11 +81,11 @@ pipeline {
         stage('Deploy') {
             steps {
 //                withCredentials([string(credentialsId: 'heroku-token', variable: 'authToken')]) {
-//                    sh 'heroku container:login'
-//                    sh 'heroku git:remote -a uboat-vault'
-//                    sh 'heroku container:push web'
-//                    sh 'heroku container:release web'
-                    echo 'Deployed Docker Image to the Environment successfully.'
+//                    bat 'heroku container:login'
+//                    bat 'heroku git:remote -a uboat-vault'
+//                    bat 'heroku container:push web'
+//                    bat 'heroku container:release web'
+                echo 'Deployed Docker Image to the Environment successfully.'
 //                }
             }
         }
@@ -85,7 +93,7 @@ pipeline {
 //        stage('Test if Vault is running') {
 //            steps {
 //                script {
-//                    final String response = sh(script: "curl -s $uboatUrl/api/isVaultActive", returnStdout: true).trim()
+//                    final String response = bat(script: "curl -s $uboatUrl/api/isVaultActive", returnStdout: true).trim()
 //                    echo response
 //                }
 //            }
@@ -95,8 +103,8 @@ pipeline {
     post {
         always
                 {
-                    sh "docker rmi $imageTag"
-                    sh 'docker logout'
+                    bat "docker rmi ${imageTag}"
+                    bat 'docker logout'
                 }
     }
 }
