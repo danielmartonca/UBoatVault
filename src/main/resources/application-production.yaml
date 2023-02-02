@@ -28,6 +28,9 @@ uboat:
     jwtEncryptionKey: ${JWT_ENCRYPTION_KEY}
     stripe_public_key: ${STRIPE_PUBLIC_KEY}
     stripe_private_key: ${STRIPE_PRIVATE_KEY}
+    twilio_account_sid: ${TWILIO_ACCOUNT_SID}
+    twilio_token: ${TWILIO_TOKEN}
+    twilio_UBoat_phone_number: ${TWILIO_UBOAT_PHONE_NUMBER}
 
   journey:
     max-active-seconds: ${MAX_ACTIVE_SECONDS}

@@ -101,6 +101,20 @@
       "description": "Public key used to call Stripe APIs."
     },
     {
+      "name": "uboat.security.twilio_account_sid",
+      "type": "java.lang.String",
+      "description": "Used by the Twilio service."
+    },
+    {
+      "name": "uboat.security.twilio_token",
+      "type": "java.lang.String",
+      "description": "Used by the Twilio service."
+    },{
+      "name": "uboat.security.twilio_UBoat_phone_number",
+      "type": "java.lang.String",
+      "description": "Used by the Twilio service."
+    },
+    {
       "name": "uboat.security.stripe_private_key",
       "type": "java.lang.String",
       "description": "Private key used to call Stripe APIs."

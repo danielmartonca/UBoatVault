@@ -26,6 +26,9 @@ uboat:
     jwtEncryptionKey: "test"
     stripe_public_key: "pk_test_51MTN1fJWxAlPqtWal0I7s9CDVzVbrlo8ohsrxiyfP2jgvC7nA9dEt0eLWCEgOELBbrRuJMibCRQ3XUPdhR9NP1pe00Es4ueo40"
     stripe_private_key: "sk_test_51MTN1fJWxAlPqtWakPb4IAwu6RkAjGh5vdBf7tPiGhxedWrCLZXxP0k2D93oO7Fi1mxBslKWiLHqI0VgoiPYXdv800RGHqYIo6"
+    twilio_account_sid: "AC03994cf4882710d3f66b518e946b46f8"
+    twilio_token: "2998da3650e8ef263a05f7ff1888d2ca"
+    twilio_UBoat_phone_number: "+1 712 214 1476"
 
   journey:
     max-active-seconds: 300

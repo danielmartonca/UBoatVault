@@ -40,6 +40,7 @@ public class AuthenticationService {
     private final RegistrationDataRepository registrationDataRepository;
     private final PendingAccountsRepository pendingAccountsRepository;
     private final SailorsRepository sailorsRepository;
+
     private final SmsVerificationService smsVerificationService;
     private final MailVerificationService mailVerificationService;
 
