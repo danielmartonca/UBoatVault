@@ -2,13 +2,13 @@ package com.uboat.vault.api.business.services;
 
 import com.uboat.vault.api.business.services.mail.verification.MailVerificationService;
 import com.uboat.vault.api.business.services.security.CryptoService;
+import com.uboat.vault.api.business.services.sms.verification.MockSmsVerificationService;
 import com.uboat.vault.api.business.services.sms.verification.SmsVerificationService;
 import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.account.account.RegistrationData;
 import com.uboat.vault.api.model.domain.account.pending.PendingAccount;
 import com.uboat.vault.api.model.domain.account.sailor.Sailor;
 import com.uboat.vault.api.model.dto.AccountDTO;
-import com.uboat.vault.api.model.dto.PhoneNumberDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.UBoatStatus;
 import com.uboat.vault.api.model.enums.UserType;
@@ -16,12 +16,14 @@ import com.uboat.vault.api.persistence.repostiories.AccountsRepository;
 import com.uboat.vault.api.persistence.repostiories.PendingAccountsRepository;
 import com.uboat.vault.api.persistence.repostiories.RegistrationDataRepository;
 import com.uboat.vault.api.persistence.repostiories.SailorsRepository;
+import com.uboat.vault.api.utilities.DateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -184,12 +186,23 @@ public class AuthenticationService {
         }
     }
 
-    public UBoatDTO sendRegistrationSMS(PhoneNumberDTO phoneNumber, String rtoken, Integer smsInteger) {
+    public UBoatDTO sendRegistrationSMS(String rtoken, Integer smsInteger) {
         try {
-            if (pendingAccountsRepository.findFirstByToken(rtoken) == null)
+            var pendingAccount = pendingAccountsRepository.findFirstByToken(rtoken);
+            if (pendingAccount == null)
                 return new UBoatDTO(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE, false);
 
-            smsVerificationService.sendRegistrationSms(phoneNumber, smsInteger);
+            if (smsVerificationService instanceof MockSmsVerificationService) //mock can spam the phone number
+            {
+                log.warn("Mock SMS service detected");
+                smsVerificationService.sendRegistrationSms(pendingAccount.getPhone(), smsInteger);
+                pendingAccount.setLastSmsSentDate(new Date());
+            } else if (pendingAccount.getLastSmsSentDate() == null || DateUtils.getSecondsPassed(pendingAccount.getLastSmsSentDate()) >= 60) //a real service can send it every minute
+            {
+                smsVerificationService.sendRegistrationSms(pendingAccount.getPhone(), smsInteger);
+                pendingAccount.setLastSmsSentDate(new Date());
+            }
+
             return new UBoatDTO(UBoatStatus.REGISTRATION_SMS_SENT, true);
         } catch (Exception e) {
             log.error("Error while sending the registration SMS.", e);

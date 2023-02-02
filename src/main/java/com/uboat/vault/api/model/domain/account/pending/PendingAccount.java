@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.Date;
 
 @NoArgsConstructor
 @Entity
@@ -46,6 +47,10 @@ public class PendingAccount {
     @Getter
     @Setter
     private String email;
+
+    @Getter
+    @Setter
+    private Date lastSmsSentDate = null;
 
     @Getter
     @Setter

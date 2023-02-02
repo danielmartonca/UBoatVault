@@ -4,7 +4,6 @@ import com.uboat.vault.api.business.services.AuthenticationService;
 import com.uboat.vault.api.business.services.EntityService;
 import com.uboat.vault.api.business.services.JwtService;
 import com.uboat.vault.api.model.dto.AccountDTO;
-import com.uboat.vault.api.model.dto.PhoneNumberDTO;
 import com.uboat.vault.api.model.dto.RegistrationDataDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.UBoatStatus;
@@ -53,12 +52,12 @@ public class AuthenticationController {
             @ApiResponse(responseCode = "200", description = "The SMS was sent successfully to the phone number.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "500", description = "An exception occurred registration SMS sending workflow.", content = @Content(mediaType = "application/json"))
     })
-    @PostMapping(value = "/registrationSms", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UBoatDTO> registrationSms(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam @NotNull Integer smsInteger, @RequestBody PhoneNumberDTO phoneNumberDTO) {
+    @PostMapping(value = "/registrationSms", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UBoatDTO> registrationSms(@RequestHeader(value = "Authorization") String authorizationHeader, @RequestParam @NotNull Integer smsInteger) {
         var responseIfInvalid = HeadersUtils.parseAuthorizationHeaderForRToken(authorizationHeader);
         if (responseIfInvalid != null) return responseIfInvalid;
 
-        var uBoatResponse = authenticationService.sendRegistrationSMS(phoneNumberDTO, HeadersUtils.extractSecret(authorizationHeader), smsInteger);
+        var uBoatResponse = authenticationService.sendRegistrationSMS(HeadersUtils.extractSecret(authorizationHeader), smsInteger);
 
         return switch (uBoatResponse.getHeader()) {
             case REGISTRATION_SMS_SENT -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);

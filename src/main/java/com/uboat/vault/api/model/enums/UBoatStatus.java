@@ -89,7 +89,7 @@ public enum UBoatStatus {
     INVALID_BEARER_FORMAT(3, "The request contains the 'Bearer' header but the format is invalid.", CommonStatus.UNEXPECTED_ERROR),
 
     // /api/registrationSms
-    REGISTRATION_SMS_SENT(1, "The SMS was sent to the phone number.", "Phone number has been confirmed"),
+    REGISTRATION_SMS_SENT(1, "The SMS was sent to the phone number.", "Phone number sms has been sent"),
 
     // /api/emailVerification
     EMAIL_VERIFIED(1, "The email has been verified by the user.", "Email has been confirmed"),

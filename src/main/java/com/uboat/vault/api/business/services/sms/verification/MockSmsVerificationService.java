@@ -1,15 +1,40 @@
 package com.uboat.vault.api.business.services.sms.verification;
 
-import com.uboat.vault.api.model.dto.PhoneNumberDTO;
+import com.uboat.vault.api.model.domain.account.account.Phone;
 import com.uboat.vault.api.model.exceptions.SmsVerificationServiceException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.telnet.TelnetClient;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.io.PrintStream;
 
 @Service
 @Slf4j
 public class MockSmsVerificationService implements SmsVerificationService {
+    private void sendSmsToEmulatorUsingTelnet(Integer emulatorIp, Integer smsInteger) throws IOException {
+        var telnet = new TelnetClient();
+        telnet.connect("localhost", emulatorIp);
+
+        var message = "Your SMS verification code is " + smsInteger;
+        var out = new PrintStream(telnet.getOutputStream());
+        out.printf("sms send %s \"%s\"%n", "1234", message);
+        out.flush();
+
+        out.print("quit");
+        out.flush();
+
+        telnet.disconnect();
+    }
+
     @Override
-    public void sendRegistrationSms(PhoneNumberDTO phoneNumber, Integer smsInteger) throws SmsVerificationServiceException {
-        log.warn("SMS Service not implemented.");
+    public void sendRegistrationSms(Phone phone, Integer smsInteger) throws SmsVerificationServiceException {
+        try {
+            if (phone.getNumber().endsWith("514")) sendSmsToEmulatorUsingTelnet(5554, smsInteger);
+            if (phone.getNumber().endsWith("515")) sendSmsToEmulatorUsingTelnet(5555, smsInteger);
+        } catch (Exception e) {
+            log.error("Failed to send mock sms verification number.");
+            throw new SmsVerificationServiceException(e);
+        }
     }
 }
