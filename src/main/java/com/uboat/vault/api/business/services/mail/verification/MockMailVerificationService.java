@@ -3,6 +3,7 @@ package com.uboat.vault.api.business.services.mail.verification;
 import com.uboat.vault.api.persistence.repostiories.PendingAccountsRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 @AllArgsConstructor
+@Profile("development")
 public class MockMailVerificationService implements MailVerificationService {
 
     private final PendingAccountsRepository pendingAccountsRepository;
@@ -20,7 +22,7 @@ public class MockMailVerificationService implements MailVerificationService {
      */
     @Transactional
     @Override
-    public void sendRegistrationEmailConfirmationMail(String email, String username, String registrationToken) {
+    public void sendRegistrationEmailConfirmationMail(String toEmail, String registrationToken) {
         try {
             log.warn("Mail Confirmation Service not implemented.");
             var seconds = (long) (Math.random() * (20 - 10) + 10);
@@ -28,17 +30,9 @@ public class MockMailVerificationService implements MailVerificationService {
 
             TimeUnit.SECONDS.sleep((long) (Math.random() * (20 - 10) + 10));
 
-            var account = pendingAccountsRepository.findFirstByToken(registrationToken);
-            if (account == null) return;
-
-            if (!account.isEmailVerified()) {
-                account.setEmailVerified(true);
-                pendingAccountsRepository.save(account);
-                log.info("Verified email automatically.");
-            } else
-                log.info("Email is already verified.");
+            this.completeEmailVerification(pendingAccountsRepository, registrationToken);
         } catch (Exception e) {
-            log.error("Exception occurred while trying to send email confirmation mail.", e);
+            log.error("Exception occurred while mocking email confirmation.", e);
         }
     }
 }

@@ -31,6 +31,8 @@ uboat:
     twilio_account_sid: ${TWILIO_ACCOUNT_SID}
     twilio_token: ${TWILIO_TOKEN}
     twilio_UBoat_phone_number: ${TWILIO_UBOAT_PHONE_NUMBER}
+    mailtrap_username: ${MAILTRAP_USERNAME}
+    mailtrap_password: ${MAILTRAP_PASSWORD}
 
   journey:
     max-active-seconds: ${MAX_ACTIVE_SECONDS}

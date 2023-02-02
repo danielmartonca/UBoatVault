@@ -17,12 +17,16 @@ import com.uboat.vault.api.persistence.repostiories.PendingAccountsRepository;
 import com.uboat.vault.api.persistence.repostiories.RegistrationDataRepository;
 import com.uboat.vault.api.persistence.repostiories.SailorsRepository;
 import com.uboat.vault.api.utilities.DateUtils;
+import com.uboat.vault.api.utilities.FileUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -33,7 +37,6 @@ import java.util.regex.Pattern;
 public class AuthenticationService {
     private final JwtService jwtService;
     private final EntityService entityService;
-
     private final CryptoService cryptoService;
 
     private final AccountsRepository accountsRepository;
@@ -165,7 +168,7 @@ public class AuthenticationService {
                     pendingAccountsRepository.save(pendingAccount);
                 }
 
-                mailVerificationService.sendRegistrationEmailConfirmationMail(pendingAccount.getEmail(), pendingAccount.getUsername(), pendingRegistrationToken);
+                mailVerificationService.sendRegistrationEmailConfirmationMail(pendingAccount.getEmail(), pendingRegistrationToken);
                 return new UBoatDTO(UBoatStatus.ACCOUNT_ALREADY_PENDING_REGISTRATION, pendingRegistrationToken);
             }
 
@@ -176,7 +179,7 @@ public class AuthenticationService {
 
             dto.setPassword(cryptoService.hash(dto.getPassword()));
             var newPendingAccount = new PendingAccount(dto, registrationToken);
-            mailVerificationService.sendRegistrationEmailConfirmationMail(newPendingAccount.getEmail(), newPendingAccount.getUsername(), registrationToken);
+            mailVerificationService.sendRegistrationEmailConfirmationMail(newPendingAccount.getEmail(), registrationToken);
             pendingAccountsRepository.save(newPendingAccount);
 
             log.info("Created new pending registration account and registrationToken. Returning registrationToken '" + registrationToken + "'.");
@@ -211,7 +214,30 @@ public class AuthenticationService {
         }
     }
 
-    public UBoatDTO emailVerification(String registrationToken) {
+    public String verifyEmail(String emailVerificationToken) throws IOException {
+        try {
+            final var hashedRToken = URLDecoder.decode(emailVerificationToken, StandardCharsets.UTF_8);
+
+            var pendingAccountsList = pendingAccountsRepository.findAll();
+            var pendingAccount = pendingAccountsList.stream()
+                    .filter(a -> cryptoService.matchesHash(a.getToken(), hashedRToken))
+                    .findFirst()
+                    .orElse(null);
+
+            if (pendingAccount == null) {
+                log.warn("The hashed token sent in the URL does not match any RToken from the database.");
+                return FileUtils.loadStaticHtmlTemplate("EmailUnauthorizedVerificationTemplate.html");
+            }
+
+            mailVerificationService.completeEmailVerification(pendingAccountsRepository, pendingAccount.getToken());
+            return FileUtils.loadStaticHtmlTemplate("EmailSuccessfulVerificationTemplate.html");
+        } catch (Exception e) {
+            log.error("Error while verifying the email", e);
+            return FileUtils.loadStaticHtmlTemplate("EmailFailedVerificationTemplate.html");
+        }
+    }
+
+    public UBoatDTO isEmailVerified(String registrationToken) {
         try {
             var pendingAccount = pendingAccountsRepository.findFirstByToken(registrationToken);
             if (pendingAccount == null) {
@@ -219,10 +245,15 @@ public class AuthenticationService {
                 return new UBoatDTO(UBoatStatus.RTOKEN_NOT_FOUND_IN_DATABASE, false);
             }
 
-            if (!pendingAccount.isEmailVerified())
-                return new UBoatDTO(UBoatStatus.EMAIL_NOT_VERIFIED, false);
+            if (pendingAccount.isEmailVerified())
+                return new UBoatDTO(UBoatStatus.EMAIL_VERIFIED, true);
 
-            return new UBoatDTO(UBoatStatus.EMAIL_VERIFIED, true);
+            if (!pendingAccount.isEmailSent()) {
+                log.warn("Email to confirm registration has not been sent. Will trigger its sending now.");
+                mailVerificationService.sendRegistrationEmailConfirmationMail(pendingAccount.getEmail(), pendingAccount.getToken());
+            }
+
+            return new UBoatDTO(UBoatStatus.EMAIL_NOT_VERIFIED, false);
         } catch (Exception e) {
             log.error("Error while checking if the email is verified.", e);
             return new UBoatDTO(UBoatStatus.VAULT_INTERNAL_SERVER_ERROR);

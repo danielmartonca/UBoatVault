@@ -29,6 +29,8 @@ uboat:
     twilio_account_sid: "AC03994cf4882710d3f66b518e946b46f8"
     twilio_token: "2998da3650e8ef263a05f7ff1888d2ca"
     twilio_UBoat_phone_number: "+1 712 214 1476"
+    mailtrap_username: "2b3bcb856b1c01"
+    mailtrap_password: "039435bd7349bb"
 
   journey:
     max-active-seconds: 300

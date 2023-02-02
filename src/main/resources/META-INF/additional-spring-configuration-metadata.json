@@ -109,7 +109,18 @@
       "name": "uboat.security.twilio_token",
       "type": "java.lang.String",
       "description": "Used by the Twilio service."
-    },{
+    },
+    {
+      "name": "uboat.security.mailtrap_username",
+      "type": "java.lang.String",
+      "description": "Used by the MailTrap service."
+    },
+    {
+      "name": "uboat.security.mailtrap_password",
+      "type": "java.lang.String",
+      "description": "Used by the MailTrap service."
+    },
+    {
       "name": "uboat.security.twilio_UBoat_phone_number",
       "type": "java.lang.String",
       "description": "Used by the Twilio service."

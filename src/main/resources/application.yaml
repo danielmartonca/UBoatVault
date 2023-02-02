@@ -12,7 +12,8 @@ whitelist:
   /api/jwt,
   /api/requestRegistration,
   /api/registrationSms,
-  /api/emailVerification,
+  /api/emailVerified,
+  /api/verifyEmail,
   /api/register,
   /api/login
 
@@ -34,6 +35,7 @@ uboat:
   pretty-print-logs: false
   apis-body-not-logged:
     /api/sailor/pulse,
+    /api//verifyEmail,
     /images/defaultProfilePicture,
     /images/profileImage,
     /images/sailorProfilePicture,

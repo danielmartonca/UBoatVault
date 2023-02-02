@@ -54,8 +54,11 @@ public class PendingAccount {
 
     @Getter
     @Setter
-    private boolean isEmailVerified = false;
+    private boolean isEmailSent = false;
 
+    @Getter
+    @Setter
+    private boolean isEmailVerified = false;
 
     @Getter
     @Setter

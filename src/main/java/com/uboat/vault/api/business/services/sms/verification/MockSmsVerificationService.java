@@ -24,7 +24,7 @@ public class MockSmsVerificationService implements SmsVerificationService {
 
         out.print("quit");
         out.flush();
-
+        log.warn("Sent '{}' to emulator {}.", smsInteger, emulatorIp);
         telnet.disconnect();
     }
 

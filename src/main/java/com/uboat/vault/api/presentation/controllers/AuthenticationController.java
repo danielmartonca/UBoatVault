@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 
 
 @RestController
@@ -66,17 +67,22 @@ public class AuthenticationController {
         };
     }
 
+    @GetMapping(value = "/verifyEmail", produces = MediaType.TEXT_HTML_VALUE)
+    public String verifyEmail(@RequestParam String token) throws IOException {
+        return authenticationService.verifyEmail(token);
+    }
+
     @Operation(summary = "Checks if the given email has been confirmed by the user or not.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "The email has either been confirmed or not. Read response custom header for more details.", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "500", description = "An exception occurred while checking if the email was confirmed.", content = @Content(mediaType = "application/json"))
     })
-    @GetMapping(value = "/emailVerification", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UBoatDTO> emailVerification(@RequestHeader(value = "Authorization") String authorizationHeader) {
+    @GetMapping(value = "/emailVerified", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UBoatDTO> emailVerified(@RequestHeader(value = "Authorization") String authorizationHeader) {
         var responseIfInvalid = HeadersUtils.parseAuthorizationHeaderForRToken(authorizationHeader);
         if (responseIfInvalid != null) return responseIfInvalid;
 
-        var uBoatResponse = authenticationService.emailVerification(HeadersUtils.extractSecret(authorizationHeader));
+        var uBoatResponse = authenticationService.isEmailVerified(HeadersUtils.extractSecret(authorizationHeader));
 
         return switch (uBoatResponse.getHeader()) {
             case EMAIL_VERIFIED, EMAIL_NOT_VERIFIED -> ResponseEntity.status(HttpStatus.OK).body(uBoatResponse);
