@@ -121,8 +121,7 @@ public class ImagesService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByJwtData(jwtData);
-            var sailor = entityService.findSailorByCredentials(account);
+            var sailor = entityService.findSailorByJwt(jwtData);
             var boat = sailor.getBoat();
 
             var boatImages = boat.getBoatImages();
@@ -168,8 +167,7 @@ public class ImagesService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByJwtData(jwtData);
-            var sailor = entityService.findSailorByCredentials(account);
+            var sailor = entityService.findSailorByJwt(jwtData);
 
             var boatImages = sailor.getBoat().getBoatImages();
 
@@ -198,7 +196,7 @@ public class ImagesService {
 
             //sailors are not allowed to access other sailors images
             if (account.getType() == UserType.SAILOR) {
-                var sailor = entityService.findSailorByCredentials(account);
+                var sailor = entityService.findSailorByJwt(jwtData);
                 var image = sailor.getBoat().getBoatImages().stream()
                         .filter(boatImage -> boatImage.getHash().equals(identifier))
                         .findFirst()
@@ -227,8 +225,8 @@ public class ImagesService {
         try {
             //cant be null because the operation is already done in the filter before
             var jwtData = jwtService.extractUsernameAndPhoneNumberFromHeader(authorizationHeader);
-            var account = entityService.findAccountByJwtData(jwtData);
-            var sailor = entityService.findSailorByCredentials(account);
+            var sailor = entityService.findSailorByJwt(jwtData);
+
             var boat = sailor.getBoat();
             var sailorImages = boat.getBoatImages();
 

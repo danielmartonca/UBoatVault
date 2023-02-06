@@ -7,7 +7,6 @@ import com.uboat.vault.api.model.domain.account.sailor.Sailor;
 import com.uboat.vault.api.model.dto.RegistrationDataDTO;
 import com.uboat.vault.api.model.dto.UBoatDTO;
 import com.uboat.vault.api.model.enums.UBoatStatus;
-import com.uboat.vault.api.model.enums.UserType;
 import com.uboat.vault.api.model.other.Credentials;
 import com.uboat.vault.api.persistence.repostiories.AccountsRepository;
 import com.uboat.vault.api.persistence.repostiories.RegistrationDataRepository;
@@ -92,31 +91,6 @@ public class EntityService {
 
         log.info("Could not find account with the given credentials.");
         return null;
-    }
-
-    /**
-     * This method searches for the active sailor entity based on the data given as parameter
-     */
-    public Sailor findSailorByCredentials(Account account) {
-        var foundAccount = findAccountByCredentials(Credentials.fromAccount(account));
-        if (foundAccount == null) {
-            log.info("Request account or token are invalid.");
-            return null;
-        }
-
-        if (foundAccount.getType() != UserType.SAILOR) {
-            log.warn("Account found but is not matching a sailor account.");
-            return null;
-        }
-
-        var foundSailorAccount = sailorsRepository.findFirstByAccountId(foundAccount.getId());
-        if (foundSailorAccount == null) {
-            log.warn("Sailor account is null. User hasn't setup any account details.");
-            return null;
-        }
-
-        log.info("Active sailor account found.");
-        return foundSailorAccount;
     }
 
     public Sailor findSailorBySailorId(String sailorId) {
