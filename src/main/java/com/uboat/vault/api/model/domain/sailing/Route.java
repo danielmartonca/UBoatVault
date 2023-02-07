@@ -1,6 +1,6 @@
 package com.uboat.vault.api.model.domain.sailing;
 
-import com.uboat.vault.api.business.services.GeoService;
+import com.uboat.vault.api.business.services.geographical.GeographicalService;
 import com.uboat.vault.api.model.dto.JourneyRequestDTO;
 import com.uboat.vault.api.model.exceptions.NoRouteFoundException;
 import lombok.AllArgsConstructor;
@@ -79,7 +79,7 @@ public class Route {
         this(sailorLocation, journeyRequestDTO.getClientLocation(), journeyRequestDTO.getPickupLocation(), journeyRequestDTO.getDestinationLocation());
     }
 
-    public void calculateRoute(GeoService geoService) throws NoRouteFoundException {
+    public void calculateRoute(GeographicalService geoService) throws NoRouteFoundException {
         this.routePolylinePoints.addAll(geoService.calculateOnWaterRoute(sailorLocation, pickupLocation, destinationLocation));
     }
 
@@ -89,7 +89,7 @@ public class Route {
         return totalDistance;
     }
 
-    public double getTotalDistance(GeoService geoService) {
+    public double getTotalDistance(GeographicalService geoService) {
         if (totalDistance != 0) return totalDistance;
         totalDistance = geoService.calculateDistanceOnWaterBetweenPoints(routePolylinePoints);
         return totalDistance;
@@ -110,7 +110,7 @@ public class Route {
         return points;
     }
 
-    public double getDistanceBetweenSailorAndClient(GeoService geoService){
+    public double getDistanceBetweenSailorAndClient(GeographicalService geoService){
         return geoService.calculateDistanceOnWaterBetweenPoints(getPointsBetweenSailorAndClient());
     }
 }

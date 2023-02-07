@@ -1,5 +1,6 @@
 package com.uboat.vault.api.business.services;
 
+import com.uboat.vault.api.business.services.geographical.GeographicalService;
 import com.uboat.vault.api.business.services.payment.PaymentService;
 import com.uboat.vault.api.model.domain.account.account.Account;
 import com.uboat.vault.api.model.domain.account.account.CreditCard;
@@ -53,7 +54,7 @@ public class JourneyService {
     private Boolean recordAllLocationData = false;
 
     private final EntityService entityService;
-    private final GeoService geoService;
+    private final GeographicalService geoService;
     private final JwtService jwtService;
     private final PaymentService paymentService;
 
