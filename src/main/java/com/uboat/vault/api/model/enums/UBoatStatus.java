@@ -107,6 +107,7 @@ public enum UBoatStatus {
     RTOKEN_NOT_FOUND_IN_DATABASE(4, "The RToken values extracted from the authorization header does not exist in the database", CommonStatus.UNEXPECTED_ERROR),
     RTOKEN_AND_ACCOUNT_NOT_MATCHING(5, "The RToken values extracted from the authorization header does not match with the account in the request", CommonStatus.UNEXPECTED_ERROR),
     MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER(6, "The account given in the request is missing registration data or phone number information", CommonStatus.UNEXPECTED_ERROR),
+    PENDING_ACCOUNT_EMAIL_NOT_VERIFIED(7, "The email address has not been verified. ", "Please verify your email."),
     REGISTRATION_SUCCESSFUL(1, "Registration for the account was successful. JWT is present in the response body.", "Registration successful"),
 
 

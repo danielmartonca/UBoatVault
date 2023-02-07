@@ -287,6 +287,8 @@ public class AuthenticationService {
                 return new UBoatDTO(UBoatStatus.MISSING_REGISTRATION_DATA_OR_PHONE_NUMBER);
             }
 
+            if (!pendingAccount.isEmailVerified()) return new UBoatDTO(UBoatStatus.PENDING_ACCOUNT_EMAIL_NOT_VERIFIED);
+
             dto.setPassword(cryptoService.hash(dto.getPassword()));
             var account = new Account(dto);
 
