@@ -12,7 +12,7 @@ import java.io.PrintStream;
 
 @Service
 @Slf4j
-@Profile("development")
+@Profile({"development", "test"})
 public class MockSmsVerificationService implements SmsVerificationService {
     private void sendSmsToEmulatorUsingTelnet(Integer emulatorIp, Integer smsInteger) throws IOException {
         var telnet = new TelnetClient();

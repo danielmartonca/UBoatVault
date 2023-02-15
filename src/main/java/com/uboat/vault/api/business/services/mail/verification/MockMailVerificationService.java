@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 @AllArgsConstructor
-@Profile("development")
+@Profile({"development", "test"})
 public class MockMailVerificationService implements MailVerificationService {
 
     private final PendingAccountsRepository pendingAccountsRepository;

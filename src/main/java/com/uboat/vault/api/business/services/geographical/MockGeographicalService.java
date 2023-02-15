@@ -16,7 +16,7 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@Profile("development")
+@Profile({"development", "test"})
 public class MockGeographicalService implements GeographicalService {
 
     @Override
